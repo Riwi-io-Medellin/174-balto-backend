@@ -71,6 +71,24 @@ dotnet run --project back-end-pets/back-end-pets.csproj
 
 API disponible en `http://localhost:5000`. Documentación OpenAPI en `http://localhost:5000/openapi/v1.json` (solo en Development).
 
+## Convenciones de API
+
+- Base: `/api/{recurso}` — sin versionado
+- Casing: `kebab-case` → `/api/walking-history`
+- Relaciones directas: recursos anidados → `/api/users/{id}/pets`
+- Auth: `Authorization: Bearer <access_token>` en cada request protegido
+- Errores: `{ "error": "mensaje", "code": "SNAKE_CASE_CODE" }`
+
+## Autenticación
+
+JWT con refresh token. `Microsoft.AspNetCore.Authentication.JwtBearer` + ASP.NET Core Identity.
+
+```
+POST /api/auth/login    → { access_token, refresh_token }
+POST /api/auth/refresh  → { access_token, refresh_token }
+POST /api/auth/logout   → revoca refresh_token
+```
+
 ## Módulos (64 casos de uso)
 
 | Módulo | Estado |
