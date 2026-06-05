@@ -71,6 +71,25 @@ dotnet run --project back-end-pets/back-end-pets.csproj
 
 API disponible en `http://localhost:5000`. Documentación OpenAPI en `http://localhost:5000/openapi/v1.json` (solo en Development).
 
+## Paquetes
+
+| Paquete | Uso |
+|---------|-----|
+| `Microsoft.AspNetCore.Identity.EntityFrameworkCore` | Registro, login y gestión de usuarios |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | Valida el token en cada petición protegida |
+| `Npgsql.EntityFrameworkCore.PostgreSQL` | Conecta la API con PostgreSQL |
+| `Microsoft.EntityFrameworkCore.Design` | Crea y aplica cambios en la base de datos |
+
+## Flujo de ramas
+
+```
+feature/* → dev → staging → main
+```
+
+- `feature/*` siempre sale de `dev`
+- Nunca commitear directo a `main` o `staging`
+- Merge a `main` solo cuando `staging` está validado
+
 ## Convenciones de API
 
 - Base: `/api/{recurso}` — sin versionado
