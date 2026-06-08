@@ -10,10 +10,12 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\BackEndPets.Application\BackEndPets.Application.csproj" />
+      <ProjectReference Include="..\BackEndPets.Infrastructure\BackEndPets.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
