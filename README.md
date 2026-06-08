@@ -1,6 +1,6 @@
-# PawExplorers — Backend API
+# Balto — Backend API
 
-API REST en .NET 10 para la plataforma PawExplorers. Conecta dueños de mascotas, walkers y negocios pet care.
+API REST en .NET 10 para la plataforma Balto. Conecta dueños de mascotas, walkers y negocios pet care.
 
 ## Stack
 
@@ -69,7 +69,7 @@ Crear `back-end-pets/appsettings.Development.json` (no se commitea):
 dotnet run --project back-end-pets/back-end-pets.csproj
 ```
 
-API disponible en `http://localhost:5000`. Documentación OpenAPI en `http://localhost:5000/openapi/v1.json` (solo en Development).
+API disponible en `http://localhost:5001`. Documentación OpenAPI en `http://localhost:5001/openapi/v1.json` (solo en Development).
 
 ## Paquetes
 
@@ -113,7 +113,7 @@ POST /api/auth/logout   → revoca refresh_token
 | Módulo | Estado |
 |--------|--------|
 | Gestión de usuarios y acceso (UC-01–08) | Pendiente |
-| Perfil del perro (UC-09–14) | Pendiente |
+| Perfil del perro (UC-09–14) | In Progress |
 | Walk Planner (UC-15–20) | Pendiente |
 | Walker Hub (UC-21–27) | Pendiente |
 | Matching y recomendaciones (UC-28–31) | Pendiente |
