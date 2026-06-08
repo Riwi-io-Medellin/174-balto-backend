@@ -277,7 +277,10 @@
         },
         "runtime": {
           "bin/placeholder/BackEndPets.Application.dll": {}
-        }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       },
       "BackEndPets.Domain/1.0.0": {
         "type": "project",
@@ -295,6 +298,7 @@
         "dependencies": {
           "BackEndPets.Application": "1.0.0",
           "BackEndPets.Domain": "1.0.0",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.5",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.5",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.0"
         },
@@ -303,7 +307,10 @@
         },
         "runtime": {
           "bin/placeholder/BackEndPets.Infrastructure.dll": {}
-        }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
@@ -668,6 +675,7 @@
       "outputPath": "/Users/veronicamartinez/174-balto-backend/back-end-pets/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
+        "/Users/veronicamartinez/174-balto-backend/NuGet.Config",
         "/Users/veronicamartinez/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [

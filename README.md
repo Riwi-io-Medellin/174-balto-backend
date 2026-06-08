@@ -1,6 +1,6 @@
-# PawExplorers — Backend API
+# Balto — Backend API
 
-API REST en .NET 10 para la plataforma PawExplorers. Conecta dueños de mascotas, walkers y negocios pet care.
+API REST en .NET 10 para la plataforma Balto. Conecta dueños de mascotas, walkers y negocios pet care.
 
 ## Stack
 
@@ -69,7 +69,7 @@ Crear `back-end-pets/appsettings.Development.json` (no se commitea):
 dotnet run --project back-end-pets/back-end-pets.csproj
 ```
 
-API disponible en `http://localhost:5000`. Documentación Swagger/OpenAPI en `http://localhost:5000/swagger/v1/swagger.json` (solo en Development).
+API disponible en `http://localhost:5000`. 
 
 ## Swagger
 
@@ -94,6 +94,26 @@ Endpoints disponibles:
 - `POST /api/auth/logout`
 
 `POST /api/auth/login` devuelve un `accessToken` y un `refreshToken`. Luego puedes usar el `accessToken` en Swagger o en tus requests con `Authorization: Bearer <accessToken>`.
+API disponible en `http://localhost:5001`. Documentación OpenAPI en `http://localhost:5001/openapi/v1.json` (solo en Development).
+
+## Paquetes
+
+| Paquete | Uso |
+|---------|-----|
+| `Microsoft.AspNetCore.Identity.EntityFrameworkCore` | Registro, login y gestión de usuarios |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | Valida el token en cada petición protegida |
+| `Npgsql.EntityFrameworkCore.PostgreSQL` | Conecta la API con PostgreSQL |
+| `Microsoft.EntityFrameworkCore.Design` | Crea y aplica cambios en la base de datos |
+
+## Flujo de ramas
+
+```
+feature/* → dev → staging → main
+```
+
+- `feature/*` siempre sale de `dev`
+- Nunca commitear directo a `main` o `staging`
+- Merge a `main` solo cuando `staging` está validado
 
 ## Convenciones de API
 
@@ -118,7 +138,7 @@ POST /api/auth/logout   → revoca refresh_token
 | Módulo | Estado |
 |--------|--------|
 | Gestión de usuarios y acceso (UC-01–08) | In Progress |
-| Perfil del perro (UC-09–14) | Pendiente |
+| Perfil del perro (UC-09–14) | In Progress |
 | Walk Planner (UC-15–20) | Pendiente |
 | Walker Hub (UC-21–27) | Pendiente |
 | Matching y recomendaciones (UC-28–31) | Pendiente |

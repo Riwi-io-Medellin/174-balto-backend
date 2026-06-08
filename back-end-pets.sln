@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "back-end-pets", "back-end-pets\back-end-pets.csproj", "{5F1FF034-CE42-479B-B252-02101F0CA626}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackEndPets.Domain", "BackEndPets.Domain\BackEndPets.Domain.csproj", "{5EE837CD-93FA-4518-B951-27232DA0A005}"

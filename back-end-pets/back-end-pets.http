@@ -1,11 +1,53 @@
 @back_end_pets_HostAddress = http://localhost:5000
 
-GET {{back_end_pets_HostAddress}}/todos/
+GET {{back_end_pets_HostAddress}}/swagger
 Accept: application/json
 
 ###
 
-GET {{back_end_pets_HostAddress}}/todos/1
+GET {{back_end_pets_HostAddress}}/swagger/v1/swagger.json
 Accept: application/json
 
 ###
+
+POST {{back_end_pets_HostAddress}}/api/users
+Content-Type: application/json
+
+{
+  "first_name": "Ana",
+  "last_name": "Pereira",
+  "email": "ana@example.com",
+  "id_number": "123456789",
+  "id_type": "CC",
+  "location": "Bogota",
+  "address": "Calle 123 #45-67",
+  "phone": 3001234567,
+  "phone_extra": null,
+  "photo_url": null
+}
+
+###
+
+POST {{back_end_pets_HostAddress}}/api/pets
+Content-Type: application/json
+
+{
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "name": "Luna",
+  "species": "dog",
+  "breed": "Labrador",
+  "birth_date": "2021-02-14",
+  "description": "Needs a calm walker.",
+  "photo_url": null
+}
+
+###
+
+GET {{back_end_pets_HostAddress}}/api/users
+Accept: application/json
+
+###
+
+GET {{back_end_pets_HostAddress}}/api/pets
+Accept: application/json
+

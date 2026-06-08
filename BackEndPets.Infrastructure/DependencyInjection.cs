@@ -3,6 +3,7 @@ using BackEndPets.Domain.Interfaces;
 using BackEndPets.Infrastructure.Identity;
 using BackEndPets.Infrastructure.Repositories;
 using BackEndPets.Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

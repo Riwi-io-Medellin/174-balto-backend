@@ -4,5 +4,5 @@ public abstract class EntityBase
 {
     public Guid Id { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -27,7 +27,7 @@ public sealed class InMemoryCrudRepository<T> : ICrudRepository<T> where T : Ent
             entity.Id = Guid.NewGuid();
         }
 
-        entity.CreatedAt = DateTimeOffset.UtcNow;
+        entity.CreatedAt = DateTime.UtcNow;
         storage[entity.Id] = entity;
         return Task.CompletedTask;
     }

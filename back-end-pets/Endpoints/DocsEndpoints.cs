@@ -49,68 +49,13 @@ public static class DocsEndpoints
   "info": {
     "title": "Balto API",
     "version": "v1",
-    "description": "Identity auth and users CRUD for the Balto backend."
+    "description": "CRUD endpoints for the users and pets tables."
   },
   "paths": {
-    "/api/auth/login": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Log in and get tokens",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LoginRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK" },
-          "401": { "description": "Unauthorized" }
-        }
-      }
-    },
-    "/api/auth/refresh": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Refresh the access token",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/RefreshTokenRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK" },
-          "401": { "description": "Unauthorized" }
-        }
-      }
-    },
-    "/api/auth/logout": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Revoke a refresh token",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LogoutRequest" }
-            }
-          }
-        },
-        "responses": {
-          "204": { "description": "No Content" },
-          "404": { "description": "Not Found" }
-        }
-      }
-    },
     "/api/users": {
       "get": {
         "tags": ["Users"],
         "summary": "List users",
-        "security": [{ "BearerAuth": [] }],
         "responses": {
           "200": { "description": "OK" }
         }
@@ -118,7 +63,6 @@ public static class DocsEndpoints
       "post": {
         "tags": ["Users"],
         "summary": "Create a user",
-        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -137,7 +81,6 @@ public static class DocsEndpoints
       "get": {
         "tags": ["Users"],
         "summary": "Get a user by id",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -154,7 +97,6 @@ public static class DocsEndpoints
       "put": {
         "tags": ["Users"],
         "summary": "Update a user",
-        "security": [{ "BearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -179,7 +121,89 @@ public static class DocsEndpoints
       "delete": {
         "tags": ["Users"],
         "summary": "Delete a user",
-        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "No Content" },
+          "404": { "description": "Not Found" }
+        }
+      }
+    },
+    "/api/pets": {
+      "get": {
+        "tags": ["Pets"],
+        "summary": "List pets",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "post": {
+        "tags": ["Pets"],
+        "summary": "Create a pet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePetRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad Request" }
+        }
+      }
+    },
+    "/api/pets/{id}": {
+      "get": {
+        "tags": ["Pets"],
+        "summary": "Get a pet by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Not Found" }
+        }
+      },
+      "put": {
+        "tags": ["Pets"],
+        "summary": "Update a pet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePetRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Not Found" }
+        }
+      },
+      "delete": {
+        "tags": ["Pets"],
+        "summary": "Delete a pet",
         "parameters": [
           {
             "name": "id",
@@ -196,54 +220,94 @@ public static class DocsEndpoints
     }
   },
   "components": {
-    "securitySchemes": {
-      "BearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
-    },
     "schemas": {
-      "LoginRequest": {
-        "type": "object",
-        "required": ["email", "password"],
-        "properties": {
-          "email": { "type": "string" },
-          "password": { "type": "string" }
-        }
-      },
-      "RefreshTokenRequest": {
-        "type": "object",
-        "required": ["refreshToken"],
-        "properties": {
-          "refreshToken": { "type": "string" }
-        }
-      },
-      "LogoutRequest": {
-        "type": "object",
-        "required": ["refreshToken"],
-        "properties": {
-          "refreshToken": { "type": "string" }
-        }
-      },
       "CreateUserRequest": {
         "type": "object",
-        "required": ["fullName", "email", "role"],
+        "required": ["first_name", "last_name", "email", "id_number", "id_type", "phone"],
         "properties": {
-          "fullName": { "type": "string" },
-          "email": { "type": "string" },
-          "role": { "type": "string" },
-          "isActive": { "type": "boolean", "default": true }
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "id_number": { "type": "string" },
+          "id_type": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
+          "location": { "type": ["string", "null"] },
+          "address": { "type": ["string", "null"] },
+          "phone": { "type": "integer", "format": "int64" },
+          "phone_extra": { "type": ["integer", "null"], "format": "int64" },
+          "photo_url": { "type": ["string", "null"] }
         }
       },
       "UpdateUserRequest": {
         "type": "object",
-        "required": ["fullName", "email", "role", "isActive"],
+        "required": ["first_name", "last_name", "email", "id_number", "id_type", "phone"],
         "properties": {
-          "fullName": { "type": "string" },
-          "email": { "type": "string" },
-          "role": { "type": "string" },
-          "isActive": { "type": "boolean" }
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "id_number": { "type": "string" },
+          "id_type": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
+          "location": { "type": ["string", "null"] },
+          "address": { "type": ["string", "null"] },
+          "phone": { "type": "integer", "format": "int64" },
+          "phone_extra": { "type": ["integer", "null"], "format": "int64" },
+          "photo_url": { "type": ["string", "null"] }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "id_number": { "type": "string" },
+          "id_type": { "type": "string" },
+          "location": { "type": ["string", "null"] },
+          "address": { "type": ["string", "null"] },
+          "phone": { "type": "integer", "format": "int64" },
+          "phone_extra": { "type": ["integer", "null"], "format": "int64" },
+          "photo_url": { "type": ["string", "null"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreatePetRequest": {
+        "type": "object",
+        "required": ["user_id", "name", "species"],
+        "properties": {
+          "user_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "species": { "type": "string" },
+          "breed": { "type": ["string", "null"] },
+          "birth_date": { "type": ["string", "null"], "format": "date" },
+          "description": { "type": ["string", "null"] },
+          "photo_url": { "type": ["string", "null"] }
+        }
+      },
+      "UpdatePetRequest": {
+        "type": "object",
+        "required": ["user_id", "name", "species"],
+        "properties": {
+          "user_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "species": { "type": "string" },
+          "breed": { "type": ["string", "null"] },
+          "birth_date": { "type": ["string", "null"], "format": "date" },
+          "description": { "type": ["string", "null"] },
+          "photo_url": { "type": ["string", "null"] }
+        }
+      },
+      "PetResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "species": { "type": "string" },
+          "breed": { "type": ["string", "null"] },
+          "birth_date": { "type": ["string", "null"], "format": "date" },
+          "description": { "type": ["string", "null"] },
+          "photo_url": { "type": ["string", "null"] },
+          "created_at": { "type": "string", "format": "date-time" }
         }
       }
     }
