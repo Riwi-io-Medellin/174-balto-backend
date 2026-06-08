@@ -1,11 +1,30 @@
 @back_end_pets_HostAddress = http://localhost:5001
 
-GET {{back_end_pets_HostAddress}}/todos/
+GET {{back_end_pets_HostAddress}}/swagger
 Accept: application/json
 
 ###
 
-GET {{back_end_pets_HostAddress}}/todos/1
+GET {{back_end_pets_HostAddress}}/swagger/v1/swagger.json
+Accept: application/json
+
+###
+
+POST {{back_end_pets_HostAddress}}/api/users/00000000-0000-0000-0000-000000000001/pets
+Content-Type: application/json
+
+{
+  "name": "Luna",
+  "species": "dog",
+  "breed": "Labrador",
+  "birthDate": "2021-02-14T00:00:00Z",
+  "description": "Needs a calm walker.",
+  "photoUrl": null
+}
+
+###
+
+GET {{back_end_pets_HostAddress}}/api/users/00000000-0000-0000-0000-000000000001/pets
 Accept: application/json
 
 ###
