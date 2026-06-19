@@ -45,6 +45,8 @@ await using (var scope = app.Services.CreateAsyncScope())
     await IdentitySeeder.SeedDemoUserAsync(userManager);
 }
 
+app.MapGet("/health", () => Results.Ok("OK"));
+
 if (app.Environment.IsDevelopment())
 {
     app.MapSwaggerEndpoints();

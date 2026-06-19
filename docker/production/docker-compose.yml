@@ -1,0 +1,12 @@
+﻿version: "3.9"
+
+services:
+  api:
+    image: back-end-pets:production
+    container_name: back-end-pets-production
+    restart: always
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__Default=${DB_CONNECTION}
