@@ -37,7 +37,7 @@ public sealed class AuthService(
             return null;
         }
 
-        return CreateTokens(user.Email ?? email, user.Id);
+        return CreateTokens(user.Email ?? email, user.Id.ToString());
     }
 
     public Task<AuthResponse?> RefreshAsync(RefreshTokenRequest request)

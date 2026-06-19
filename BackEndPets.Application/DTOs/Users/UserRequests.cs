@@ -1,21 +1,39 @@
 namespace BackEndPets.Application.DTOs.Users;
 
 public sealed record CreateUserRequest(
-    string FullName,
+    string FirstName,
+    string LastName,
     string Email,
-    string Role,
-    bool IsActive = true);
+    string Password,
+    string IdNumber,
+    string IdType,
+    long Phone,
+    long? PhoneExtra = null,
+    string? Location = null,
+    string? Address = null,
+    string? PhotoUrl = null);
 
 public sealed record UpdateUserRequest(
-    string FullName,
-    string Email,
-    string Role,
-    bool IsActive);
+    string FirstName,
+    string LastName,
+    string IdNumber,
+    string IdType,
+    long Phone,
+    long? PhoneExtra = null,
+    string? Location = null,
+    string? Address = null,
+    string? PhotoUrl = null);
 
 public sealed record UserResponse(
     Guid Id,
-    string FullName,
+    string FirstName,
+    string LastName,
     string Email,
-    string Role,
-    bool IsActive,
-    DateTimeOffset CreatedAt);
+    string IdNumber,
+    string IdType,
+    long Phone,
+    long? PhoneExtra,
+    string? Location,
+    string? Address,
+    string? PhotoUrl,
+    DateTime CreatedAt);

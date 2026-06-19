@@ -19,7 +19,12 @@ public static class IdentitySeeder
         {
             UserName = DemoEmail,
             Email = DemoEmail,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            FirstName = "Admin",
+            LastName = "PawExplorers",
+            IdNumber = "0000000000",
+            IdType = "CC",
+            Phone = 3000000000
         };
 
         await userManager.CreateAsync(user, DemoPassword);
