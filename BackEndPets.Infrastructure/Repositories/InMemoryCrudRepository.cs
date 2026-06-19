@@ -6,17 +6,17 @@ namespace BackEndPets.Infrastructure.Repositories;
 
 public sealed class InMemoryCrudRepository<T> : ICrudRepository<T> where T : EntityBase, new()
 {
-    private readonly ConcurrentDictionary<Guid, T> storage = new();
+    private readonly ConcurrentDictionary<Guid, T> _storage = new();
 
     public Task<IReadOnlyCollection<T>> GetAllAsync()
     {
-        IReadOnlyCollection<T> items = storage.Values.OrderBy(item => item.CreatedAt).ToList();
+        IReadOnlyCollection<T> items = _storage.Values.OrderBy(item => item.CreatedAt).ToList();
         return Task.FromResult(items);
     }
 
     public Task<T?> GetByIdAsync(Guid id)
     {
-        storage.TryGetValue(id, out var entity);
+        _storage.TryGetValue(id, out var entity);
         return Task.FromResult(entity);
     }
 
@@ -28,20 +28,20 @@ public sealed class InMemoryCrudRepository<T> : ICrudRepository<T> where T : Ent
         }
 
         entity.CreatedAt = DateTimeOffset.UtcNow;
-        storage[entity.Id] = entity;
+        _storage[entity.Id] = entity;
         return Task.CompletedTask;
     }
 
     public Task<bool> UpdateAsync(T entity)
     {
-        if (!storage.ContainsKey(entity.Id))
+        if (!_storage.ContainsKey(entity.Id))
         {
             return Task.FromResult(false);
         }
 
-        storage[entity.Id] = entity;
+        _storage[entity.Id] = entity;
         return Task.FromResult(true);
     }
 
-    public Task<bool> DeleteAsync(Guid id) => Task.FromResult(storage.TryRemove(id, out _));
+    public Task<bool> DeleteAsync(Guid id) => Task.FromResult(_storage.TryRemove(id, out _));
 }
