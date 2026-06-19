@@ -6,15 +6,24 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>BackEndPets.API</RootNamespace>
         <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\BackEndPets.Application\BackEndPets.Application.csproj" />
+      <ProjectReference Include="..\BackEndPets.Infrastructure\BackEndPets.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>

@@ -69,7 +69,31 @@ Crear `back-end-pets/appsettings.Development.json` (no se commitea):
 dotnet run --project back-end-pets/back-end-pets.csproj
 ```
 
-API disponible en `http://localhost:5000`. Documentación OpenAPI en `http://localhost:5000/openapi/v1.json` (solo en Development).
+API disponible en `http://localhost:5000`. Documentación Swagger/OpenAPI en `http://localhost:5000/swagger/v1/swagger.json` (solo en Development).
+
+## Swagger
+
+En desarrollo, la documentación Swagger está disponible en:
+
+- Swagger UI: `http://localhost:5000/swagger`
+- OpenAPI JSON: `http://localhost:5000/swagger/v1/swagger.json`
+
+La UI se monta con una página HTML simple en la API y consume el JSON generado en `/swagger/v1/swagger.json`.
+
+## Auth
+
+El login usa ASP.NET Core Identity con una cuenta de desarrollo sembrada al arrancar la app. Para probar los endpoints protegidos de usuarios, primero inicia sesión con este usuario:
+
+- Email: `admin@pawexplorers.com`
+- Password: `Password123!`
+
+Endpoints disponibles:
+
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+
+`POST /api/auth/login` devuelve un `accessToken` y un `refreshToken`. Luego puedes usar el `accessToken` en Swagger o en tus requests con `Authorization: Bearer <accessToken>`.
 
 ## Paquetes
 
@@ -100,7 +124,7 @@ feature/* → dev → staging → main
 
 ## Autenticación
 
-JWT con refresh token. `Microsoft.AspNetCore.Authentication.JwtBearer` + ASP.NET Core Identity.
+JWT con refresh token. ASP.NET Core Identity valida el usuario y la contraseña, y los refresh tokens se guardan en memoria para desarrollo. `Microsoft.AspNetCore.Authentication.JwtBearer`.
 
 ```
 POST /api/auth/login    → { access_token, refresh_token }
@@ -112,7 +136,7 @@ POST /api/auth/logout   → revoca refresh_token
 
 | Módulo | Estado |
 |--------|--------|
-| Gestión de usuarios y acceso (UC-01–08) | Pendiente |
+| Gestión de usuarios y acceso (UC-01–08) | In Progress |
 | Perfil del perro (UC-09–14) | Pendiente |
 | Walk Planner (UC-15–20) | Pendiente |
 | Walker Hub (UC-21–27) | Pendiente |

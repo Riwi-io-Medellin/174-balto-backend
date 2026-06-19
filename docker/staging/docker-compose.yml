@@ -1,0 +1,12 @@
+﻿version: "3.9"
+
+services:
+  api:
+    image: back-end-pets:staging
+    container_name: back-end-pets-staging
+    restart: always
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ConnectionStrings__Default=${DB_CONNECTION}
