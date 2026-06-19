@@ -5,34 +5,38 @@ on:
     branches: ["staging"]
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/back-end-pets
+  REGISTRY: ghcr.io
+  IMAGE_NAME: riwi-io-medellin/back-end-pets
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Login GHCR
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build image
+      - name: Build Docker image
         run: |
-          docker build -t $IMAGE:staging-${{ github.sha }} -f back-end-pets/Dockerfile .
+          docker build \
+            -t $REGISTRY/$IMAGE_NAME:staging-${{ github.sha }} \
+            -f back-end-pets/Dockerfile .
 
-      - name: Push image
+      - name: Push Docker image
         run: |
-          docker push $IMAGE:staging-${{ github.sha }}
+          docker push $REGISTRY/$IMAGE_NAME:staging-${{ github.sha }}
 
-      - name: Deploy via SSH
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            docker pull $IMAGE:staging-${{ github.sha }}
+            docker pull ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 
             docker stop back-end-pets-staging || true
             docker rm back-end-pets-staging || true
@@ -41,7 +45,7 @@ jobs:
               --name back-end-pets-staging \
               -p 5001:8080 \
               -e ASPNETCORE_ENVIRONMENT=Staging \
-              $IMAGE:staging-${{ github.sha }}
+              ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 
             sleep 10
 

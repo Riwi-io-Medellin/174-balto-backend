@@ -5,41 +5,44 @@ on:
     branches: ["main"]
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/back-end-pets
+  REGISTRY: ghcr.io
+  IMAGE_NAME: riwi-io-medellin/back-end-pets
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Login GHCR
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build image
+      - name: Build Docker image
         run: |
-          docker build -t $IMAGE:prod-${{ github.sha }} -f back-end-pets/Dockerfile .
+          docker build \
+            -t $REGISTRY/$IMAGE_NAME:prod-${{ github.sha }} \
+            -f back-end-pets/Dockerfile .
 
-      - name: Push image
-        run: docker push $IMAGE:prod-${{ github.sha }}
+      - name: Push Docker image
+        run: |
+          docker push $REGISTRY/$IMAGE_NAME:prod-${{ github.sha }}
 
-      - name: Deploy (blue/green simple)
+      - name: Deploy with zero downtime
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            OLD=$(docker ps -q -f name=back-end-pets-production || true)
-
-            docker pull $IMAGE:prod-${{ github.sha }}
+            docker pull ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
             docker run -d \
               --name back-end-pets-production-new \
               -p 5000:8080 \
               -e ASPNETCORE_ENVIRONMENT=Production \
-              $IMAGE:prod-${{ github.sha }}
+              ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
             sleep 10
 
@@ -48,7 +51,7 @@ jobs:
               docker rm back-end-pets-production || true
               docker rename back-end-pets-production-new back-end-pets-production
             else
-              docker stop back-end-pets-production-new
-              docker rm back-end-pets-production-new
+              docker stop back-end-pets-production-new || true
+              docker rm back-end-pets-production-new || true
               exit 1
             fi
