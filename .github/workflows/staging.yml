@@ -35,22 +35,34 @@ jobs:
         run: |
           docker push $REGISTRY/$IMAGE_NAME:staging-${{ github.sha }}
 
-      - name: Test SSH Connection
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "================================"
-            echo "SSH CONNECTION SUCCESSFUL"
-            echo "================================"
 
-            whoami
-            hostname
-            pwd
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
+              -u "${{ secrets.GHCR_USERNAME }}" \
+              --password-stdin
 
-            docker --version || true
-            docker compose version || true
+            docker pull ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 
-            ls -la
+            docker stop back-end-pets-staging || true
+            docker rm back-end-pets-staging || true
+
+            docker run -d \
+              --name back-end-pets-staging \
+              --restart unless-stopped \
+              -p 5001:8080 \
+              -e ASPNETCORE_ENVIRONMENT=Staging \
+              ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
+
+            sleep 15
+
+            docker ps
+
+            docker logs back-end-pets-staging --tail 50
+
+            curl -f http://localhost:5001 || true
