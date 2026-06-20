@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\back-end-pets\\back-end-pets.csproj": {}
+    "/Users/veronicamartinez/174-balto-backend/back-end-pets/back-end-pets.csproj": {}
   },
   "projects": {
-    "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\back-end-pets\\back-end-pets.csproj": {
+    "/Users/veronicamartinez/174-balto-backend/back-end-pets/back-end-pets.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\back-end-pets\\back-end-pets.csproj",
+        "projectUniqueName": "/Users/veronicamartinez/174-balto-backend/back-end-pets/back-end-pets.csproj",
         "projectName": "back-end-pets",
-        "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\back-end-pets\\back-end-pets.csproj",
-        "packagesPath": "C:\\Users\\diego\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\back-end-pets\\obj\\",
+        "projectPath": "/Users/veronicamartinez/174-balto-backend/back-end-pets/back-end-pets.csproj",
+        "packagesPath": "/Users/veronicamartinez/.nuget/packages/",
+        "outputPath": "/Users/veronicamartinez/174-balto-backend/back-end-pets/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\diego\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/veronicamartinez/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -26,11 +26,11 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj": {
-                "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj"
+              "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj": {
+                "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj"
               },
-              "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Infrastructure\\BackEndPets.Infrastructure.csproj": {
-                "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Infrastructure\\BackEndPets.Infrastructure.csproj"
+              "/Users/veronicamartinez/174-balto-backend/BackEndPets.Infrastructure/BackEndPets.Infrastructure.csproj": {
+                "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Infrastructure/BackEndPets.Infrastructure.csproj"
               }
             }
           }
@@ -79,7 +79,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -497,17 +497,17 @@
         }
       }
     },
-    "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj": {
+    "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj",
+        "projectUniqueName": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj",
         "projectName": "BackEndPets.Application",
-        "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj",
-        "packagesPath": "C:\\Users\\diego\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\obj\\",
+        "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj",
+        "packagesPath": "/Users/veronicamartinez/.nuget/packages/",
+        "outputPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\diego\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/veronicamartinez/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -519,8 +519,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj": {
-                "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj"
+              "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj": {
+                "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj"
               }
             }
           }
@@ -562,7 +562,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -840,17 +840,17 @@
         }
       }
     },
-    "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj": {
+    "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj",
+        "projectUniqueName": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj",
         "projectName": "BackEndPets.Domain",
-        "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj",
-        "packagesPath": "C:\\Users\\diego\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\obj\\",
+        "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj",
+        "packagesPath": "/Users/veronicamartinez/.nuget/packages/",
+        "outputPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\diego\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/veronicamartinez/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -895,7 +895,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1173,17 +1173,17 @@
         }
       }
     },
-    "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Infrastructure\\BackEndPets.Infrastructure.csproj": {
+    "/Users/veronicamartinez/174-balto-backend/BackEndPets.Infrastructure/BackEndPets.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Infrastructure\\BackEndPets.Infrastructure.csproj",
+        "projectUniqueName": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Infrastructure/BackEndPets.Infrastructure.csproj",
         "projectName": "BackEndPets.Infrastructure",
-        "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Infrastructure\\BackEndPets.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\diego\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Infrastructure\\obj\\",
+        "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Infrastructure/BackEndPets.Infrastructure.csproj",
+        "packagesPath": "/Users/veronicamartinez/.nuget/packages/",
+        "outputPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Infrastructure/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\diego\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/veronicamartinez/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -1195,11 +1195,11 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj": {
-                "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Application\\BackEndPets.Application.csproj"
+              "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj": {
+                "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Application/BackEndPets.Application.csproj"
               },
-              "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj": {
-                "projectPath": "C:\\Users\\diego\\Development\\Riwi\\Code\\Integrador_Avanzada\\174-balto-backend\\BackEndPets.Domain\\BackEndPets.Domain.csproj"
+              "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj": {
+                "projectPath": "/Users/veronicamartinez/174-balto-backend/BackEndPets.Domain/BackEndPets.Domain.csproj"
               }
             }
           }
@@ -1252,7 +1252,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
