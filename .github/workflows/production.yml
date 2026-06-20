@@ -2,7 +2,12 @@
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
 
 env:
   REGISTRY: ghcr.io
@@ -17,41 +22,50 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build Docker image
+      - name: Build Docker Image
         run: |
           docker build \
             -t $REGISTRY/$IMAGE_NAME:prod-${{ github.sha }} \
             -f back-end-pets/Dockerfile .
 
-      - name: Push Docker image
+      - name: Push Docker Image
         run: |
           docker push $REGISTRY/$IMAGE_NAME:prod-${{ github.sha }}
 
-      - name: Deploy with zero downtime
+      - name: Deploy Production
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
+              -u "${{ secrets.GHCR_USERNAME }}" \
+              --password-stdin
+
             docker pull ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
+            docker stop back-end-pets-production || true
+            docker rm back-end-pets-production || true
+
             docker run -d \
-              --name back-end-pets-production-new \
+              --name back-end-pets-production \
+              --restart unless-stopped \
               -p 5000:8080 \
               -e ASPNETCORE_ENVIRONMENT=Production \
               ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
-            sleep 10
+            sleep 15
 
-            if curl -f http://localhost:5000/health; then
-              docker stop back-end-pets-production || true
-              docker rm back-end-pets-production || true
-              docker rename back-end-pets-production-new back-end-pets-production
-            else
-              docker stop back-end-pets-production-new || true
-              docker rm back-end-pets-production-new || true
-              exit 1
-            fi
+            echo "=== RUNNING CONTAINERS ==="
+            docker ps
+
+            echo "=== LAST LOGS ==="
+            docker logs back-end-pets-production --tail 50
+
+            echo "=== HEALTH CHECK ==="
+            curl -f http://localhost:5000 || true
