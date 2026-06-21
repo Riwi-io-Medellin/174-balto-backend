@@ -52,6 +52,25 @@ public static class DocsEndpoints
     "description": "Identity auth and users CRUD for the Balto backend."
   },
   "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Create an account and get tokens",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad Request" },
+          "409": { "description": "Conflict" }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": ["Auth"],
@@ -204,6 +223,15 @@ public static class DocsEndpoints
       }
     },
     "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["fullName", "email", "password"],
+        "properties": {
+          "fullName": { "type": "string" },
+          "email": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      },
       "LoginRequest": {
         "type": "object",
         "required": ["email", "password"],

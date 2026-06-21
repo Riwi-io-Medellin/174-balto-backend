@@ -4,7 +4,7 @@ namespace BackEndPets.Infrastructure.Identity;
 
 public static class IdentitySeeder
 {
-    private const string DemoEmail = "admin@pawexplorers.com";
+    private const string DemoEmail = "admin@balto.io";
     private const string DemoPassword = "Password123!";
 
     public static async Task SeedDemoUserAsync(UserManager<ApplicationUser> userManager)

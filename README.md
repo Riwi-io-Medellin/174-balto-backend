@@ -1,6 +1,6 @@
-# PawExplorers — Backend API
+# Balto — Backend API
 
-API REST en .NET 10 para la plataforma PawExplorers. Conecta dueños de mascotas, walkers y negocios pet care.
+API REST en .NET 10 para la plataforma Balto. Conecta dueños de mascotas, walkers y negocios pet care.
 
 ## Stack
 
@@ -84,7 +84,7 @@ La UI se monta con una página HTML simple en la API y consume el JSON generado 
 
 El login usa ASP.NET Core Identity con una cuenta de desarrollo sembrada al arrancar la app. Para probar los endpoints protegidos de usuarios, primero inicia sesión con este usuario:
 
-- Email: `admin@pawexplorers.com`
+- Email: `admin@balto.io`
 - Password: `Password123!`
 
 Endpoints disponibles:

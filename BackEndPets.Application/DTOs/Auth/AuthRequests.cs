@@ -10,7 +10,17 @@ public sealed record RefreshTokenRequest(
 public sealed record LogoutRequest(
     string RefreshToken);
 
+public sealed record RegisterRequest(
+    string FullName,
+    string Email,
+    string Password);
+
 public sealed record AuthResponse(
     string AccessToken,
     string RefreshToken,
     DateTimeOffset ExpiresAt);
+
+public sealed record RegisterResult(
+    AuthResponse? Tokens,
+    string? ErrorCode,
+    string? ErrorMessage);
