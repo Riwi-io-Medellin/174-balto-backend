@@ -55,8 +55,11 @@ jobs:
             docker run -d \
               --name back-end-pets-staging \
               --restart unless-stopped \
+              --network proxy \
               -p 5001:8080 \
               -e ASPNETCORE_ENVIRONMENT=Staging \
+              -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION }}" \
+              -e Jwt__Key="${{ secrets.JWT_KEY }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 
             sleep 15
