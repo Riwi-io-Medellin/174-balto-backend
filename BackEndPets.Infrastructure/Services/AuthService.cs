@@ -17,6 +17,59 @@ public sealed class AuthService(
 {
     private static readonly ConcurrentDictionary<string, RefreshTokenRecord> RefreshTokens = new();
 
+    public async Task<RegisterResult> RegisterAsync(RegisterRequest request)
+    {
+        var firstName = request.FirstName?.Trim() ?? string.Empty;
+        var lastName = request.LastName?.Trim() ?? string.Empty;
+        var email = request.Email?.Trim() ?? string.Empty;
+        var password = request.Password ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(firstName) ||
+            string.IsNullOrWhiteSpace(lastName) ||
+            string.IsNullOrWhiteSpace(email) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            return new RegisterResult(null, "VALIDATION_FAILED", "First name, last name, email and password are required.");
+        }
+
+        var existing = await userManager.FindByEmailAsync(email);
+        if (existing is not null)
+        {
+            return new RegisterResult(null, "EMAIL_ALREADY_TAKEN", "An account with this email already exists.");
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            FirstName = firstName,
+            LastName = lastName,
+            EmailConfirmed = true
+        };
+
+        var createResult = await userManager.CreateAsync(user, password);
+        if (!createResult.Succeeded)
+        {
+            var firstError = createResult.Errors.FirstOrDefault();
+            var code = firstError?.Code switch
+            {
+                "PasswordTooShort" => "PASSWORD_WEAK",
+                "PasswordRequiresDigit" => "PASSWORD_WEAK",
+                "PasswordRequiresUpper" => "PASSWORD_WEAK",
+                "PasswordRequiresLower" => "PASSWORD_WEAK",
+                "PasswordRequiresNonAlphanumeric" => "PASSWORD_WEAK",
+                "DuplicateEmail" => "EMAIL_ALREADY_TAKEN",
+                "DuplicateUserName" => "EMAIL_ALREADY_TAKEN",
+                "InvalidEmail" => "VALIDATION_FAILED",
+                _ => "REGISTRATION_FAILED"
+            };
+            return new RegisterResult(null, code, firstError?.Description ?? "Unable to register user.");
+        }
+
+        var tokens = CreateTokens(user.Email ?? email, user.Id.ToString());
+        return new RegisterResult(tokens, null, null);
+    }
+
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
     {
         var email = request.Email?.Trim();
@@ -84,8 +137,8 @@ public sealed class AuthService(
 
     private string CreateAccessToken(string email, string userId, DateTimeOffset expiresAt)
     {
-        var issuer = configuration["Jwt:Issuer"] ?? "PawExplorers";
-        var audience = configuration["Jwt:Audience"] ?? "PawExplorers.API";
+        var issuer = configuration["Jwt:Issuer"] ?? "balto";
+        var audience = configuration["Jwt:Audience"] ?? "balto.api";
         var key = configuration["Jwt:Key"] ?? "dev-only-change-this-secret-key-32-chars";
 
         var claims = new[]

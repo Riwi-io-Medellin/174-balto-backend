@@ -4,6 +4,8 @@ namespace BackEndPets.Application.Interfaces;
 
 public interface IAuthService
 {
+    Task<RegisterResult> RegisterAsync(RegisterRequest request);
+
     Task<AuthResponse?> LoginAsync(LoginRequest request);
 
     Task<AuthResponse?> RefreshAsync(RefreshTokenRequest request);

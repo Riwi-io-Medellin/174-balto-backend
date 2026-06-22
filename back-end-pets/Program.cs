@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 //holi
 
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "PawExplorers";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "PawExplorers.API";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "balto";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "balto.api";
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "dev-only-change-this-secret-key-32-chars";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
