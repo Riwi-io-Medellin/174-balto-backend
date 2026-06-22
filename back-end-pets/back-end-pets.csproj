@@ -26,4 +26,8 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="obj\Debug\net10.0\" />
+    </ItemGroup>
+
 </Project>

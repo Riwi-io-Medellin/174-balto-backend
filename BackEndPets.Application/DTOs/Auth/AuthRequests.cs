@@ -18,7 +18,10 @@ public sealed record RegisterRequest(
     string IdNumber,
     string IdType,
     string Phone,
-    string? PhoneExtra = null);
+    string? PhoneExtra = null,
+    string? Location = null,
+    string? Address = null,
+    string? PhotoUrl = null);
 
 public sealed record AuthResponse(
     string AccessToken,

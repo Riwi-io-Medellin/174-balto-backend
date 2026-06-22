@@ -44,7 +44,8 @@ public sealed class UserService(
             PhoneExtra = request.PhoneExtra,
             Location = request.Location?.Trim(),
             Address = request.Address?.Trim(),
-            PhotoUrl = request.PhotoUrl?.Trim()
+            PhotoUrl = request.PhotoUrl?.Trim(),
+            EmailConfirmed = true
         };
 
         var result = await userManager.CreateAsync(user, request.Password);

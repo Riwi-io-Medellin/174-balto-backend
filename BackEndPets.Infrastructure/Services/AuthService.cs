@@ -60,6 +60,9 @@ public sealed class AuthService(
             IdType = idType,
             Phone = phone,
             PhoneExtra = request.PhoneExtra?.Trim(),
+            Location = request.Location?.Trim(),
+            Address = request.Address?.Trim(),
+            PhotoUrl = request.PhotoUrl?.Trim(),
             EmailConfirmed = true
         };
 

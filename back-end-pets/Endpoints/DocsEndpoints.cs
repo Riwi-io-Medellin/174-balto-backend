@@ -243,7 +243,10 @@ public static class DocsEndpoints
           "idNumber": { "type": "string" },
           "idType": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
           "phone": { "type": "string" },
-          "phoneExtra": { "type": "string", "nullable": true }
+          "phoneExtra": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "photoUrl": { "type": "string", "nullable": true }
         }
       },
       "LoginRequest": {
