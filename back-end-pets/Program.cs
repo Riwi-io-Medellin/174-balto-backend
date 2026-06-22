@@ -47,10 +47,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 
 app.MapGet("/health", () => Results.Ok("OK"));
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapSwaggerEndpoints();
-}
+app.MapSwaggerEndpoints();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
