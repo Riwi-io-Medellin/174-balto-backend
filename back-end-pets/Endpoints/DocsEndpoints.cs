@@ -52,6 +52,15 @@ public static class DocsEndpoints
     "description": "Identity auth and users CRUD for the Balto backend."
   },
   "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "responses": {
+          "200": { "description": "OK", "content": { "text/plain": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": ["Auth"],
@@ -65,9 +74,9 @@ public static class DocsEndpoints
           }
         },
         "responses": {
-          "201": { "description": "Created" },
-          "400": { "description": "Bad Request" },
-          "409": { "description": "Conflict" }
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
     },
@@ -84,7 +93,7 @@ public static class DocsEndpoints
           }
         },
         "responses": {
-          "200": { "description": "OK" },
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
           "401": { "description": "Unauthorized" }
         }
       }
@@ -102,7 +111,7 @@ public static class DocsEndpoints
           }
         },
         "responses": {
-          "200": { "description": "OK" },
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
           "401": { "description": "Unauthorized" }
         }
       }
@@ -121,7 +130,7 @@ public static class DocsEndpoints
         },
         "responses": {
           "204": { "description": "No Content" },
-          "404": { "description": "Not Found" }
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
     },
@@ -131,7 +140,7 @@ public static class DocsEndpoints
         "summary": "List users",
         "security": [{ "BearerAuth": [] }],
         "responses": {
-          "200": { "description": "OK" }
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/UserResponse" } } } } }
         }
       },
       "post": {
@@ -147,8 +156,8 @@ public static class DocsEndpoints
           }
         },
         "responses": {
-          "201": { "description": "Created" },
-          "400": { "description": "Bad Request" }
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
     },
@@ -166,8 +175,8 @@ public static class DocsEndpoints
           }
         ],
         "responses": {
-          "200": { "description": "OK" },
-          "404": { "description": "Not Found" }
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       },
       "put": {
@@ -191,8 +200,8 @@ public static class DocsEndpoints
           }
         },
         "responses": {
-          "200": { "description": "OK" },
-          "404": { "description": "Not Found" }
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       },
       "delete": {
@@ -209,7 +218,7 @@ public static class DocsEndpoints
         ],
         "responses": {
           "204": { "description": "No Content" },
-          "404": { "description": "Not Found" }
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
     }
@@ -225,12 +234,16 @@ public static class DocsEndpoints
     "schemas": {
       "RegisterRequest": {
         "type": "object",
-        "required": ["firstName", "lastName", "email", "password"],
+        "required": ["firstName", "lastName", "email", "password", "idNumber", "idType", "phone"],
         "properties": {
           "firstName": { "type": "string" },
           "lastName": { "type": "string" },
-          "email": { "type": "string" },
-          "password": { "type": "string" }
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "idNumber": { "type": "string" },
+          "idType": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
+          "phone": { "type": "string" },
+          "phoneExtra": { "type": "string", "nullable": true }
         }
       },
       "LoginRequest": {
@@ -255,24 +268,71 @@ public static class DocsEndpoints
           "refreshToken": { "type": "string" }
         }
       },
+      "AuthResponse": {
+        "type": "object",
+        "required": ["accessToken", "refreshToken", "expiresAt"],
+        "properties": {
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ApiErrorResponse": {
+        "type": "object",
+        "required": ["error", "code"],
+        "properties": {
+          "error": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      },
       "CreateUserRequest": {
         "type": "object",
-        "required": ["fullName", "email", "role"],
+        "required": ["firstName", "lastName", "email", "password", "idNumber", "idType", "phone"],
         "properties": {
-          "fullName": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
           "email": { "type": "string" },
-          "role": { "type": "string" },
-          "isActive": { "type": "boolean", "default": true }
+          "password": { "type": "string" },
+          "idNumber": { "type": "string" },
+          "idType": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
+          "phone": { "type": "string" },
+          "phoneExtra": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "photoUrl": { "type": "string", "nullable": true }
         }
       },
       "UpdateUserRequest": {
         "type": "object",
-        "required": ["fullName", "email", "role", "isActive"],
+        "required": ["firstName", "lastName", "idNumber", "idType", "phone"],
         "properties": {
-          "fullName": { "type": "string" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "idNumber": { "type": "string" },
+          "idType": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
+          "phone": { "type": "string" },
+          "phoneExtra": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "photoUrl": { "type": "string", "nullable": true }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "required": ["id", "firstName", "lastName", "email", "idNumber", "idType", "phone", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
           "email": { "type": "string" },
-          "role": { "type": "string" },
-          "isActive": { "type": "boolean" }
+          "idNumber": { "type": "string" },
+          "idType": { "type": "string", "enum": ["CC", "CE", "Passport", "TI"] },
+          "phone": { "type": "string" },
+          "phoneExtra": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "photoUrl": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
         }
       }
     }

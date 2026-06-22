@@ -26,8 +26,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(u => u.IdType).HasColumnName("id_type");
             b.Property(u => u.Location).HasColumnName("location");
             b.Property(u => u.Address).HasColumnName("address");
-            b.Property(u => u.Phone).HasColumnName("phone");
-            b.Property(u => u.PhoneExtra).HasColumnName("phone_extra");
+            b.Property(u => u.Phone).HasColumnName("phone").HasColumnType("varchar(30)");
+            b.Property(u => u.PhoneExtra).HasColumnName("phone_extra").HasColumnType("varchar(30)");
             b.Property(u => u.PhotoUrl).HasColumnName("photo_url");
             b.Property(u => u.CreatedAt).HasColumnName("created_at");
 

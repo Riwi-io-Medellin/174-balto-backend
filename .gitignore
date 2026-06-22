@@ -53,3 +53,16 @@ TestResults/
 coverage/
 *.coverage
 *.coveragexml
+
+# AI agents & coding assistants
+CLAUDE.md
+AGENT.md
+AGENTS.md
+skills-lock.json
+.agents/
+.cursor/
+.copilot/
+.windsurf/
+.opencode/
+opencode.json
+.aider*

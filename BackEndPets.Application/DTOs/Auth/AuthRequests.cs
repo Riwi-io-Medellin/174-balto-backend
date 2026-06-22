@@ -14,7 +14,11 @@ public sealed record RegisterRequest(
     string FirstName,
     string LastName,
     string Email,
-    string Password);
+    string Password,
+    string IdNumber,
+    string IdType,
+    string Phone,
+    string? PhoneExtra = null);
 
 public sealed record AuthResponse(
     string AccessToken,

@@ -1,97 +1,115 @@
 
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS "AspNetRoles" (
-    "Id" text NOT NULL,
-    "Name" character varying(256),
-    "NormalizedName" character varying(256),
+-- =============================================================
+-- MIGRATION: Drop old ASP.NET Identity tables (text-based PKs)
+-- and replace with identity_* tables using uuid PKs matching
+-- the AppIdentityDbContext configuration.
+-- =============================================================
+
+-- Drop old tables in FK-safe order (dependent first)
+DROP TABLE IF EXISTS "AspNetUserRoles" CASCADE;
+DROP TABLE IF EXISTS "AspNetUserLogins" CASCADE;
+DROP TABLE IF EXISTS "AspNetUserTokens" CASCADE;
+DROP TABLE IF EXISTS "AspNetUserClaims" CASCADE;
+DROP TABLE IF EXISTS "AspNetRoleClaims" CASCADE;
+DROP TABLE IF EXISTS "AspNetUsers" CASCADE;
+DROP TABLE IF EXISTS "AspNetRoles" CASCADE;
+
+-- =============================================================
+-- FIXES ON users TABLE
+-- =============================================================
+
+ALTER TABLE users ALTER COLUMN lockout_enabled SET DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number varchar;
+
+-- =============================================================
+-- identity_roles — replaces AspNetRoles with uuid PK
+-- =============================================================
+
+CREATE TABLE identity_roles (
+    "Id" uuid NOT NULL,
+    "Name" varchar(256),
+    "NormalizedName" varchar(256),
     "ConcurrencyStamp" text,
-    CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id")
+    CONSTRAINT "PK_identity_roles" PRIMARY KEY ("Id")
 );
 
-CREATE TABLE IF NOT EXISTS "AspNetUsers" (
-    "Id" text NOT NULL,
-    "FullName" text NOT NULL DEFAULT '',
-    "UserName" character varying(256),
-    "NormalizedUserName" character varying(256),
-    "Email" character varying(256),
-    "NormalizedEmail" character varying(256),
-    "EmailConfirmed" boolean NOT NULL DEFAULT false,
-    "PasswordHash" text,
-    "SecurityStamp" text,
-    "ConcurrencyStamp" text,
-    "PhoneNumber" text,
-    "PhoneNumberConfirmed" boolean NOT NULL DEFAULT false,
-    "TwoFactorEnabled" boolean NOT NULL DEFAULT false,
-    "LockoutEnd" timestamp with time zone,
-    "LockoutEnabled" boolean NOT NULL DEFAULT false,
-    "AccessFailedCount" integer NOT NULL DEFAULT 0,
-    CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id")
+-- =============================================================
+-- identity_user_roles — join table between users and roles
+-- =============================================================
+
+CREATE TABLE identity_user_roles (
+    "UserId" uuid NOT NULL,
+    "RoleId" uuid NOT NULL,
+    CONSTRAINT "PK_identity_user_roles" PRIMARY KEY ("UserId", "RoleId"),
+    CONSTRAINT "FK_identity_user_roles_users_UserId" FOREIGN KEY ("UserId") REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT "FK_identity_user_roles_identity_roles_RoleId" FOREIGN KEY ("RoleId") REFERENCES identity_roles("Id") ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "AspNetRoleClaims" (
+-- =============================================================
+-- identity_user_claims — claims assigned to users
+-- =============================================================
+
+CREATE TABLE identity_user_claims (
     "Id" serial NOT NULL,
-    "RoleId" text NOT NULL,
+    "UserId" uuid NOT NULL,
     "ClaimType" text,
     "ClaimValue" text,
-    CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
-    CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId"
-        FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles" ("Id") ON DELETE CASCADE
+    CONSTRAINT "PK_identity_user_claims" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_identity_user_claims_users_UserId" FOREIGN KEY ("UserId") REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "AspNetUserClaims" (
-    "Id" serial NOT NULL,
-    "UserId" text NOT NULL,
-    "ClaimType" text,
-    "ClaimValue" text,
-    CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
-    CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId"
-        FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
-);
+-- =============================================================
+-- identity_user_logins — external login providers (Google, etc.)
+-- =============================================================
 
-CREATE TABLE IF NOT EXISTS "AspNetUserLogins" (
+CREATE TABLE identity_user_logins (
     "LoginProvider" text NOT NULL,
     "ProviderKey" text NOT NULL,
     "ProviderDisplayName" text,
-    "UserId" text NOT NULL,
-    CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
-    CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId"
-        FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+    "UserId" uuid NOT NULL,
+    CONSTRAINT "PK_identity_user_logins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
+    CONSTRAINT "FK_identity_user_logins_users_UserId" FOREIGN KEY ("UserId") REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS "AspNetUserRoles" (
-    "UserId" text NOT NULL,
-    "RoleId" text NOT NULL,
-    CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
-    CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId"
-        FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles" ("Id") ON DELETE CASCADE,
-    CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId"
-        FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
-);
+-- =============================================================
+-- identity_user_tokens — tokens for password reset, 2FA, etc.
+-- =============================================================
 
-CREATE TABLE IF NOT EXISTS "AspNetUserTokens" (
-    "UserId" text NOT NULL,
+CREATE TABLE identity_user_tokens (
+    "UserId" uuid NOT NULL,
     "LoginProvider" text NOT NULL,
     "Name" text NOT NULL,
     "Value" text,
-    CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
-    CONSTRAINT "FK_AspNetUserTokens_AspNetUsers_UserId"
-        FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE
+    CONSTRAINT "PK_identity_user_tokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
+    CONSTRAINT "FK_identity_user_tokens_users_UserId" FOREIGN KEY ("UserId") REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS "IX_AspNetRoleClaims_RoleId" ON "AspNetRoleClaims" ("RoleId");
-CREATE UNIQUE INDEX IF NOT EXISTS "RoleNameIndex" ON "AspNetRoles" ("NormalizedName") WHERE "NormalizedName" IS NOT NULL;
-CREATE INDEX IF NOT EXISTS "IX_AspNetUserClaims_UserId" ON "AspNetUserClaims" ("UserId");
-CREATE INDEX IF NOT EXISTS "IX_AspNetUserLogins_UserId" ON "AspNetUserLogins" ("UserId");
-CREATE INDEX IF NOT EXISTS "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles" ("RoleId");
-CREATE INDEX IF NOT EXISTS "EmailIndex" ON "AspNetUsers" ("NormalizedEmail");
-CREATE UNIQUE INDEX IF NOT EXISTS "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName") WHERE "NormalizedUserName" IS NOT NULL;
+-- =============================================================
+-- identity_role_claims — claims assigned to roles
+-- =============================================================
 
--- EF Core migrations history table (used by EnsureCreated/dbcontext checks)
-CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
-    "MigrationId" character varying(150) NOT NULL,
-    "ProductVersion" character varying(32) NOT NULL,
-    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+CREATE TABLE identity_role_claims (
+    "Id" serial NOT NULL,
+    "RoleId" uuid NOT NULL,
+    "ClaimType" text,
+    "ClaimValue" text,
+    CONSTRAINT "PK_identity_role_claims" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_identity_role_claims_identity_roles_RoleId" FOREIGN KEY ("RoleId") REFERENCES identity_roles("Id") ON DELETE CASCADE
 );
+
+-- =============================================================
+-- INDEXES (matching EF Core conventions)
+-- =============================================================
+
+-- Roles: unique index on NormalizedName (Identity requirement)
+CREATE UNIQUE INDEX "RoleNameIndex" ON identity_roles ("NormalizedName") WHERE "NormalizedName" IS NOT NULL;
+
+-- FK lookup indexes
+CREATE INDEX "IX_identity_user_roles_RoleId" ON identity_user_roles ("RoleId");
+CREATE INDEX "IX_identity_user_claims_UserId" ON identity_user_claims ("UserId");
+CREATE INDEX "IX_identity_user_logins_UserId" ON identity_user_logins ("UserId");
+CREATE INDEX "IX_identity_role_claims_RoleId" ON identity_role_claims ("RoleId");
 
 COMMIT;

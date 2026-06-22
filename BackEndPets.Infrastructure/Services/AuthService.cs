@@ -23,13 +23,25 @@ public sealed class AuthService(
         var lastName = request.LastName?.Trim() ?? string.Empty;
         var email = request.Email?.Trim() ?? string.Empty;
         var password = request.Password ?? string.Empty;
+        var idNumber = request.IdNumber?.Trim() ?? string.Empty;
+        var idType = request.IdType?.Trim() ?? string.Empty;
+        var phone = request.Phone?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(firstName) ||
             string.IsNullOrWhiteSpace(lastName) ||
             string.IsNullOrWhiteSpace(email) ||
-            string.IsNullOrWhiteSpace(password))
+            string.IsNullOrWhiteSpace(password) ||
+            string.IsNullOrWhiteSpace(idNumber) ||
+            string.IsNullOrWhiteSpace(idType) ||
+            string.IsNullOrWhiteSpace(phone))
         {
-            return new RegisterResult(null, "VALIDATION_FAILED", "First name, last name, email and password are required.");
+            return new RegisterResult(null, "VALIDATION_FAILED", "All fields are required.");
+        }
+
+        string[] validIdTypes = ["CC", "CE", "Passport", "TI"];
+        if (!validIdTypes.Contains(idType))
+        {
+            return new RegisterResult(null, "VALIDATION_FAILED", $"id_type must be one of: {string.Join(", ", validIdTypes)}.");
         }
 
         var existing = await userManager.FindByEmailAsync(email);
@@ -44,6 +56,10 @@ public sealed class AuthService(
             Email = email,
             FirstName = firstName,
             LastName = lastName,
+            IdNumber = idNumber,
+            IdType = idType,
+            Phone = phone,
+            PhoneExtra = request.PhoneExtra?.Trim(),
             EmailConfirmed = true
         };
 

@@ -16,9 +16,9 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public string? Address { get; set; }
 
-    public long Phone { get; set; }
+    public string Phone { get; set; } = string.Empty;
 
-    public long? PhoneExtra { get; set; }
+    public string? PhoneExtra { get; set; }
 
     public string? PhotoUrl { get; set; }
 

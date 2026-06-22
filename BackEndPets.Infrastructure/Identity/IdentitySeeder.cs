@@ -24,7 +24,7 @@ public static class IdentitySeeder
             LastName = "PawExplorers",
             IdNumber = "0000000000",
             IdType = "CC",
-            Phone = 3000000000
+            Phone = "3000000000"
         };
 
         await userManager.CreateAsync(user, DemoPassword);
