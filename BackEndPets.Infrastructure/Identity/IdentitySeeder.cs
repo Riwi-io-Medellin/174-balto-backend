@@ -17,7 +17,7 @@ public static class IdentitySeeder
 
         var user = new ApplicationUser
         {
-            UserName = DemoEmail,
+            UserName = "Admin.PawExplorers",
             Email = DemoEmail,
             EmailConfirmed = true,
             FirstName = "Admin",

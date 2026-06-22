@@ -32,7 +32,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(u => u.CreatedAt).HasColumnName("created_at");
 
             // Usamos el email como username, así no se duplica info.
-            b.Property(u => u.UserName).HasColumnName("user_name");
+            b.Ignore(u => u.UserName);
             b.Property(u => u.NormalizedUserName).HasColumnName("normalized_user_name");
             b.Property(u => u.NormalizedEmail).HasColumnName("normalized_email");
             b.Property(u => u.PasswordHash).HasColumnName("password_hash");

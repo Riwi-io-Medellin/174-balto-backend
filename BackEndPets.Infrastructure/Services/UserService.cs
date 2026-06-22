@@ -34,7 +34,7 @@ public sealed class UserService(
 
         var user = new ApplicationUser
         {
-            UserName = request.Email.Trim(),
+            UserName = $"{request.FirstName.Trim()}.{request.LastName.Trim()}",
             Email = request.Email.Trim(),
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),

@@ -52,7 +52,7 @@ public sealed class AuthService(
 
         var user = new ApplicationUser
         {
-            UserName = email,
+            UserName = $"{firstName}.{lastName}",
             Email = email,
             FirstName = firstName,
             LastName = lastName,
