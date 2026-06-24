@@ -35,7 +35,7 @@ packages/
 .env.*
 appsettings.*.json
 !appsettings.json
-!appsettings.*.example.json
+!appsettings.Development.json
 
 # Logs
 *.log
@@ -54,15 +54,10 @@ coverage/
 *.coverage
 *.coveragexml
 
-# AI agents & coding assistants
+# AI agents & skills
 CLAUDE.md
 AGENT.md
-AGENTS.md
-skills-lock.json
 .agents/
-.cursor/
-.copilot/
-.windsurf/
-.opencode/
-opencode.json
-.aider*
+.claude/
+skills-lock.json
+*.skills.json
