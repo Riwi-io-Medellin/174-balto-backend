@@ -22,4 +22,12 @@ public sealed class WalkerRepository(AppIdentityDbContext dbContext) : IWalkerRe
         await dbContext.SaveChangesAsync();
         return walker;
     }
+    
+    public async Task<IReadOnlyCollection<Walker>> GetAllAsync() =>
+        await dbContext.Walkers
+            .OrderBy(w => w.CreatedAt)
+            .ToListAsync();
+
+    public Task<Walker?> GetByIdAsync(Guid id) =>
+        dbContext.Walkers.FirstOrDefaultAsync(w => w.Id == id);
 }

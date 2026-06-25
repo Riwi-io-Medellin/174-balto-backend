@@ -96,4 +96,30 @@ public sealed class ProfileService(
             return (null, errorCode);
         }
     }
+    
+    public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync() =>
+        (await walkerRepository.GetAllAsync())
+        .Select(w => new WalkerResponse(w.Id, w.UserId, w.VerificationStatus,
+            w.Available, w.WorkLocation, w.Experience, w.Description, w.CreatedAt))
+        .ToList();
+
+    public async Task<WalkerResponse?> GetWalkerByIdAsync(Guid id)
+    {
+        var w = await walkerRepository.GetByIdAsync(id);
+        return w is null ? null : new WalkerResponse(w.Id, w.UserId, w.VerificationStatus,
+            w.Available, w.WorkLocation, w.Experience, w.Description, w.CreatedAt);
+    }
+
+    public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync() =>
+        (await businessRepository.GetAllAsync())
+        .Select(b => new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
+            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt))
+        .ToList();
+
+    public async Task<BusinessResponse?> GetBusinessByIdAsync(Guid id)
+    {
+        var b = await businessRepository.GetByIdAsync(id);
+        return b is null ? null : new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
+            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt);
+    }
 }

@@ -7,4 +7,6 @@ public interface IWalkerRepository
     Task<Walker?> GetByUserIdAsync(Guid userId);
     Task<bool> ExistsForUserAsync(Guid userId);
     Task<Walker> CreateAsync(Walker walker);
+    Task<IReadOnlyCollection<Walker>> GetAllAsync();
+    Task<Walker?> GetByIdAsync(Guid id);
 }

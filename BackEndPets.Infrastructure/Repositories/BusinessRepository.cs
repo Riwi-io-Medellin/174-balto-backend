@@ -21,4 +21,12 @@ public sealed class BusinessRepository(AppIdentityDbContext dbContext) : IBusine
         await dbContext.SaveChangesAsync();
         return business;
     }
+    
+    public async Task<IReadOnlyCollection<Business>> GetAllAsync() =>
+        await dbContext.Businesses
+            .OrderBy(b => b.CreatedAt)
+            .ToListAsync();
+
+    public Task<Business?> GetByIdAsync(Guid id) =>
+        dbContext.Businesses.FirstOrDefaultAsync(b => b.Id == id);
 }
