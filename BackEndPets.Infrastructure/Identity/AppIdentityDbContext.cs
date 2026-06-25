@@ -1,3 +1,4 @@
+using BackEndPets.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,9 @@ namespace BackEndPets.Infrastructure.Identity;
 public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
+    public DbSet<Walker> Walkers => Set<Walker>();
+    public DbSet<Business> Businesses => Set<Business>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -54,5 +58,40 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
         builder.Entity<IdentityUserLogin<Guid>>().ToTable("identity_user_logins");
         builder.Entity<IdentityUserToken<Guid>>().ToTable("identity_user_tokens");
         builder.Entity<IdentityRoleClaim<Guid>>().ToTable("identity_role_claims");
+
+        builder.Entity<Walker>(b =>
+        {
+            b.ToTable("walkers");
+            b.HasKey(w => w.Id);
+            b.Property(w => w.Id).HasColumnName("id");
+            b.Property(w => w.UserId).HasColumnName("user_id");
+            b.Property(w => w.Available).HasColumnName("available");
+            b.Property(w => w.WorkLocation).HasColumnName("work_location");
+            b.Property(w => w.Experience).HasColumnName("experience");
+            b.Property(w => w.Description).HasColumnName("description");
+            b.Property(w => w.VerificationStatus).HasColumnName("verification_status");
+            b.Property(w => w.CreatedAt).HasColumnName("created_at");
+            b.Property(w => w.UpdatedAt).HasColumnName("updated_at");
+            b.HasIndex(w => w.UserId).IsUnique();
+        });
+
+        builder.Entity<Business>(b =>
+        {
+            b.ToTable("businesses");
+            b.HasKey(biz => biz.Id);
+            b.Property(biz => biz.Id).HasColumnName("id");
+            b.Property(biz => biz.OwnerUserId).HasColumnName("owner_user_id");
+            b.Property(biz => biz.Name).HasColumnName("name");
+            b.Property(biz => biz.Nit).HasColumnName("nit");
+            b.Property(biz => biz.Email).HasColumnName("email");
+            b.Property(biz => biz.Location).HasColumnName("location");
+            b.Property(biz => biz.Address).HasColumnName("address");
+            b.Property(biz => biz.Phone).HasColumnName("phone");
+            b.Property(biz => biz.Type).HasColumnName("type");
+            b.Property(biz => biz.VerificationStatus).HasColumnName("verification_status");
+            b.Property(biz => biz.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(biz => biz.Nit).IsUnique();
+            b.HasIndex(biz => biz.Email).IsUnique();
+        });
     }
 }

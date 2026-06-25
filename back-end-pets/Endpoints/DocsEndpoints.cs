@@ -221,6 +221,51 @@ public static class DocsEndpoints
           "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
+    },
+    "/api/me": {
+      "get": {
+        "tags": ["Me"],
+        "summary": "Get the authenticated user's aggregated profile",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MeResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers": {
+      "post": {
+        "tags": ["Walkers"],
+        "summary": "Register the current user as a walker",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkerResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/businesses": {
+      "post": {
+        "tags": ["Businesses"],
+        "summary": "Register a new business for the current user",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBusinessRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BusinessResponse" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
     }
   },
   "components": {
@@ -335,6 +380,73 @@ public static class DocsEndpoints
           "location": { "type": "string", "nullable": true },
           "address": { "type": "string", "nullable": true },
           "photoUrl": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "required": ["id", "firstName", "lastName", "email", "isWalker", "businesses"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string" },
+          "isWalker": { "type": "boolean" },
+          "walkerStatus": { "type": "string", "nullable": true },
+          "businesses": { "type": "array", "items": { "$ref": "#/components/schemas/BusinessSummary" } }
+        }
+      },
+      "BusinessSummary": {
+        "type": "object",
+        "required": ["id", "name", "verificationStatus"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "type": { "type": "string", "nullable": true, "enum": ["veterinary", "grooming", "shelter", "petshop", "other"] },
+          "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] }
+        }
+      },
+      "WalkerResponse": {
+        "type": "object",
+        "required": ["id", "userId", "verificationStatus", "available", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "userId": { "type": "string", "format": "uuid" },
+          "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
+          "available": { "type": "boolean" },
+          "workLocation": { "type": "string", "nullable": true },
+          "experience": { "type": "string", "nullable": true },
+          "description": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateBusinessRequest": {
+        "type": "object",
+        "required": ["name", "nit", "email", "phone"],
+        "properties": {
+          "name": { "type": "string" },
+          "nit": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "integer", "format": "int64" },
+          "type": { "type": "string", "nullable": true, "enum": ["veterinary", "grooming", "shelter", "petshop", "other"] },
+          "location": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true }
+        }
+      },
+      "BusinessResponse": {
+        "type": "object",
+        "required": ["id", "ownerUserId", "name", "nit", "email", "phone", "verificationStatus", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "ownerUserId": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "nit": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "integer", "format": "int64" },
+          "type": { "type": "string", "nullable": true, "enum": ["veterinary", "grooming", "shelter", "petshop", "other"] },
+          "location": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
           "createdAt": { "type": "string", "format": "date-time" }
         }
       }

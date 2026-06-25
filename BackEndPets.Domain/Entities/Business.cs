@@ -1,0 +1,16 @@
+namespace BackEndPets.Domain.Entities;
+
+public sealed class Business
+{
+    public Guid Id { get; set; }
+    public Guid OwnerUserId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Nit { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Location { get; set; }
+    public string? Address { get; set; }
+    public long Phone { get; set; }
+    public string? Type { get; set; }
+    public string VerificationStatus { get; set; } = "pending";
+    public DateTime CreatedAt { get; set; }
+}

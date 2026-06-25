@@ -35,7 +35,10 @@ public static class DependencyInjection
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
-        
+        services.AddScoped<IWalkerRepository, WalkerRepository>();
+        services.AddScoped<IBusinessRepository, BusinessRepository>();
+        services.AddScoped<IProfileService, ProfileService>();
+
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
         return services;
