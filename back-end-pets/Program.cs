@@ -81,5 +81,6 @@ app.MapWalkingHistoryEndpoints();
 app.MapWalkSessionsEndpoints();
 app.MapFeedbackEndpoints();
 app.MapWalkerAssetsEndpoints();
+app.MapBusinessAssetsEndpoints();
 
 app.Run();

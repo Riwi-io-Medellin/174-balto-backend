@@ -17,6 +17,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
     public DbSet<WalkerGallery> WalkerGalleries => Set<WalkerGallery>();
     public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
+    public DbSet<BusinessDocument> BusinessDocuments => Set<BusinessDocument>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -120,6 +121,17 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(biz => biz.CreatedAt).HasColumnName("created_at");
             b.HasIndex(biz => biz.Nit).IsUnique();
             b.HasIndex(biz => biz.Email).IsUnique();
+        });
+        
+        builder.Entity<BusinessDocument>(b =>
+        {
+            b.ToTable("business_documents");
+            b.HasKey(d => d.Id);
+            b.Property(d => d.Id).HasColumnName("id");
+            b.Property(d => d.BusinessId).HasColumnName("business_id");
+            b.Property(d => d.DocumentType).HasColumnName("document_type");
+            b.Property(d => d.FileUrl).HasColumnName("file_url");
+            b.Property(d => d.CreatedAt).HasColumnName("created_at");
         });
         
         builder.Entity<Pet>(b =>
