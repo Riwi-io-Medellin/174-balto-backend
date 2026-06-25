@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IWalkSessionRepository, WalkSessionRepository>();
         services.AddScoped<IWalkRoutePointRepository, WalkRoutePointRepository>();
         services.AddScoped<IWalkSessionService, WalkSessionService>();
+        services.AddScoped<IWalkSessionAuthorizationService, WalkSessionAuthorizationService>();
 
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 

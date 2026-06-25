@@ -15,16 +15,6 @@ public static class BusinessesEndpoints
 
         group.MapPost("/", async (CreateBusinessRequest request, HttpContext ctx, IProfileService service) =>
         {
-            if (string.IsNullOrWhiteSpace(request.Name) ||
-                string.IsNullOrWhiteSpace(request.Nit) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                request.Phone <= 0)
-            {
-                return Results.BadRequest(new ApiErrorResponse(
-                    "Name, nit, email, and a valid phone number are required.",
-                    "VALIDATION_FAILED"));
-            }
-
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
@@ -32,6 +22,9 @@ public static class BusinessesEndpoints
             var (business, errorCode) = await service.CreateBusinessAsync(userId, request);
             return errorCode switch
             {
+                "VALIDATION_FAILED" => Results.BadRequest(new ApiErrorResponse(
+                    "Name, nit, email, and a valid phone number are required.",
+                    "VALIDATION_FAILED")),
                 "INVALID_BUSINESS_TYPE" => Results.BadRequest(new ApiErrorResponse(
                     "type must be one of: veterinary, grooming, shelter, petshop, other.",
                     "INVALID_BUSINESS_TYPE")),
