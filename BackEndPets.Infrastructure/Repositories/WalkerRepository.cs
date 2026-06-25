@@ -23,10 +23,19 @@ public sealed class WalkerRepository(AppIdentityDbContext dbContext) : IWalkerRe
         return walker;
     }
     
-    public async Task<IReadOnlyCollection<Walker>> GetAllAsync() =>
-        await dbContext.Walkers
-            .OrderBy(w => w.CreatedAt)
-            .ToListAsync();
+    public async Task<IReadOnlyCollection<Walker>> GetAllAsync(bool? available = null, string? workLocation = null)
+    {
+        var query = dbContext.Walkers.AsQueryable();
+
+        if (available.HasValue)
+            query = query.Where(w => w.Available == available.Value);
+
+        if (!string.IsNullOrWhiteSpace(workLocation))
+            query = query.Where(w => w.WorkLocation != null &&
+                                     w.WorkLocation.ToLower().Contains(workLocation.ToLower()));
+
+        return await query.OrderBy(w => w.CreatedAt).ToListAsync();
+    }
 
     public Task<Walker?> GetByIdAsync(Guid id) =>
         dbContext.Walkers.FirstOrDefaultAsync(w => w.Id == id);

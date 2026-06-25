@@ -44,8 +44,10 @@ public static class BusinessesEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
-        group.MapGet("/", async (IProfileService service) =>
-                Results.Ok(await service.GetBusinessesAsync()))
+        group.MapGet("/", async (
+                    [AsParameters] BusinessFilterRequest filters,
+                    IProfileService service) =>
+                Results.Ok(await service.GetBusinessesAsync(filters.Type, filters.Location)))
             .WithName("GetBusinesses")
             .WithSummary("List all businesses")
             .Produces<IReadOnlyCollection<BusinessResponse>>(StatusCodes.Status200OK);

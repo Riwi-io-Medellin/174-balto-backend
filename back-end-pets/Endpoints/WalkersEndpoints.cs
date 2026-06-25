@@ -33,8 +33,10 @@ public static class WalkersEndpoints
         .Produces<WalkerResponse>(StatusCodes.Status201Created)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
-        group.MapGet("/", async (IProfileService service) =>
-                Results.Ok(await service.GetWalkersAsync()))
+        group.MapGet("/", async (
+                    [AsParameters] WalkerFilterRequest filters,
+                    IProfileService service) =>
+                Results.Ok(await service.GetWalkersAsync(filters.Available, filters.WorkLocation)))
             .WithName("GetWalkers")
             .WithSummary("List all walkers")
             .Produces<IReadOnlyCollection<WalkerResponse>>(StatusCodes.Status200OK);

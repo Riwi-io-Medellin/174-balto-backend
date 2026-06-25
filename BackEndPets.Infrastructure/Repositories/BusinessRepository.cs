@@ -22,10 +22,19 @@ public sealed class BusinessRepository(AppIdentityDbContext dbContext) : IBusine
         return business;
     }
     
-    public async Task<IReadOnlyCollection<Business>> GetAllAsync() =>
-        await dbContext.Businesses
-            .OrderBy(b => b.CreatedAt)
-            .ToListAsync();
+    public async Task<IReadOnlyCollection<Business>> GetAllAsync(string? type = null, string? location = null)
+    {
+        var query = dbContext.Businesses.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(type))
+            query = query.Where(b => b.Type == type);
+
+        if (!string.IsNullOrWhiteSpace(location))
+            query = query.Where(b => b.Location != null &&
+                                     b.Location.ToLower().Contains(location.ToLower()));
+
+        return await query.OrderBy(b => b.CreatedAt).ToListAsync();
+    }
 
     public Task<Business?> GetByIdAsync(Guid id) =>
         dbContext.Businesses.FirstOrDefaultAsync(b => b.Id == id);
