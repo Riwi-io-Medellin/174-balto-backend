@@ -38,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<IWalkerRepository, WalkerRepository>();
         services.AddScoped<IBusinessRepository, BusinessRepository>();
         services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IPetWalkingHistoryRepository, PetWalkingHistoryRepository>();
+        services.AddScoped<IWalkSessionRepository, WalkSessionRepository>();
+        services.AddScoped<IWalkRoutePointRepository, WalkRoutePointRepository>();
+        services.AddScoped<IWalkSessionService, WalkSessionService>();
 
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
