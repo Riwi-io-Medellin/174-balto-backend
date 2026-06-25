@@ -1064,7 +1064,8 @@ public static class DocsEndpoints
           "species": { "type": "string", "nullable": true },
           "breed": { "type": "string", "nullable": true },
           "birthDate": { "type": "string", "format": "date-time", "nullable": true },
-          "description": { "type": "string", "nullable": true }
+          "description": { "type": "string", "nullable": true },
+          "weight": { "type": "number", "format": "double", "nullable": true, "minimum": 0, "maximum": 300 }
         }
       },
       "UpdatePetRequest": {
@@ -1075,7 +1076,8 @@ public static class DocsEndpoints
           "species": { "type": "string", "nullable": true },
           "breed": { "type": "string", "nullable": true },
           "birthDate": { "type": "string", "format": "date-time", "nullable": true },
-          "description": { "type": "string", "nullable": true }
+          "description": { "type": "string", "nullable": true },
+          "weight": { "type": "number", "format": "double", "nullable": true, "minimum": 0, "maximum": 300 }
         }
       },
       "PetResponse": {
@@ -1090,6 +1092,7 @@ public static class DocsEndpoints
           "birthDate": { "type": "string", "format": "date-time", "nullable": true },
           "description": { "type": "string", "nullable": true },
           "photoUrl": { "type": "string", "nullable": true },
+          "weight": { "type": "number", "format": "double", "nullable": true },
           "createdAt": { "type": "string", "format": "date-time" }
         }
       },

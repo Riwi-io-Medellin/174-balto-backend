@@ -5,14 +5,16 @@ public sealed record CreatePetRequest(
     string? Species,
     string? Breed,
     DateTime? BirthDate,
-    string? Description);
+    string? Description,
+    decimal? Weight);
 
 public sealed record UpdatePetRequest(
     string Name,
     string? Species,
     string? Breed,
     DateTime? BirthDate,
-    string? Description);
+    string? Description,
+    decimal? Weight);
 
 public sealed record PetResponse(
     Guid Id,
@@ -23,4 +25,5 @@ public sealed record PetResponse(
     DateTime? BirthDate,
     string? Description,
     string? PhotoUrl,
+    decimal? Weight,
     DateTime CreatedAt);
