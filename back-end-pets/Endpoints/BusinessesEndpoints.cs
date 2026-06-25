@@ -44,6 +44,24 @@ public static class BusinessesEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
+        group.MapGet("/", async (IProfileService service) =>
+                Results.Ok(await service.GetBusinessesAsync()))
+            .WithName("GetBusinesses")
+            .WithSummary("List all businesses")
+            .Produces<IReadOnlyCollection<BusinessResponse>>(StatusCodes.Status200OK);
+
+        group.MapGet("/{id:guid}", async (Guid id, IProfileService service) =>
+            {
+                var business = await service.GetBusinessByIdAsync(id);
+                return business is null
+                    ? Results.NotFound(new ApiErrorResponse("Business not found.", "BUSINESS_NOT_FOUND"))
+                    : Results.Ok(business);
+            })
+            .WithName("GetBusinessById")
+            .WithSummary("Get a business by id")
+            .Produces<BusinessResponse>(StatusCodes.Status200OK)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+        
         return app;
     }
 }

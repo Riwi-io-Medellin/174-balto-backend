@@ -33,6 +33,24 @@ public static class WalkersEndpoints
         .Produces<WalkerResponse>(StatusCodes.Status201Created)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
+        group.MapGet("/", async (IProfileService service) =>
+                Results.Ok(await service.GetWalkersAsync()))
+            .WithName("GetWalkers")
+            .WithSummary("List all walkers")
+            .Produces<IReadOnlyCollection<WalkerResponse>>(StatusCodes.Status200OK);
+
+        group.MapGet("/{id:guid}", async (Guid id, IProfileService service) =>
+            {
+                var walker = await service.GetWalkerByIdAsync(id);
+                return walker is null
+                    ? Results.NotFound(new ApiErrorResponse("Walker not found.", "WALKER_NOT_FOUND"))
+                    : Results.Ok(walker);
+            })
+            .WithName("GetWalkerById")
+            .WithSummary("Get a walker by id")
+            .Produces<WalkerResponse>(StatusCodes.Status200OK)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+        
         return app;
     }
 }
