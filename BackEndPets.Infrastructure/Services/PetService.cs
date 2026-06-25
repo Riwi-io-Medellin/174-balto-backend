@@ -17,7 +17,8 @@ public sealed class PetService(IPetRepository petRepository) : IPetService
             Breed = request.Breed?.Trim(),
             BirthDate = request.BirthDate,
             Description = request.Description?.Trim(),
-            Weight = request.Weight
+            Weight = request.Weight,
+            PhotoUrl = request.PhotoUrl?.Trim()
         };
 
         var created = await petRepository.CreateAsync(pet);
@@ -47,6 +48,7 @@ public sealed class PetService(IPetRepository petRepository) : IPetService
         existing.BirthDate = request.BirthDate;
         existing.Description = request.Description?.Trim();
         existing.Weight = request.Weight;
+        existing.PhotoUrl = request.PhotoUrl?.Trim();
 
         var updated = await petRepository.UpdateAsync(existing);
         return (MapResponse(updated!), null);

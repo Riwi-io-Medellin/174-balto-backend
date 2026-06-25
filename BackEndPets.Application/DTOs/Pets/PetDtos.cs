@@ -6,7 +6,8 @@ public sealed record CreatePetRequest(
     string? Breed,
     DateTime? BirthDate,
     string? Description,
-    decimal? Weight);
+    decimal? Weight,
+    string? PhotoUrl = null);
 
 public sealed record UpdatePetRequest(
     string Name,
@@ -14,7 +15,8 @@ public sealed record UpdatePetRequest(
     string? Breed,
     DateTime? BirthDate,
     string? Description,
-    decimal? Weight);
+    decimal? Weight,
+    string? PhotoUrl = null);
 
 public sealed record PetResponse(
     Guid Id,

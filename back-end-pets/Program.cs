@@ -3,6 +3,7 @@ using BackEndPets.API.Hubs;
 using BackEndPets.Application;
 using BackEndPets.Infrastructure;
 using BackEndPets.Infrastructure.Identity;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -50,6 +51,12 @@ builder.Services.AddSignalR();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+var cloudinaryAccount = new Account(
+    builder.Configuration["Cloudinary:CloudName"],
+    builder.Configuration["Cloudinary:ApiKey"],
+    builder.Configuration["Cloudinary:ApiSecret"]);
+builder.Services.AddSingleton(new Cloudinary(cloudinaryAccount));
+
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
@@ -82,5 +89,6 @@ app.MapWalkSessionsEndpoints();
 app.MapFeedbackEndpoints();
 app.MapWalkerAssetsEndpoints();
 app.MapBusinessAssetsEndpoints();
+app.MapUploadEndpoints();
 
 app.Run();
