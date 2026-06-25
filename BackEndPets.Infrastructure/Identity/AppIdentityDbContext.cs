@@ -119,7 +119,12 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.HasKey(h => h.Id);
             b.Property(h => h.Id).HasColumnName("id");
             b.Property(h => h.UserId).HasColumnName("user_id");
+            b.Property(h => h.PetId).HasColumnName("pet_id");
             b.Property(h => h.WalkerId).HasColumnName("walker_id");
+            b.Property(h => h.Cost).HasColumnName("cost");
+            b.Property(h => h.StartTime).HasColumnName("start_time");
+            b.Property(h => h.EndTime).HasColumnName("end_time");
+            b.Property(h => h.CreatedAt).HasColumnName("created_at");
         });
 
         builder.Entity<WalkSession>(b =>

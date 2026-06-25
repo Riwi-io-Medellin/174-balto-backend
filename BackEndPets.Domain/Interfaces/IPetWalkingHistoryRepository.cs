@@ -4,5 +4,8 @@ namespace BackEndPets.Domain.Interfaces;
 
 public interface IPetWalkingHistoryRepository
 {
-    Task<PetWalkingHistory?> GetByIdAsync(Guid historyId);
+    Task<PetWalkingHistory> CreateAsync(PetWalkingHistory history);
+    Task<PetWalkingHistory?> GetByIdAsync(Guid id);
+    Task<IReadOnlyCollection<PetWalkingHistory>> GetByUserIdAsync(Guid userId);
+    Task<IReadOnlyCollection<PetWalkingHistory>> GetByWalkerIdAsync(Guid walkerId);
 }
