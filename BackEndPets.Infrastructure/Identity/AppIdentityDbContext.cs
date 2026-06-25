@@ -10,6 +10,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
 {
     public DbSet<Walker> Walkers => Set<Walker>();
     public DbSet<Business> Businesses => Set<Business>();
+    public DbSet<Pet> Pets => Set<Pet>();
     public DbSet<PetWalkingHistory> PetWalkingHistories => Set<PetWalkingHistory>();
     public DbSet<WalkSession> WalkSessions => Set<WalkSession>();
     public DbSet<WalkRoutePoint> WalkRoutePoints => Set<WalkRoutePoint>();
@@ -95,6 +96,21 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(biz => biz.CreatedAt).HasColumnName("created_at");
             b.HasIndex(biz => biz.Nit).IsUnique();
             b.HasIndex(biz => biz.Email).IsUnique();
+        });
+        
+        builder.Entity<Pet>(b =>
+        {
+            b.ToTable("pets");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Id).HasColumnName("id");
+            b.Property(p => p.UserId).HasColumnName("user_id");
+            b.Property(p => p.Name).HasColumnName("name");
+            b.Property(p => p.Species).HasColumnName("species");
+            b.Property(p => p.Breed).HasColumnName("breed");
+            b.Property(p => p.BirthDate).HasColumnName("birth_date");
+            b.Property(p => p.Description).HasColumnName("description");
+            b.Property(p => p.PhotoUrl).HasColumnName("photo_url");
+            b.Property(p => p.CreatedAt).HasColumnName("created_at");
         });
 
         builder.Entity<PetWalkingHistory>(b =>
