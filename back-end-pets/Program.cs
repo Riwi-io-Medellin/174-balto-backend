@@ -76,6 +76,11 @@ app.MapUsersEndpoints();
 app.MapMeEndpoints();
 app.MapWalkersEndpoints();
 app.MapBusinessesEndpoints();
+app.MapPetsEndpoints();
+app.MapWalkingHistoryEndpoints();
 app.MapWalkSessionsEndpoints();
+app.MapFeedbackEndpoints();
+app.MapWalkerAssetsEndpoints();
+app.MapBusinessAssetsEndpoints();
 
 app.Run();

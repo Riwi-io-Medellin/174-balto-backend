@@ -54,3 +54,16 @@ public sealed record WalkerFilterRequest(
 public sealed record BusinessFilterRequest(
     string? Type, 
     string? Location);
+
+public sealed record WalkerRecommendationRequest(
+    string? WorkLocation = null);
+
+public sealed record WalkerRecommendationResponse(
+    Guid Id,
+    Guid UserId,
+    bool Available,
+    string? WorkLocation,
+    string? Experience,
+    string? Description,
+    string VerificationStatus,
+    IReadOnlyCollection<string> Reasons);

@@ -43,7 +43,17 @@ public static class DependencyInjection
         services.AddScoped<IWalkRoutePointRepository, WalkRoutePointRepository>();
         services.AddScoped<IWalkSessionService, WalkSessionService>();
         services.AddScoped<IWalkSessionAuthorizationService, WalkSessionAuthorizationService>();
-
+        services.AddScoped<IPetRepository, PetRepository>();
+        services.AddScoped<IPetService, PetService>();
+        services.AddScoped<IWalkingHistoryService, WalkingHistoryService>();
+        services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+        services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddScoped<IWalkerGalleryRepository, WalkerGalleryRepository>();
+        services.AddScoped<IWalkerDocumentRepository, WalkerDocumentRepository>();
+        services.AddScoped<IWalkerAssetsService, WalkerAssetsService>();
+        services.AddScoped<IBusinessDocumentRepository, BusinessDocumentRepository>();
+        services.AddScoped<IBusinessAssetsService, BusinessAssetsService>();
+        
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
         return services;
