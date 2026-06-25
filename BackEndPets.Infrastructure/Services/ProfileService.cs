@@ -103,8 +103,8 @@ public sealed class ProfileService(
         }
     }
     
-    public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync() =>
-        (await walkerRepository.GetAllAsync())
+    public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync(bool? available = null, string? workLocation = null) =>
+        (await walkerRepository.GetAllAsync(available, workLocation))
         .Select(w => new WalkerResponse(w.Id, w.UserId, w.VerificationStatus,
             w.Available, w.WorkLocation, w.Experience, w.Description, w.CreatedAt))
         .ToList();
@@ -116,8 +116,8 @@ public sealed class ProfileService(
             w.Available, w.WorkLocation, w.Experience, w.Description, w.CreatedAt);
     }
 
-    public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync() =>
-        (await businessRepository.GetAllAsync())
+    public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null) =>
+        (await businessRepository.GetAllAsync(type, location))
         .Select(b => new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
             b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt))
         .ToList();

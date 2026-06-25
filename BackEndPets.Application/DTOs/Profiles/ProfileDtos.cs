@@ -46,3 +46,11 @@ public sealed record BusinessResponse(
     string? Address,
     string VerificationStatus,
     DateTime CreatedAt);
+
+public sealed record WalkerFilterRequest(
+    bool? Available, 
+    string? WorkLocation);
+
+public sealed record BusinessFilterRequest(
+    string? Type, 
+    string? Location);
