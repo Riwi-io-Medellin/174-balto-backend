@@ -18,6 +18,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkerGallery> WalkerGalleries => Set<WalkerGallery>();
     public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
     public DbSet<BusinessDocument> BusinessDocuments => Set<BusinessDocument>();
+    public DbSet<BusinessService> BusinessServices => Set<BusinessService>();
+    public DbSet<PetHistory> PetHistories => Set<PetHistory>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -134,6 +136,19 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(d => d.CreatedAt).HasColumnName("created_at");
         });
         
+        builder.Entity<BusinessService>(b =>
+        {
+            b.ToTable("business_services");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Id).HasColumnName("id");
+            b.Property(s => s.BusinessId).HasColumnName("business_id");
+            b.Property(s => s.ServiceType).HasColumnName("service_type");
+            b.Property(s => s.Description).HasColumnName("description");
+            b.Property(s => s.Price).HasColumnName("price");
+            b.Property(s => s.PhotoUrl).HasColumnName("photo_url");
+            b.Property(s => s.CreatedAt).HasColumnName("created_at");
+        });
+        
         builder.Entity<Pet>(b =>
         {
             b.ToTable("pets");
@@ -147,6 +162,18 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.Description).HasColumnName("description");
             b.Property(p => p.PhotoUrl).HasColumnName("photo_url");
             b.Property(p => p.CreatedAt).HasColumnName("created_at");
+        });
+        
+        builder.Entity<PetHistory>(b =>
+        {
+            b.ToTable("pet_histories");
+            b.HasKey(h => h.Id);
+            b.Property(h => h.Id).HasColumnName("id");
+            b.Property(h => h.PetId).HasColumnName("pet_id");
+            b.Property(h => h.Title).HasColumnName("title");
+            b.Property(h => h.Description).HasColumnName("description");
+            b.Property(h => h.DocumentUrl).HasColumnName("document_url");
+            b.Property(h => h.CreatedAt).HasColumnName("created_at");
         });
 
         builder.Entity<PetWalkingHistory>(b =>
