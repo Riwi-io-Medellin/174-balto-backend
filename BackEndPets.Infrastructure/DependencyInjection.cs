@@ -46,7 +46,9 @@ public static class DependencyInjection
         services.AddScoped<IPetRepository, PetRepository>();
         services.AddScoped<IPetService, PetService>();
         services.AddScoped<IWalkingHistoryService, WalkingHistoryService>();
-
+        services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+        services.AddScoped<IFeedbackService, FeedbackService>();
+        
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
         return services;

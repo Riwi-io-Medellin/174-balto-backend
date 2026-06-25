@@ -11,4 +11,6 @@ public interface IProfileService
     Task<WalkerResponse?> GetWalkerByIdAsync(Guid id);
     Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null);
     Task<BusinessResponse?> GetBusinessByIdAsync(Guid id);
+    Task<IReadOnlyCollection<WalkerRecommendationResponse>> GetWalkerRecommendationsAsync(
+        WalkerRecommendationRequest request);
 }

@@ -79,5 +79,6 @@ app.MapBusinessesEndpoints();
 app.MapPetsEndpoints();
 app.MapWalkingHistoryEndpoints();
 app.MapWalkSessionsEndpoints();
+app.MapFeedbackEndpoints();
 
 app.Run();

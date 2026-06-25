@@ -14,7 +14,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<PetWalkingHistory> PetWalkingHistories => Set<PetWalkingHistory>();
     public DbSet<WalkSession> WalkSessions => Set<WalkSession>();
     public DbSet<WalkRoutePoint> WalkRoutePoints => Set<WalkRoutePoint>();
-
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -147,6 +148,19 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.Latitude).HasColumnName("latitude");
             b.Property(p => p.Longitude).HasColumnName("longitude");
             b.Property(p => p.CreatedAt).HasColumnName("created_at");
+        });
+        
+        builder.Entity<Feedback>(b =>
+        {
+            b.ToTable("feedback");
+            b.HasKey(f => f.Id);
+            b.Property(f => f.Id).HasColumnName("id");
+            b.Property(f => f.UserId).HasColumnName("user_id");
+            b.Property(f => f.TargetId).HasColumnName("target_id");
+            b.Property(f => f.TargetType).HasColumnName("target_type");
+            b.Property(f => f.Comment).HasColumnName("comment");
+            b.Property(f => f.Rating).HasColumnName("rating");
+            b.Property(f => f.CreatedAt).HasColumnName("created_at");
         });
     }
 }

@@ -12,7 +12,8 @@ namespace BackEndPets.Infrastructure.Services;
 public sealed class ProfileService(
     UserManager<ApplicationUser> userManager,
     IWalkerRepository walkerRepository,
-    IBusinessRepository businessRepository) : IProfileService
+    IBusinessRepository businessRepository,
+    IFeedbackRepository feedbackRepository) : IProfileService
 {
     private static readonly string[] ValidBusinessTypes = ["veterinary", "grooming", "shelter", "petshop", "other"];
 
@@ -127,5 +128,66 @@ public sealed class ProfileService(
         var b = await businessRepository.GetByIdAsync(id);
         return b is null ? null : new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
             b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt);
+    }
+    
+    public async Task<IReadOnlyCollection<WalkerRecommendationResponse>> GetWalkerRecommendationsAsync(
+        WalkerRecommendationRequest request)
+    {
+        var walkers = await walkerRepository.GetAllAsync(available: true);
+        var result = new List<(Walker Walker, int Score, List<string> Reasons)>();
+
+        foreach (var w in walkers.Where(w => w.VerificationStatus == "verified"))
+        {
+            var reasons = new List<string>();
+            var score = 0;
+
+            if (w.Available)
+            {
+                reasons.Add("Available now");
+                score += 3;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.WorkLocation) &&
+                !string.IsNullOrWhiteSpace(w.WorkLocation) &&
+                w.WorkLocation.ToLower().Contains(request.WorkLocation.ToLower()))
+            {
+                reasons.Add($"Operates in {request.WorkLocation}");
+                score += 2;
+            }
+
+            if (!string.IsNullOrWhiteSpace(w.Experience))
+            {
+                reasons.Add("With documented experience");
+                score += 1;
+            }
+
+            // Scoring por calificación promedio
+            var feedbacks = await feedbackRepository.GetByTargetAsync(w.Id, "walker");
+            if (feedbacks.Count > 0)
+            {
+                var avgRating = feedbacks.Average(f => f.Rating);
+                if (avgRating >= 4.0)
+                {
+                    reasons.Add($"Average rating {Math.Round(avgRating, 1)}/5");
+                    score += (int)Math.Round(avgRating);
+                }
+            }
+
+            if (reasons.Count > 0)
+                result.Add((w, score, reasons));
+        }
+
+        return result
+            .OrderByDescending(x => x.Score)
+            .Select(x => new WalkerRecommendationResponse(
+                x.Walker.Id,
+                x.Walker.UserId,
+                x.Walker.Available,
+                x.Walker.WorkLocation,
+                x.Walker.Experience,
+                x.Walker.Description,
+                x.Walker.VerificationStatus,
+                x.Reasons))
+            .ToList();
     }
 }

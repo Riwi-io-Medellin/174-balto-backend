@@ -53,6 +53,14 @@ public static class WalkersEndpoints
             .Produces<WalkerResponse>(StatusCodes.Status200OK)
             .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
         
+        group.MapGet("/recommendations", async (
+                    [AsParameters] WalkerRecommendationRequest request,
+                    IProfileService service) =>
+                Results.Ok(await service.GetWalkerRecommendationsAsync(request)))
+            .WithName("GetWalkerRecommendations")
+            .WithSummary("Get recommended walkers ordered by availability, location and experience")
+            .Produces<IReadOnlyCollection<WalkerRecommendationResponse>>(StatusCodes.Status200OK);
+        
         return app;
     }
 }
