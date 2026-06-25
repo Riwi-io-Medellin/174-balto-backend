@@ -266,6 +266,138 @@ public static class DocsEndpoints
           "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
+    },
+    "/api/walk-sessions": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Start a new walk session (assigned walker only)",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StartWalkSessionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkSessionResponse" } } } },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}/location": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Add a GPS point and broadcast to connected clients",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddLocationRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkRoutePointResponse" } } } },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}/pause": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Pause an in-progress walk session",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkSessionResponse" } } } },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}/resume": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Resume a paused walk session",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkSessionResponse" } } } },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}/complete": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Complete a walk session",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkSessionResponse" } } } },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}/route": {
+      "get": {
+        "tags": ["WalkSessions"],
+        "summary": "Get all GPS route points for a session (walker or pet owner)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WalkRoutePointResponse" } } } } },
+          "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
     }
   },
   "components": {
@@ -447,6 +579,43 @@ public static class DocsEndpoints
           "location": { "type": "string", "nullable": true },
           "address": { "type": "string", "nullable": true },
           "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StartWalkSessionRequest": {
+        "type": "object",
+        "required": ["petWalkingHistoryId"],
+        "properties": {
+          "petWalkingHistoryId": { "type": "string", "format": "uuid" }
+        }
+      },
+      "AddLocationRequest": {
+        "type": "object",
+        "required": ["latitude", "longitude"],
+        "properties": {
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "WalkSessionResponse": {
+        "type": "object",
+        "required": ["id", "petWalkingHistoryId", "status"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "petWalkingHistoryId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["in_progress", "paused", "completed"] },
+          "startedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "endedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "WalkRoutePointResponse": {
+        "type": "object",
+        "required": ["id", "walkSessionId", "latitude", "longitude", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "walkSessionId": { "type": "string", "format": "uuid" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
           "createdAt": { "type": "string", "format": "date-time" }
         }
       }

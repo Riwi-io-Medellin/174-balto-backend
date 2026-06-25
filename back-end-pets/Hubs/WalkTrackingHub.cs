@@ -1,0 +1,41 @@
+using System.Security.Claims;
+using BackEndPets.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+
+namespace BackEndPets.API.Hubs;
+
+[Authorize]
+public sealed class WalkTrackingHub(IWalkSessionAuthorizationService authorizationService) : Hub
+{
+    public async Task JoinWalkGroup(string sessionId)
+    {
+        if (!Guid.TryParse(sessionId, out var sessionGuid))
+        {
+            await Clients.Caller.SendAsync("Error", "Invalid session id.");
+            return;
+        }
+
+        var userIdStr = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdStr, out var userId))
+        {
+            await Clients.Caller.SendAsync("Error", "Unauthorized.");
+            return;
+        }
+
+        var result = await authorizationService.CanJoinWalkGroupAsync(userId, sessionGuid);
+        if (!result.CanAccess)
+        {
+            await Clients.Caller.SendAsync("Error", result.ErrorMessage);
+            return;
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"walk-{sessionId}");
+        await Clients.Caller.SendAsync("JoinedWalkGroup", sessionId);
+    }
+
+    public async Task LeaveWalkGroup(string sessionId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"walk-{sessionId}");
+    }
+}

@@ -6,13 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BackEndPets.Infrastructure.Services;
 
-public sealed class UserService(
-    UserManager<ApplicationUser> userManager,
-    AppIdentityDbContext dbContext) : IUserService
+public sealed class UserService(UserManager<ApplicationUser> userManager) : IUserService
 {
     public async Task<IReadOnlyCollection<UserResponse>> GetAllAsync()
     {
-        var users = await dbContext.Users
+        var users = await userManager.Users
             .OrderBy(u => u.CreatedAt)
             .ToListAsync();
 

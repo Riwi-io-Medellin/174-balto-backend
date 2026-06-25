@@ -1,4 +1,5 @@
 using BackEndPets.API.Endpoints;
+using BackEndPets.API.Hubs;
 using BackEndPets.Application;
 using BackEndPets.Infrastructure;
 using BackEndPets.Infrastructure.Identity;
@@ -28,8 +29,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/walk-tracking"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddSignalR();
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -53,10 +69,13 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHub<WalkTrackingHub>("/hubs/walk-tracking");
+
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapMeEndpoints();
 app.MapWalkersEndpoints();
 app.MapBusinessesEndpoints();
+app.MapWalkSessionsEndpoints();
 
 app.Run();

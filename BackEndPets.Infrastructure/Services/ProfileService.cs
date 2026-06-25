@@ -57,6 +57,12 @@ public sealed class ProfileService(
     public async Task<(BusinessResponse? Business, string? ErrorCode)> CreateBusinessAsync(
         Guid userId, CreateBusinessRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            string.IsNullOrWhiteSpace(request.Nit) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            request.Phone <= 0)
+            return (null, "VALIDATION_FAILED");
+
         if (request.Type is not null && !ValidBusinessTypes.Contains(request.Type))
             return (null, "INVALID_BUSINESS_TYPE");
 

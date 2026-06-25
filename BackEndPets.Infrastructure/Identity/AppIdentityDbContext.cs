@@ -10,6 +10,9 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
 {
     public DbSet<Walker> Walkers => Set<Walker>();
     public DbSet<Business> Businesses => Set<Business>();
+    public DbSet<PetWalkingHistory> PetWalkingHistories => Set<PetWalkingHistory>();
+    public DbSet<WalkSession> WalkSessions => Set<WalkSession>();
+    public DbSet<WalkRoutePoint> WalkRoutePoints => Set<WalkRoutePoint>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -92,6 +95,37 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(biz => biz.CreatedAt).HasColumnName("created_at");
             b.HasIndex(biz => biz.Nit).IsUnique();
             b.HasIndex(biz => biz.Email).IsUnique();
+        });
+
+        builder.Entity<PetWalkingHistory>(b =>
+        {
+            b.ToTable("pet_walking_history");
+            b.HasKey(h => h.Id);
+            b.Property(h => h.Id).HasColumnName("id");
+            b.Property(h => h.UserId).HasColumnName("user_id");
+            b.Property(h => h.WalkerId).HasColumnName("walker_id");
+        });
+
+        builder.Entity<WalkSession>(b =>
+        {
+            b.ToTable("walk_sessions");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Id).HasColumnName("id");
+            b.Property(s => s.PetWalkingHistoryId).HasColumnName("pet_walking_history_id");
+            b.Property(s => s.Status).HasColumnName("status");
+            b.Property(s => s.StartedAt).HasColumnName("started_at");
+            b.Property(s => s.EndedAt).HasColumnName("ended_at");
+        });
+
+        builder.Entity<WalkRoutePoint>(b =>
+        {
+            b.ToTable("walk_route_points");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Id).HasColumnName("id");
+            b.Property(p => p.WalkSessionId).HasColumnName("walk_session_id");
+            b.Property(p => p.Latitude).HasColumnName("latitude");
+            b.Property(p => p.Longitude).HasColumnName("longitude");
+            b.Property(p => p.CreatedAt).HasColumnName("created_at");
         });
     }
 }
