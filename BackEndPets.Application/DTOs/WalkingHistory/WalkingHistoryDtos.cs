@@ -3,7 +3,7 @@ namespace BackEndPets.Application.DTOs.WalkingHistory;
 public sealed record CreateWalkingHistoryRequest(
     Guid PetId,
     Guid WalkerId,
-    DateTime? StartTime,
+    DateTime StartTime,
     decimal? Cost);
 
 public sealed record WalkingHistoryResponse(
@@ -11,7 +11,8 @@ public sealed record WalkingHistoryResponse(
     Guid UserId,
     Guid PetId,
     Guid WalkerId,
+    Guid? WalkSessionId,
     decimal? Cost,
-    DateTime? StartTime,
+    DateTime StartTime,
     DateTime? EndTime,
     DateTime CreatedAt);

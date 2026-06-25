@@ -55,5 +55,5 @@ public sealed class WalkingHistoryService(
     }
 
     private static WalkingHistoryResponse MapResponse(PetWalkingHistory h) =>
-        new(h.Id, h.UserId, h.PetId, h.WalkerId, h.Cost, h.StartTime, h.EndTime, h.CreatedAt);
+        new(h.Id, h.UserId, h.PetId, h.WalkerId, h.WalkSessionId, h.Cost, h.StartTime, h.EndTime, h.CreatedAt);
 }

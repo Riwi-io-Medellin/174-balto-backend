@@ -154,6 +154,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.ToTable("pet_walking_history");
             b.HasKey(h => h.Id);
             b.Property(h => h.Id).HasColumnName("id");
+            b.Property(h => h.WalkSessionId).HasColumnName("walk_session_id");
             b.Property(h => h.UserId).HasColumnName("user_id");
             b.Property(h => h.PetId).HasColumnName("pet_id");
             b.Property(h => h.WalkerId).HasColumnName("walker_id");
@@ -168,7 +169,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.ToTable("walk_sessions");
             b.HasKey(s => s.Id);
             b.Property(s => s.Id).HasColumnName("id");
-            b.Property(s => s.PetWalkingHistoryId).HasColumnName("pet_walking_history_id");
+            b.Property(s => s.WalkerId).HasColumnName("walker_id");
             b.Property(s => s.Status).HasColumnName("status");
             b.Property(s => s.StartedAt).HasColumnName("started_at");
             b.Property(s => s.EndedAt).HasColumnName("ended_at");

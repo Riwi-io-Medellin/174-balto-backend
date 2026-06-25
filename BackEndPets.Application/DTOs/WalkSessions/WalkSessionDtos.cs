@@ -1,14 +1,15 @@
 namespace BackEndPets.Application.DTOs.WalkSessions;
 
-public sealed record StartWalkSessionRequest(Guid PetWalkingHistoryId);
+public sealed record StartWalkSessionRequest(IReadOnlyList<Guid> PetWalkingHistoryIds);
 
 public sealed record AddLocationRequest(double Latitude, double Longitude);
 
 public sealed record WalkSessionResponse(
     Guid Id,
-    Guid PetWalkingHistoryId,
+    Guid? WalkerId,
+    IReadOnlyList<Guid> PetWalkingHistoryIds,
     string Status,
-    DateTime? StartedAt,
+    DateTime StartedAt,
     DateTime? EndedAt);
 
 public sealed record WalkRoutePointResponse(

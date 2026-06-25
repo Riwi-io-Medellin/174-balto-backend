@@ -584,9 +584,9 @@ public static class DocsEndpoints
       },
       "StartWalkSessionRequest": {
         "type": "object",
-        "required": ["petWalkingHistoryId"],
+        "required": ["petWalkingHistoryIds"],
         "properties": {
-          "petWalkingHistoryId": { "type": "string", "format": "uuid" }
+          "petWalkingHistoryIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }
         }
       },
       "AddLocationRequest": {
@@ -599,12 +599,13 @@ public static class DocsEndpoints
       },
       "WalkSessionResponse": {
         "type": "object",
-        "required": ["id", "petWalkingHistoryId", "status"],
+        "required": ["id", "status", "startedAt", "petWalkingHistoryIds"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
-          "petWalkingHistoryId": { "type": "string", "format": "uuid" },
-          "status": { "type": "string", "enum": ["in_progress", "paused", "completed"] },
-          "startedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "walkerId": { "type": "string", "format": "uuid", "nullable": true },
+          "petWalkingHistoryIds": { "type": "array", "items": { "type": "string", "format": "uuid" } },
+          "status": { "type": "string", "enum": ["pending", "in_progress", "paused", "completed", "cancelled"] },
+          "startedAt": { "type": "string", "format": "date-time" },
           "endedAt": { "type": "string", "format": "date-time", "nullable": true }
         }
       },

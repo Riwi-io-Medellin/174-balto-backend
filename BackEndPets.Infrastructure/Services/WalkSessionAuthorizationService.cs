@@ -14,17 +14,16 @@ public sealed class WalkSessionAuthorizationService(
         if (session is null)
             return new WalkGroupAccessResult(false, "Session not found.");
 
-        var history = await historyRepo.GetByIdAsync(session.PetWalkingHistoryId);
-        if (history is null)
-            return new WalkGroupAccessResult(false, "History not found.");
-
         var walker = await walkerRepo.GetByUserIdAsync(userId);
-        var isWalker = walker is not null && walker.Id == history.WalkerId;
-        var isOwner = history.UserId == userId;
+        var isWalker = walker is not null && walker.Id == session.WalkerId;
+        if (isWalker)
+            return new WalkGroupAccessResult(true, null);
 
-        if (!isWalker && !isOwner)
-            return new WalkGroupAccessResult(false, "Unauthorized.");
+        var histories = await historyRepo.GetBySessionIdAsync(sessionId);
+        var isOwner = histories.Any(h => h.UserId == userId);
 
-        return new WalkGroupAccessResult(true, null);
+        return isOwner
+            ? new WalkGroupAccessResult(true, null)
+            : new WalkGroupAccessResult(false, "Unauthorized.");
     }
 }

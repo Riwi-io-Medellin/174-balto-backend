@@ -30,4 +30,16 @@ public sealed class PetWalkingHistoryRepository(AppIdentityDbContext dbContext) 
             .Where(h => h.WalkerId == walkerId)
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
+
+    public async Task<IReadOnlyCollection<PetWalkingHistory>> GetBySessionIdAsync(Guid sessionId) =>
+        await dbContext.PetWalkingHistories
+            .Where(h => h.WalkSessionId == sessionId)
+            .OrderBy(h => h.CreatedAt)
+            .ToListAsync();
+
+    public async Task UpdateAsync(PetWalkingHistory history)
+    {
+        dbContext.PetWalkingHistories.Update(history);
+        await dbContext.SaveChangesAsync();
+    }
 }

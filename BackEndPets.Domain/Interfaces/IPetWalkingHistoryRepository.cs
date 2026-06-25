@@ -8,4 +8,6 @@ public interface IPetWalkingHistoryRepository
     Task<PetWalkingHistory?> GetByIdAsync(Guid id);
     Task<IReadOnlyCollection<PetWalkingHistory>> GetByUserIdAsync(Guid userId);
     Task<IReadOnlyCollection<PetWalkingHistory>> GetByWalkerIdAsync(Guid walkerId);
+    Task<IReadOnlyCollection<PetWalkingHistory>> GetBySessionIdAsync(Guid sessionId);
+    Task UpdateAsync(PetWalkingHistory history);
 }
