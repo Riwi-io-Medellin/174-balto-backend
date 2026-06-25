@@ -48,6 +48,9 @@ public static class DependencyInjection
         services.AddScoped<IWalkingHistoryService, WalkingHistoryService>();
         services.AddScoped<IFeedbackRepository, FeedbackRepository>();
         services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddScoped<IWalkerGalleryRepository, WalkerGalleryRepository>();
+        services.AddScoped<IWalkerDocumentRepository, WalkerDocumentRepository>();
+        services.AddScoped<IWalkerAssetsService, WalkerAssetsService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 

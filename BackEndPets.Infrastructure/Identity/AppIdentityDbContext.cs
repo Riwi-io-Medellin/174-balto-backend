@@ -15,6 +15,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkSession> WalkSessions => Set<WalkSession>();
     public DbSet<WalkRoutePoint> WalkRoutePoints => Set<WalkRoutePoint>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
+    public DbSet<WalkerGallery> WalkerGalleries => Set<WalkerGallery>();
+    public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -78,6 +80,27 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(w => w.CreatedAt).HasColumnName("created_at");
             b.Property(w => w.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(w => w.UserId).IsUnique();
+        });
+        
+        builder.Entity<WalkerGallery>(b =>
+        {
+            b.ToTable("walker_gallery");
+            b.HasKey(g => g.Id);
+            b.Property(g => g.Id).HasColumnName("id");
+            b.Property(g => g.WalkerId).HasColumnName("walker_id");
+            b.Property(g => g.PhotoUrl).HasColumnName("photo_url");
+            b.Property(g => g.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<WalkerDocument>(b =>
+        {
+            b.ToTable("walker_documents");
+            b.HasKey(d => d.Id);
+            b.Property(d => d.Id).HasColumnName("id");
+            b.Property(d => d.WalkerId).HasColumnName("walker_id");
+            b.Property(d => d.DocumentType).HasColumnName("document_type");
+            b.Property(d => d.FileUrl).HasColumnName("file_url");
+            b.Property(d => d.CreatedAt).HasColumnName("created_at");
         });
 
         builder.Entity<Business>(b =>
