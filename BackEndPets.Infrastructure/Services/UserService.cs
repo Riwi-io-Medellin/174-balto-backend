@@ -67,6 +67,7 @@ public sealed class UserService(UserManager<ApplicationUser> userManager) : IUse
         user.Location = request.Location?.Trim();
         user.Address = request.Address?.Trim();
         user.PhotoUrl = request.PhotoUrl?.Trim();
+        user.UserName = $"{user.FirstName}.{user.LastName}";
 
         var result = await userManager.UpdateAsync(user);
         return result.Succeeded ? ToResponse(user) : null;

@@ -3,11 +3,14 @@ using BackEndPets.API.Hubs;
 using BackEndPets.Application;
 using BackEndPets.Infrastructure;
 using BackEndPets.Infrastructure.Identity;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +53,16 @@ builder.Services.AddSignalR();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+var cloudName = builder.Configuration["Cloudinary:CloudName"];
+if (!string.IsNullOrEmpty(cloudName))
+{
+    var cloudinaryAccount = new Account(
+        cloudName,
+        builder.Configuration["Cloudinary:ApiKey"],
+        builder.Configuration["Cloudinary:ApiSecret"]);
+    builder.Services.AddSingleton(new Cloudinary(cloudinaryAccount));
+}
+
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
@@ -82,6 +95,7 @@ app.MapWalkSessionsEndpoints();
 app.MapFeedbackEndpoints();
 app.MapWalkerAssetsEndpoints();
 app.MapBusinessAssetsEndpoints();
+app.MapUploadEndpoints();
 app.MapNotificationsEndpoints();
 
 app.Run();

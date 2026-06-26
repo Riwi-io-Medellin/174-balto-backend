@@ -10,5 +10,6 @@ public sealed class Pet
     public DateTime? BirthDate { get; set; }
     public string? Description { get; set; }
     public string? PhotoUrl { get; set; }
+    public decimal? Weight { get; set; }
     public DateTime CreatedAt { get; set; }
 }

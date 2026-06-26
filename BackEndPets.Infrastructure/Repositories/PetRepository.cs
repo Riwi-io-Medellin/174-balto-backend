@@ -36,6 +36,7 @@ public sealed class PetRepository(AppIdentityDbContext dbContext) : IPetReposito
         existing.BirthDate = pet.BirthDate;
         existing.Description = pet.Description;
         existing.PhotoUrl = pet.PhotoUrl;
+        existing.Weight = pet.Weight;
 
         await dbContext.SaveChangesAsync();
         return existing;
