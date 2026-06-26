@@ -51,11 +51,15 @@ builder.Services.AddSignalR();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-var cloudinaryAccount = new Account(
-    builder.Configuration["Cloudinary:CloudName"],
-    builder.Configuration["Cloudinary:ApiKey"],
-    builder.Configuration["Cloudinary:ApiSecret"]);
-builder.Services.AddSingleton(new Cloudinary(cloudinaryAccount));
+var cloudName = builder.Configuration["Cloudinary:CloudName"];
+if (!string.IsNullOrEmpty(cloudName))
+{
+    var cloudinaryAccount = new Account(
+        cloudName,
+        builder.Configuration["Cloudinary:ApiKey"],
+        builder.Configuration["Cloudinary:ApiSecret"]);
+    builder.Services.AddSingleton(new Cloudinary(cloudinaryAccount));
+}
 
 var app = builder.Build();
 

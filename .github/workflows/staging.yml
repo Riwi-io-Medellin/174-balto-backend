@@ -60,9 +60,9 @@ jobs:
               -e ASPNETCORE_ENVIRONMENT=Staging \
               -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION }}" \
               -e Jwt__Key="${{ secrets.JWT_KEY }}" \
-              -e Cloudinary__CloudName="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
-              -e Cloudinary__ApiKey="${{ secrets.CLOUDINARY_API_KEY }}" \
-              -e Cloudinary__ApiSecret="${{ secrets.CLOUDINARY_API_SECRET }}" \
+              -e Cloudinary__CloudName="${{ secrets.CLOUDINARY__CLOUDNAME }}" \
+              -e Cloudinary__ApiKey="${{ secrets.CLOUDINARY__APIKEY }}" \
+              -e Cloudinary__ApiSecret="${{ secrets.CLOUDINARY__APISECRET }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 
             sleep 15

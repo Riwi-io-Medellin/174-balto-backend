@@ -11,8 +11,13 @@ public static class UploadEndpoints
             .WithTags("Upload")
             .RequireAuthorization();
 
-        group.MapPost("/", async (HttpRequest request, Cloudinary cloudinary) =>
+        group.MapPost("/", async (HttpRequest request, Cloudinary? cloudinary) =>
         {
+            if (cloudinary is null)
+                return Results.Json(
+                    new { error = "Upload service not configured.", code = "UPLOAD_NOT_CONFIGURED" },
+                    statusCode: 500);
+
             if (!request.HasFormContentType)
                 return Results.BadRequest(new { error = "Expected multipart form.", code = "INVALID_CONTENT_TYPE" });
 
