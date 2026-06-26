@@ -32,3 +32,18 @@ public sealed record RegisterResult(
     AuthResponse? Tokens,
     string? ErrorCode,
     string? ErrorMessage);
+
+public sealed record ForgotPasswordRequest(
+    string Email);
+
+public sealed record ResetPasswordRequest(
+    string Email,
+    string Token,
+    string NewPassword);
+
+public sealed record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword);
+
+public sealed record SocialLoginRequest(
+    string IdToken);

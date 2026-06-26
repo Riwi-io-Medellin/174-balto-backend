@@ -33,6 +33,8 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppIdentityDbContext>()
             .AddDefaultTokenProviders();
 
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IWalkerRepository, WalkerRepository>();
