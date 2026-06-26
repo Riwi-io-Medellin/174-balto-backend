@@ -43,16 +43,20 @@ public sealed class WalkSessionService(
             await historyRepo.UpdateAsync(history);
         }
 
+        // Notificar a cada owner
+        foreach (var history in histories)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: history.UserId,
+                Type: "walk_started",
+                Title: "Paseo iniciado",
+                Body: "El paseador ha iniciado el paseo.",
+                EntityId: created.Id,
+                EntityType: "walk_session"));
+        }
+
         var historyIds = histories.Select(h => h.Id).ToList();
         return (MapSession(created, historyIds), null);
-        await notificationService.CreateAsync(new CreateNotificationRequest(
-            UserId: history.UserId,
-            Type: "walk_started",
-            Title: "Paseo iniciado",
-            Body: "El paseador ha iniciado el paseo.",
-            EntityId: session.Id,
-            EntityType: "walk_session"));
-        return (MapSession(created), null);
     }
 
     public async Task<(WalkRoutePointResponse? Point, string? ErrorCode)> AddLocationAsync(
@@ -112,15 +116,21 @@ public sealed class WalkSessionService(
         session.Status = "completed";
         session.EndedAt = DateTime.UtcNow;
         await sessionRepo.UpdateAsync(session);
-        return (MapSession(session, []), null);
-        await notificationService.CreateAsync(new CreateNotificationRequest(
-            UserId: currentUserId,
-            Type: "walk_finished",
-            Title: "Paseo finalizado",
-            Body: "El paseo ha sido completado.",
-            EntityId: session.Id,
-            EntityType: "walk_session"));
-        return (MapSession(session), null);
+
+        // Notificar a cada owner del paseo
+        var histories = await historyRepo.GetBySessionIdAsync(sessionId);
+        foreach (var history in histories)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: history.UserId,
+                Type: "walk_finished",
+                Title: "Paseo finalizado",
+                Body: "El paseo ha sido completado.",
+                EntityId: session.Id,
+                EntityType: "walk_session"));
+        }
+
+        return (MapSession(session, histories.Select(h => h.Id).ToList()), null);
     }
 
     public async Task<(IReadOnlyCollection<WalkRoutePointResponse>? Points, string? ErrorCode)> GetRouteAsync(
