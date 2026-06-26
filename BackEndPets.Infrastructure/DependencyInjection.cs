@@ -53,6 +53,8 @@ public static class DependencyInjection
         services.AddScoped<IWalkerAssetsService, WalkerAssetsService>();
         services.AddScoped<IBusinessDocumentRepository, BusinessDocumentRepository>();
         services.AddScoped<IBusinessAssetsService, BusinessAssetsService>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<INotificationService, NotificationService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 

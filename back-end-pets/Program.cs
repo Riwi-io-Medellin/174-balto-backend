@@ -96,5 +96,6 @@ app.MapFeedbackEndpoints();
 app.MapWalkerAssetsEndpoints();
 app.MapBusinessAssetsEndpoints();
 app.MapUploadEndpoints();
+app.MapNotificationsEndpoints();
 
 app.Run();
