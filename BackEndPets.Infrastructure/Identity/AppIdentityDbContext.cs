@@ -18,6 +18,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkerGallery> WalkerGalleries => Set<WalkerGallery>();
     public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
     public DbSet<BusinessDocument> BusinessDocuments => Set<BusinessDocument>();
+    public DbSet<Notification> Notifications => Set<Notification>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -196,6 +197,23 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(f => f.Comment).HasColumnName("comment");
             b.Property(f => f.Rating).HasColumnName("rating");
             b.Property(f => f.CreatedAt).HasColumnName("created_at");
+        });
+        
+        builder.Entity<Notification>(b =>
+        {
+            b.ToTable("notifications");
+            b.HasKey(n => n.Id);
+            b.Property(n => n.Id).HasColumnName("id");
+            b.Property(n => n.UserId).HasColumnName("user_id");
+            b.Property(n => n.Type).HasColumnName("type");
+            b.Property(n => n.Title).HasColumnName("title");
+            b.Property(n => n.Body).HasColumnName("body");
+            b.Property(n => n.EntityId).HasColumnName("entity_id");
+            b.Property(n => n.EntityType).HasColumnName("entity_type");
+            b.Property(n => n.Metadata).HasColumnName("metadata");
+            b.Property(n => n.IsRead).HasColumnName("is_read");
+            b.Property(n => n.ReadAt).HasColumnName("read_at");
+            b.Property(n => n.CreatedAt).HasColumnName("created_at");
         });
     }
 }

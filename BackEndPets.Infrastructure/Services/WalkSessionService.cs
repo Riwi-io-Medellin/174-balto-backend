@@ -1,3 +1,4 @@
+using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.DTOs.WalkSessions;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
@@ -9,6 +10,7 @@ public sealed class WalkSessionService(
     IWalkSessionRepository sessionRepo,
     IWalkRoutePointRepository routePointRepo,
     IPetWalkingHistoryRepository historyRepo,
+    INotificationService notificationService,
     IWalkerRepository walkerRepo) : IWalkSessionService
 {
     public async Task<(WalkSessionResponse? Session, string? ErrorCode)> StartSessionAsync(
@@ -29,6 +31,13 @@ public sealed class WalkSessionService(
         };
 
         var created = await sessionRepo.CreateAsync(session);
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: history.UserId,
+            Type: "walk_started",
+            Title: "Paseo iniciado",
+            Body: "El paseador ha iniciado el paseo.",
+            EntityId: session.Id,
+            EntityType: "walk_session"));
         return (MapSession(created), null);
     }
 
@@ -89,6 +98,13 @@ public sealed class WalkSessionService(
         session.Status = "completed";
         session.EndedAt = DateTime.UtcNow;
         await sessionRepo.UpdateAsync(session);
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: currentUserId,
+            Type: "walk_finished",
+            Title: "Paseo finalizado",
+            Body: "El paseo ha sido completado.",
+            EntityId: session.Id,
+            EntityType: "walk_session"));
         return (MapSession(session), null);
     }
 

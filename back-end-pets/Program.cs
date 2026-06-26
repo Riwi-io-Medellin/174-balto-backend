@@ -82,5 +82,6 @@ app.MapWalkSessionsEndpoints();
 app.MapFeedbackEndpoints();
 app.MapWalkerAssetsEndpoints();
 app.MapBusinessAssetsEndpoints();
+app.MapNotificationsEndpoints();
 
 app.Run();
