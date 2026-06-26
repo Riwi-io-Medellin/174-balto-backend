@@ -17,36 +17,67 @@ public static class UploadEndpoints
                 return Results.Json(
                     new { error = "Upload service not configured.", code = "UPLOAD_NOT_CONFIGURED" },
                     statusCode: 500);
-
+        
             if (!request.HasFormContentType)
                 return Results.BadRequest(new { error = "Expected multipart form.", code = "INVALID_CONTENT_TYPE" });
-
+        
             var form = await request.ReadFormAsync();
             var file = form.Files.GetFile("file");
+        
             if (file is null || file.Length == 0)
                 return Results.BadRequest(new { error = "No file provided.", code = "FILE_REQUIRED" });
-
+        
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+                return Results.BadRequest(new UploadError(
+                    "Invalid file type. Allowed: jpg, jpeg, png, webp, gif, pdf.",
+                    "INVALID_FILE_TYPE"));
+        
+            if (file.Length > 10 * 1024 * 1024)
+                return Results.BadRequest(new UploadError(
+                    "File exceeds 10MB limit.",
+                    "FILE_TOO_LARGE"));
+        
             await using var stream = file.OpenReadStream();
-            var uploadParams = new ImageUploadParams
+            var isImage = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" }.Contains(extension);
+        
+            UploadResult result;
+        
+            if (isImage)
             {
-                File = new FileDescription(file.FileName, stream),
-                Folder = "pet_photos",
-                UseFilename = true,
-                UniqueFilename = true,
-                Overwrite = false
-            };
-
-            var result = await cloudinary.UploadAsync(uploadParams);
-
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "balto",
+                    UseFilename = true,
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
+                result = await cloudinary.UploadAsync(uploadParams);
+            }
+            else
+            {
+                var uploadParams = new RawUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "balto/documents",
+                    UseFilename = true,
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
+                result = await cloudinary.UploadAsync(uploadParams);
+            }
+        
             if (result.Error is not null)
                 return Results.Json(
-                    new { error = result.Error.Message, code = "CLOUDINARY_ERROR" },
+                    new UploadError(result.Error.Message, "CLOUDINARY_ERROR"),
                     statusCode: 500);
-
-            return Results.Ok(new { url = result.SecureUrl.ToString() });
+        
+            return Results.Ok(new UploadResponse(result.SecureUrl.ToString()));
         })
-        .WithName("UploadImage")
-        .WithSummary("Upload an image to Cloudinary")
+        .WithName("UploadFile")
+        .WithSummary("Upload an image or document to Cloudinary")
         .Produces<UploadResponse>(StatusCodes.Status200OK)
         .Produces<UploadError>(StatusCodes.Status400BadRequest)
         .DisableAntiforgery();
