@@ -60,6 +60,9 @@ jobs:
               -e ASPNETCORE_ENVIRONMENT=Production \
               -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION }}" \
               -e Jwt__Key="${{ secrets.JWT_KEY }}" \
+              -e SocialAuth__Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e Gemini__ApiKey="${{ secrets.GEMINI_API_KEY }}" \
+              -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
             sleep 15
