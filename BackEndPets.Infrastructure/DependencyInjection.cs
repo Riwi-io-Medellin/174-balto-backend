@@ -58,6 +58,10 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IChatService, ChatService>();
+        services.AddScoped<IBusinessServiceRepository, BusinessServiceRepository>();
+        services.AddScoped<IBusinessServicesService, BusinessServicesService>();
+        services.AddScoped<IPetHistoryRepository, PetHistoryRepository>();
+        services.AddScoped<IPetHistoryService, PetHistoryService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
