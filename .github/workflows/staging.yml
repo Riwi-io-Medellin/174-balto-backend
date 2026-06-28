@@ -65,6 +65,7 @@ jobs:
               -e Cloudinary__ApiSecret="${{ secrets.CLOUDINARY__APISECRET }}" \
               -e SocialAuth__Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
               -e Gemini__ApiKey="${{ secrets.GEMINI_API_KEY }}" \
+              -e OpenAI__ApiKey="${{ secrets.OPENAI_API_KEY }}" \
               -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 

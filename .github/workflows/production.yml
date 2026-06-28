@@ -60,8 +60,12 @@ jobs:
               -e ASPNETCORE_ENVIRONMENT=Production \
               -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION }}" \
               -e Jwt__Key="${{ secrets.JWT_KEY }}" \
+              -e Cloudinary__CloudName="${{ secrets.CLOUDINARY__CLOUDNAME }}" \
+              -e Cloudinary__ApiKey="${{ secrets.CLOUDINARY__APIKEY }}" \
+              -e Cloudinary__ApiSecret="${{ secrets.CLOUDINARY__APISECRET }}" \
               -e SocialAuth__Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
               -e Gemini__ApiKey="${{ secrets.GEMINI_API_KEY }}" \
+              -e OpenAI__ApiKey="${{ secrets.OPENAI_API_KEY }}" \
               -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
