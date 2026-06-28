@@ -23,4 +23,40 @@ public sealed class WalkSessionRepository(AppIdentityDbContext dbContext) : IWal
         dbContext.WalkSessions.Update(session);
         await dbContext.SaveChangesAsync();
     }
+
+    public Task<WalkSession?> GetActiveByWalkerIdAsync(Guid walkerId) =>
+        dbContext.WalkSessions.FirstOrDefaultAsync(s =>
+            s.WalkerId == walkerId && s.Status == "in_progress");
+
+    public async Task<WalkSession> StartFromBookingAsync(WalkSession session, WalkBooking booking)
+    {
+        await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+        session.Id = Guid.NewGuid();
+        dbContext.WalkSessions.Add(session);
+
+        booking.Status        = "in_progress";
+        booking.WalkSessionId = session.Id;
+        booking.UpdatedAt     = DateTime.UtcNow;
+        dbContext.WalkBookings.Update(booking);
+
+        await dbContext.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return session;
+    }
+
+    public async Task FinishFromBookingAsync(WalkSession session, WalkBooking booking)
+    {
+        await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+        dbContext.WalkSessions.Update(session);
+
+        booking.Status    = "completed";
+        booking.UpdatedAt = DateTime.UtcNow;
+        dbContext.WalkBookings.Update(booking);
+
+        await dbContext.SaveChangesAsync();
+        await tx.CommitAsync();
+    }
 }

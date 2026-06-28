@@ -213,14 +213,42 @@ public static class DocsEndpoints
         }
       }
     },
-    "/api/walkers/{id}": {
+    "/api/walkers/search": {
       "get": {
         "tags": ["Walkers"],
-        "summary": "Get a walker by id",
+        "summary": "Search approved walkers by location, date and duration",
+        "description": "Returns paginated approved walkers accepting bookings, filtered by geolocation radius and availability on the requested date. Walkers without stored coordinates are excluded. Sorted by distance ascending.",
         "security": [{ "BearerAuth": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "parameters": [
+          { "name": "latitude",        "in": "query", "required": true,  "schema": { "type": "number", "format": "double", "example": 4.7110 } },
+          { "name": "longitude",       "in": "query", "required": true,  "schema": { "type": "number", "format": "double", "example": -74.0721 } },
+          { "name": "radiusKm",        "in": "query", "required": true,  "schema": { "type": "number", "format": "double", "example": 5.0 } },
+          { "name": "date",            "in": "query", "required": true,  "schema": { "type": "string", "format": "date", "example": "2026-07-15" } },
+          { "name": "durationMinutes", "in": "query", "required": true,  "schema": { "type": "integer", "enum": [30, 60, 90] } },
+          { "name": "page",            "in": "query", "required": false, "schema": { "type": "integer", "default": 1, "minimum": 1 } },
+          { "name": "pageSize",        "in": "query", "required": false, "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 100 } }
+        ],
         "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkerResponse" } } } },
+          "200": { "description": "Paginated walker results", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PagedWalkerSummary" } } } },
+          "400": { "description": "Invalid durationMinutes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/walkers/{walkerId}": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get full walker profile with availability and rating",
+        "description": "Returns complete profile, weekly availability, optional available slots for a date, rating summary and completed walk count.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "walkerId",        "in": "path",  "required": true,  "schema": { "type": "string", "format": "uuid" } },
+          { "name": "date",            "in": "query", "required": false, "schema": { "type": "string", "format": "date", "example": "2026-07-15" }, "description": "If provided with durationMinutes, computes available slots" },
+          { "name": "durationMinutes", "in": "query", "required": false, "schema": { "type": "integer", "enum": [30, 60, 90] } }
+        ],
+        "responses": {
+          "200": { "description": "Walker detail", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkerDetailResponse" } } } },
+          "401": { "description": "Unauthorized" },
           "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
@@ -235,6 +263,66 @@ public static class DocsEndpoints
         ],
         "responses": {
           "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WalkerRecommendationResponse" } } } } }
+        }
+      }
+    },
+    "/api/walkers/apply": {
+      "post": {
+        "tags": ["Walkers"],
+        "summary": "Submit identity document and profile info to apply as a verified walker",
+        "description": "Uploads the identity document to Cloudinary, runs OCR via GPT-4o-mini to extract name and document number, then approves or rejects the walker by comparing the extracted name against the authenticated user's name (word-overlap ≥ 50%).",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["document", "workLocation", "experience"],
+                "properties": {
+                  "document": { "type": "string", "format": "binary", "description": "Identity document image (jpg, jpeg, png, webp — max 10 MB)" },
+                  "workLocation": { "type": "string", "description": "Area or city where the walker operates" },
+                  "experience": { "type": "string", "description": "Walker's experience description" },
+                  "description": { "type": "string", "description": "Optional additional bio" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Application submitted — identity document uploaded, walker status set to under_review", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkerApplyResponse" } } } },
+          "400": { "description": "Bad Request — missing file, invalid type/size, or missing required fields", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "503": { "description": "Cloudinary upload service not configured", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers/me": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get the authenticated user's walker profile",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkerProfileResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Walkers"],
+        "summary": "Update the authenticated user's walker profile (approved walkers only)",
+        "description": "Partial update — only provided fields are changed. VerificationStatus, DocumentName, DocumentNumber and UserId cannot be modified.",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateWalkerProfileRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Profile updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalkerProfileResponse" } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Walker not approved yet", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
     },
@@ -313,6 +401,81 @@ public static class DocsEndpoints
           "204": { "description": "No Content" },
           "403": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
           "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers/me/availability": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get the authenticated walker's weekly availability",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilitySlotResponse" } } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Walkers"],
+        "summary": "Replace the authenticated walker's full weekly availability (approved walkers only)",
+        "description": "Replaces the entire weekly schedule atomically. Send an empty array to clear availability.",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilitySlotRequest" } },
+              "example": [
+                { "dayOfWeek": 1, "startTime": "08:00:00", "endTime": "12:00:00" },
+                { "dayOfWeek": 1, "startTime": "14:00:00", "endTime": "18:00:00" },
+                { "dayOfWeek": 3, "startTime": "09:00:00", "endTime": "17:00:00" }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Availability replaced", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilitySlotResponse" } } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Walker not approved yet", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers/me/availability/exceptions": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get the authenticated walker's availability exceptions",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilityExceptionResponse" } } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Walkers"],
+        "summary": "Replace the authenticated walker's full list of availability exceptions (approved walkers only)",
+        "description": "Replaces all date exceptions atomically. Dates with isUnavailable=true override the weekly schedule entirely; dates with isUnavailable=false replace the time window for that day.",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilityExceptionRequest" } },
+              "example": [
+                { "date": "2025-12-25", "isUnavailable": true, "startTime": null, "endTime": null },
+                { "date": "2025-12-26", "isUnavailable": false, "startTime": "10:00:00", "endTime": "14:00:00" }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Exceptions replaced", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilityExceptionResponse" } } } } },
+          "400": { "description": "Validation error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Walker not approved yet", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
     },
@@ -780,6 +943,247 @@ public static class DocsEndpoints
           "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
         }
       }
+    },
+    "/api/walk-sessions/me/active": {
+      "get": {
+        "tags": ["WalkSessions"],
+        "summary": "Get the authenticated walker's current active session",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingSessionResponse" }, "example": { "id": "a1b2c3d4-0000-0000-0000-000000000001", "walkerId": "a1b2c3d4-0000-0000-0000-000000000002", "bookingId": "a1b2c3d4-0000-0000-0000-000000000003", "status": "in_progress", "startedAt": "2026-07-15T09:00:00Z", "finishedAt": null, "totalDistanceMeters": null, "totalDurationSeconds": null } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker not found or no active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/start": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Start a walk session from an accepted booking (walker only)",
+        "description": "Creates a WalkSession and transitions the booking from accepted → in_progress atomically. Fails if the walker already has another in-progress session.",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StartSessionFromBookingRequest" }, "example": { "bookingId": "a1b2c3d4-0000-0000-0000-000000000003" } } }
+        },
+        "responses": {
+          "201": { "description": "Session started", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingSessionResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "No walker profile or booking not assigned to you", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Booking not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Booking not accepted or walker already has an active session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}": {
+      "get": {
+        "tags": ["WalkSessions"],
+        "summary": "Get full session details by ID",
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Session details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingSessionResponse" } } } },
+          "404": { "description": "Session not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-sessions/{sessionId}/finish": {
+      "post": {
+        "tags": ["WalkSessions"],
+        "summary": "Finish an active walk session and complete the linked booking (walker only)",
+        "description": "Sets session status to completed, records distance and duration, and transitions the booking from in_progress → completed atomically.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FinishSessionRequest" }, "example": { "totalDistanceMeters": 3200.5, "totalDurationSeconds": 2700 } } }
+        },
+        "responses": {
+          "200": { "description": "Session finished", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingSessionResponse" }, "example": { "id": "a1b2c3d4-0000-0000-0000-000000000001", "walkerId": "a1b2c3d4-0000-0000-0000-000000000002", "bookingId": "a1b2c3d4-0000-0000-0000-000000000003", "status": "completed", "startedAt": "2026-07-15T09:00:00Z", "finishedAt": "2026-07-15T09:45:00Z", "totalDistanceMeters": 3200.5, "totalDurationSeconds": 2700 } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "No walker profile or session is not yours", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Session or linked booking not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Session not active or not booking-based", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-bookings": {
+      "post": {
+        "tags": ["WalkBookings"],
+        "summary": "Create a new walk booking",
+        "description": "The walker must be approved and accepting bookings. slotStart must match one of the walker's available slots (use GET /walkers/{walkerId}/available-slots first). Walker's hourly rate is snapshotted and totalPrice is calculated at creation time.",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBookingRequest" },
+              "example": {
+                "walkerId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "petId": "7b3e1c82-1234-4abc-9def-000000000001",
+                "slotStart": "2026-07-15T09:00:00Z",
+                "durationMinutes": 60,
+                "specialInstructions": "Please bring water for the dog and avoid the park on the left."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Booking created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingResponse" } } } },
+          "400": { "description": "Invalid duration or slot in the past", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Pet not owned by current user", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Pet or walker not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Walker not approved, not accepting bookings, or requested slot is unavailable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-bookings/me": {
+      "get": {
+        "tags": ["WalkBookings"],
+        "summary": "Get the authenticated user's bookings",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["pending", "accepted", "rejected", "walker_cancelled", "owner_cancelled", "completed"] }, "description": "Filter by booking status" }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BookingResponse" } } } } },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/walk-bookings/{id}": {
+      "get": {
+        "tags": ["WalkBookings"],
+        "summary": "Get booking details (owner or assigned walker only)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden — not the client nor the assigned walker", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-bookings/{id}/accept": {
+      "post": {
+        "tags": ["WalkBookings"],
+        "summary": "Accept a pending booking (walker only)",
+        "description": "Transactionally updates the booking to accepted and creates a WalkSession set to start at the requested date.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Booking accepted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Booking not assigned to this walker", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Walker profile or booking not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Booking is not pending", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-bookings/{id}/reject": {
+      "post": {
+        "tags": ["WalkBookings"],
+        "summary": "Reject a booking (walker only)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Booking rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Booking not assigned to this walker", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Walker profile or booking not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Booking already resolved or completed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-bookings/{id}/cancel": {
+      "post": {
+        "tags": ["WalkBookings"],
+        "summary": "Cancel a booking as the assigned walker (sets status to walker_cancelled)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Booking cancelled by walker", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Booking not assigned to this walker", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Walker profile or booking not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Booking is already in a terminal state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walk-bookings/{id}/owner-cancel": {
+      "post": {
+        "tags": ["WalkBookings"],
+        "summary": "Cancel a booking as the booking owner (sets status to owner_cancelled)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Booking cancelled by owner", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BookingResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "You do not own this booking", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "404": { "description": "Booking not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Booking is already in a terminal state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers/me/bookings": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get all bookings for the authenticated walker with optional status filter",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["pending", "accepted", "rejected", "walker_cancelled", "owner_cancelled", "completed"] }, "description": "Filter by booking status" }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BookingResponse" } } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers/me/pending-bookings": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get pending booking requests for the authenticated walker",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BookingResponse" } } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker profile not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/walkers/{walkerId}/available-slots": {
+      "get": {
+        "tags": ["Walkers"],
+        "summary": "Get available booking slots for a walker on a given date",
+        "description": "Generates time slots every 30 minutes that fit within the walker's availability for the requested date. Exceptions override the weekly schedule. Walker must be approved and accepting bookings.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "walkerId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" }, "description": "Walker entity id" },
+          { "name": "date", "in": "query", "required": true, "schema": { "type": "string", "format": "date", "example": "2026-07-15" }, "description": "Date to query (ISO 8601 date)" },
+          { "name": "durationMinutes", "in": "query", "required": true, "schema": { "type": "integer", "enum": [30, 60, 90] }, "description": "Walk duration in minutes — must be 30, 60, or 90" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available slots",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AvailableSlotResponse" } },
+                "example": [
+                  { "start": "2026-07-15T08:00:00Z", "end": "2026-07-15T09:00:00Z" },
+                  { "start": "2026-07-15T08:30:00Z", "end": "2026-07-15T09:30:00Z" },
+                  { "start": "2026-07-15T09:00:00Z", "end": "2026-07-15T10:00:00Z" }
+                ]
+              }
+            }
+          },
+          "400": { "description": "Invalid duration (must be 30, 60, or 90)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Walker not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } },
+          "409": { "description": "Walker not approved or not accepting bookings", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorResponse" } } } }
+        }
+      }
     }
   },
   "components": {
@@ -938,6 +1342,97 @@ public static class DocsEndpoints
           "description": { "type": "string", "nullable": true },
           "verificationStatus": { "type": "string" },
           "reasons": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "WalkerApplyResponse": {
+        "type": "object",
+        "required": ["walkerId", "userId", "verificationStatus", "documentUrl", "message"],
+        "properties": {
+          "walkerId": { "type": "string", "format": "uuid" },
+          "userId": { "type": "string", "format": "uuid" },
+          "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"], "description": "approved when extracted name matches account name (≥50% word overlap); rejected otherwise" },
+          "documentUrl": { "type": "string", "description": "Cloudinary secure URL of the uploaded identity document" },
+          "documentName": { "type": "string", "nullable": true, "description": "Full name as extracted from the document by GPT-4o-mini" },
+          "documentNumber": { "type": "string", "nullable": true, "description": "Document number as extracted from the document by GPT-4o-mini" },
+          "message": { "type": "string" }
+        }
+      },
+      "WalkerProfileResponse": {
+        "type": "object",
+        "required": ["id", "userId", "verificationStatus", "available", "isAcceptingBookings", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "userId": { "type": "string", "format": "uuid" },
+          "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
+          "available": { "type": "boolean" },
+          "workLocation": { "type": "string", "nullable": true },
+          "experience": { "type": "string", "nullable": true },
+          "description": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "nullable": true },
+          "hourlyRate": { "type": "number", "format": "double", "nullable": true },
+          "serviceRadiusKm": { "type": "number", "format": "double", "nullable": true },
+          "yearsOfExperience": { "type": "integer", "nullable": true },
+          "isAcceptingBookings": { "type": "boolean" },
+          "documentName": { "type": "string", "nullable": true },
+          "documentNumber": { "type": "string", "nullable": true },
+          "workLatitude": { "type": "number", "format": "double", "nullable": true },
+          "workLongitude": { "type": "number", "format": "double", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdateWalkerProfileRequest": {
+        "type": "object",
+        "properties": {
+          "bio": { "type": "string", "nullable": true, "description": "Walker biography shown on their public profile" },
+          "hourlyRate": { "type": "number", "format": "double", "nullable": true, "minimum": 0, "description": "Rate charged per hour (>= 0)" },
+          "serviceRadiusKm": { "type": "number", "format": "double", "nullable": true, "exclusiveMinimum": 0, "description": "Maximum km from work location the walker will travel (> 0)" },
+          "yearsOfExperience": { "type": "integer", "nullable": true, "minimum": 0, "description": "Years of professional experience (>= 0)" },
+          "isAcceptingBookings": { "type": "boolean", "nullable": true, "description": "Whether the walker is currently open to new bookings" },
+          "workLatitude": { "type": "number", "format": "double", "nullable": true, "description": "Walker's work location latitude (used for marketplace search)" },
+          "workLongitude": { "type": "number", "format": "double", "nullable": true, "description": "Walker's work location longitude (used for marketplace search)" }
+        }
+      },
+      "AvailabilitySlotRequest": {
+        "type": "object",
+        "required": ["dayOfWeek", "startTime", "endTime"],
+        "properties": {
+          "dayOfWeek": { "type": "integer", "minimum": 0, "maximum": 6, "description": "0 = Sunday, 1 = Monday … 6 = Saturday" },
+          "startTime": { "type": "string", "format": "time", "example": "08:00:00", "description": "ISO 8601 time — must be earlier than endTime" },
+          "endTime": { "type": "string", "format": "time", "example": "12:00:00" }
+        }
+      },
+      "AvailabilitySlotResponse": {
+        "type": "object",
+        "required": ["id", "walkerId", "dayOfWeek", "startTime", "endTime"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "walkerId": { "type": "string", "format": "uuid" },
+          "dayOfWeek": { "type": "integer", "minimum": 0, "maximum": 6 },
+          "startTime": { "type": "string", "format": "time" },
+          "endTime": { "type": "string", "format": "time" }
+        }
+      },
+      "AvailabilityExceptionRequest": {
+        "type": "object",
+        "required": ["date", "isUnavailable"],
+        "properties": {
+          "date": { "type": "string", "format": "date", "example": "2025-12-25", "description": "Must be unique in the request array" },
+          "isUnavailable": { "type": "boolean", "description": "true = unavailable all day (startTime/endTime must be null); false = alternate hours (startTime/endTime required)" },
+          "startTime": { "type": "string", "format": "time", "nullable": true, "example": "10:00:00" },
+          "endTime": { "type": "string", "format": "time", "nullable": true, "example": "14:00:00" }
+        }
+      },
+      "AvailabilityExceptionResponse": {
+        "type": "object",
+        "required": ["id", "walkerId", "date", "isUnavailable"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "walkerId": { "type": "string", "format": "uuid" },
+          "date": { "type": "string", "format": "date" },
+          "isUnavailable": { "type": "boolean" },
+          "startTime": { "type": "string", "format": "time", "nullable": true },
+          "endTime": { "type": "string", "format": "time", "nullable": true }
         }
       },
       "AddWalkerPhotoRequest": {
@@ -1221,6 +1716,120 @@ public static class DocsEndpoints
           "latitude": { "type": "number", "format": "double" },
           "longitude": { "type": "number", "format": "double" },
           "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StartSessionFromBookingRequest": {
+        "type": "object",
+        "required": ["bookingId"],
+        "properties": {
+          "bookingId": { "type": "string", "format": "uuid", "description": "ID of an accepted booking to start a session for" }
+        }
+      },
+      "FinishSessionRequest": {
+        "type": "object",
+        "required": ["totalDistanceMeters", "totalDurationSeconds"],
+        "properties": {
+          "totalDistanceMeters": { "type": "number", "format": "double", "description": "Total GPS distance in meters", "example": 3200.5 },
+          "totalDurationSeconds": { "type": "integer", "description": "Total elapsed duration in seconds", "example": 2700 }
+        }
+      },
+      "BookingSessionResponse": {
+        "type": "object",
+        "required": ["id", "walkerId", "bookingId", "status", "startedAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "walkerId": { "type": "string", "format": "uuid" },
+          "bookingId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["in_progress", "completed"] },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "finishedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "totalDistanceMeters": { "type": "number", "format": "double", "nullable": true },
+          "totalDurationSeconds": { "type": "integer", "nullable": true }
+        }
+      },
+      "CreateBookingRequest": {
+        "type": "object",
+        "required": ["walkerId", "petId", "slotStart", "durationMinutes"],
+        "properties": {
+          "walkerId": { "type": "string", "format": "uuid", "description": "Walker entity id (not user id)" },
+          "petId": { "type": "string", "format": "uuid" },
+          "slotStart": { "type": "string", "format": "date-time", "description": "Walk start time (UTC). Must match one of the walker's available slots returned by GET /walkers/{walkerId}/available-slots", "example": "2026-07-15T09:00:00Z" },
+          "durationMinutes": { "type": "integer", "enum": [30, 60, 90] },
+          "specialInstructions": { "type": "string", "nullable": true, "description": "Optional instructions for the walker" }
+        }
+      },
+      "BookingResponse": {
+        "type": "object",
+        "required": ["id", "clientUserId", "walkerId", "petId", "status", "slotStart", "durationMinutes", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "clientUserId": { "type": "string", "format": "uuid" },
+          "walkerId": { "type": "string", "format": "uuid", "description": "Walker entity id" },
+          "petId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected", "walker_cancelled", "owner_cancelled", "completed"] },
+          "slotStart": { "type": "string", "format": "date-time" },
+          "durationMinutes": { "type": "integer", "enum": [30, 60, 90] },
+          "snapshotHourlyRate": { "type": "number", "format": "double", "nullable": true, "description": "Walker's rate captured at booking time" },
+          "totalPrice": { "type": "number", "format": "double", "nullable": true, "description": "snapshotHourlyRate × durationMinutes / 60" },
+          "specialInstructions": { "type": "string", "nullable": true },
+          "walkSessionId": { "type": "string", "format": "uuid", "nullable": true, "description": "Set when booking is accepted" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AvailableSlotResponse": {
+        "type": "object",
+        "required": ["start", "end"],
+        "properties": {
+          "start": { "type": "string", "format": "date-time", "description": "Slot start (UTC)" },
+          "end": { "type": "string", "format": "date-time", "description": "Slot end (UTC)" }
+        }
+      },
+      "WalkerSummaryResponse": {
+        "type": "object",
+        "required": ["id", "fullName", "averageRating", "totalReviews", "distanceKm", "hasAvailability"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "fullName": { "type": "string" },
+          "profilePhoto": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "nullable": true },
+          "hourlyRate": { "type": "number", "format": "double", "nullable": true },
+          "averageRating": { "type": "number", "format": "double" },
+          "totalReviews": { "type": "integer" },
+          "yearsOfExperience": { "type": "integer", "nullable": true },
+          "serviceRadiusKm": { "type": "number", "format": "double", "nullable": true },
+          "distanceKm": { "type": "number", "format": "double", "description": "Straight-line distance from query point" },
+          "hasAvailability": { "type": "boolean", "description": "Always true — walkers without slots are filtered out" }
+        }
+      },
+      "PagedWalkerSummary": {
+        "type": "object",
+        "required": ["items", "page", "pageSize", "totalCount"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/WalkerSummaryResponse" } },
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer" },
+          "totalCount": { "type": "integer", "description": "Total matching walkers before pagination" }
+        }
+      },
+      "WalkerDetailResponse": {
+        "type": "object",
+        "required": ["id", "userId", "fullName", "averageRating", "totalReviews", "completedWalks", "weeklyAvailability", "availableSlots"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "userId": { "type": "string", "format": "uuid" },
+          "fullName": { "type": "string" },
+          "profilePhoto": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "nullable": true },
+          "hourlyRate": { "type": "number", "format": "double", "nullable": true },
+          "serviceRadiusKm": { "type": "number", "format": "double", "nullable": true },
+          "yearsOfExperience": { "type": "integer", "nullable": true },
+          "workLocation": { "type": "string", "nullable": true },
+          "averageRating": { "type": "number", "format": "double" },
+          "totalReviews": { "type": "integer" },
+          "completedWalks": { "type": "integer" },
+          "weeklyAvailability": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilitySlotResponse" } },
+          "availableSlots": { "type": "array", "items": { "$ref": "#/components/schemas/AvailableSlotResponse" }, "description": "Empty when date/durationMinutes not provided" }
         }
       }
     }

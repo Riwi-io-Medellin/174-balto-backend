@@ -9,4 +9,7 @@ public interface IWalkerRepository
     Task<Walker> CreateAsync(Walker walker);
     Task<IReadOnlyCollection<Walker>> GetAllAsync(bool? available = null, string? workLocation = null);
     Task<Walker?> GetByIdAsync(Guid id);
+    Task<Walker> UpdateAsync(Walker walker);
+    Task<IReadOnlyCollection<WalkerUserProjection>> GetApprovedAcceptingWithUserAsync();
+    Task<WalkerUserProjection?> GetByIdWithUserAsync(Guid id);
 }

@@ -21,6 +21,9 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<BusinessService> BusinessServices => Set<BusinessService>();
     public DbSet<PetHistory> PetHistories => Set<PetHistory>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<WalkerAvailability> WalkerAvailabilities => Set<WalkerAvailability>();
+    public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
+    public DbSet<WalkBooking> WalkBookings => Set<WalkBooking>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -81,6 +84,15 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(w => w.Experience).HasColumnName("experience");
             b.Property(w => w.Description).HasColumnName("description");
             b.Property(w => w.VerificationStatus).HasColumnName("verification_status");
+            b.Property(w => w.DocumentName).HasColumnName("document_name");
+            b.Property(w => w.DocumentNumber).HasColumnName("document_number");
+            b.Property(w => w.Bio).HasColumnName("bio");
+            b.Property(w => w.HourlyRate).HasColumnName("hourly_rate").HasColumnType("numeric(10,2)");
+            b.Property(w => w.ServiceRadiusKm).HasColumnName("service_radius_km").HasColumnType("numeric(8,2)");
+            b.Property(w => w.YearsOfExperience).HasColumnName("years_of_experience");
+            b.Property(w => w.IsAcceptingBookings).HasColumnName("is_accepting_bookings");
+            b.Property(w => w.WorkLatitude).HasColumnName("work_latitude");
+            b.Property(w => w.WorkLongitude).HasColumnName("work_longitude");
             b.Property(w => w.CreatedAt).HasColumnName("created_at");
             b.Property(w => w.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(w => w.UserId).IsUnique();
@@ -199,9 +211,12 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.HasKey(s => s.Id);
             b.Property(s => s.Id).HasColumnName("id");
             b.Property(s => s.WalkerId).HasColumnName("walker_id");
+            b.Property(s => s.BookingId).HasColumnName("booking_id");
             b.Property(s => s.Status).HasColumnName("status");
             b.Property(s => s.StartedAt).HasColumnName("started_at");
             b.Property(s => s.EndedAt).HasColumnName("ended_at");
+            b.Property(s => s.TotalDistanceMeters).HasColumnName("total_distance_meters");
+            b.Property(s => s.TotalDurationSeconds).HasColumnName("total_duration_seconds");
         });
 
         builder.Entity<WalkRoutePoint>(b =>
@@ -243,6 +258,51 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(n => n.IsRead).HasColumnName("is_read");
             b.Property(n => n.ReadAt).HasColumnName("read_at");
             b.Property(n => n.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<WalkerAvailability>(b =>
+        {
+            b.ToTable("walker_availability");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.Id).HasColumnName("id");
+            b.Property(a => a.WalkerId).HasColumnName("walker_id");
+            b.Property(a => a.DayOfWeek).HasColumnName("day_of_week");
+            b.Property(a => a.StartTime).HasColumnName("start_time").HasColumnType("time");
+            b.Property(a => a.EndTime).HasColumnName("end_time").HasColumnType("time");
+            b.Property(a => a.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<WalkerAvailabilityException>(b =>
+        {
+            b.ToTable("walker_availability_exceptions");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).HasColumnName("id");
+            b.Property(e => e.WalkerId).HasColumnName("walker_id");
+            b.Property(e => e.Date).HasColumnName("date").HasColumnType("date");
+            b.Property(e => e.IsUnavailable).HasColumnName("is_unavailable");
+            b.Property(e => e.StartTime).HasColumnName("start_time").HasColumnType("time");
+            b.Property(e => e.EndTime).HasColumnName("end_time").HasColumnType("time");
+            b.Property(e => e.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(e => new { e.WalkerId, e.Date }).IsUnique();
+        });
+
+        builder.Entity<WalkBooking>(b =>
+        {
+            b.ToTable("walk_bookings");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.ClientUserId).HasColumnName("client_user_id");
+            b.Property(x => x.WalkerId).HasColumnName("walker_id");
+            b.Property(x => x.PetId).HasColumnName("pet_id");
+            b.Property(x => x.Status).HasColumnName("status");
+            b.Property(x => x.SlotStart).HasColumnName("slot_start");
+            b.Property(x => x.DurationMinutes).HasColumnName("duration_minutes");
+            b.Property(x => x.SnapshotHourlyRate).HasColumnName("snapshot_hourly_rate").HasColumnType("numeric(10,2)");
+            b.Property(x => x.TotalPrice).HasColumnName("total_price").HasColumnType("numeric(10,2)");
+            b.Property(x => x.SpecialInstructions).HasColumnName("special_instructions");
+            b.Property(x => x.WalkSessionId).HasColumnName("walk_session_id");
+            b.Property(x => x.CreatedAt).HasColumnName("created_at");
+            b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
         });
     }
 }

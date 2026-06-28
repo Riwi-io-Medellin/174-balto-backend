@@ -39,4 +39,30 @@ public sealed class WalkerRepository(AppIdentityDbContext dbContext) : IWalkerRe
 
     public Task<Walker?> GetByIdAsync(Guid id) =>
         dbContext.Walkers.FirstOrDefaultAsync(w => w.Id == id);
+
+    public async Task<Walker> UpdateAsync(Walker walker)
+    {
+        walker.UpdatedAt = DateTime.UtcNow;
+        dbContext.Walkers.Update(walker);
+        await dbContext.SaveChangesAsync();
+        return walker;
+    }
+
+    public async Task<IReadOnlyCollection<WalkerUserProjection>> GetApprovedAcceptingWithUserAsync() =>
+        await dbContext.Walkers
+            .Where(w => w.VerificationStatus == "approved" && w.IsAcceptingBookings)
+            .Join(dbContext.Users,
+                w => w.UserId,
+                u => u.Id,
+                (w, u) => new WalkerUserProjection(w, u.FirstName, u.LastName, u.PhotoUrl))
+            .ToListAsync();
+
+    public async Task<WalkerUserProjection?> GetByIdWithUserAsync(Guid id) =>
+        await dbContext.Walkers
+            .Where(w => w.Id == id)
+            .Join(dbContext.Users,
+                w => w.UserId,
+                u => u.Id,
+                (w, u) => new WalkerUserProjection(w, u.FirstName, u.LastName, u.PhotoUrl))
+            .FirstOrDefaultAsync();
 }

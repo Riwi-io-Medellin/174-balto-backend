@@ -13,4 +13,7 @@ public interface IProfileService
     Task<BusinessResponse?> GetBusinessByIdAsync(Guid id);
     Task<IReadOnlyCollection<WalkerRecommendationResponse>> GetWalkerRecommendationsAsync(
         WalkerRecommendationRequest request);
+    Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId);
+    Task<(WalkerProfileResponse? Profile, string? ErrorCode)> UpdateMyWalkerProfileAsync(
+        Guid userId, UpdateWalkerProfileRequest request);
 }

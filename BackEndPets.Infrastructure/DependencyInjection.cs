@@ -62,6 +62,15 @@ public static class DependencyInjection
         services.AddScoped<IBusinessServicesService, BusinessServicesService>();
         services.AddScoped<IPetHistoryRepository, PetHistoryRepository>();
         services.AddScoped<IPetHistoryService, PetHistoryService>();
+        services.AddScoped<IDocumentVerificationService, OpenAIDocumentVerificationService>();
+        services.AddScoped<IWalkerApplicationService, WalkerApplicationService>();
+        services.AddScoped<IWalkerAvailabilityRepository, WalkerAvailabilityRepository>();
+        services.AddScoped<IWalkerAvailabilityExceptionRepository, WalkerAvailabilityExceptionRepository>();
+        services.AddScoped<IAvailabilityEngine, AvailabilityEngine>();
+        services.AddScoped<IWalkerAvailabilityService, WalkerAvailabilityService>();
+        services.AddScoped<IWalkBookingRepository, WalkBookingRepository>();
+        services.AddScoped<IWalkBookingService, WalkBookingService>();
+        services.AddScoped<IWalkerMarketplaceService, WalkerMarketplaceService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 

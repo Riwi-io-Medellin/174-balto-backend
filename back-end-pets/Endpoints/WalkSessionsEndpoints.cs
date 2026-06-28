@@ -197,6 +197,103 @@ public static class WalkSessionsEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
+        group.MapGet("/me/active", async (
+            HttpContext ctx,
+            IWalkSessionService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (session, errorCode) = await service.GetActiveForWalkerAsync(userId);
+            return errorCode switch
+            {
+                "WALKER_NOT_FOUND"   => Results.NotFound(new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
+                "NO_ACTIVE_SESSION"  => Results.NotFound(new ApiErrorResponse("No active session.", "NO_ACTIVE_SESSION")),
+                _ when session is not null => Results.Ok(session),
+                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("GetActiveWalkSession")
+        .WithSummary("Get the authenticated walker's current active session")
+        .Produces<BookingSessionResponse>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/start", async (
+            StartSessionFromBookingRequest request,
+            HttpContext ctx,
+            IWalkSessionService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (session, errorCode) = await service.StartFromBookingAsync(userId, request.BookingId);
+            return errorCode switch
+            {
+                "WALKER_NOT_FOUND"         => Results.Json(new ApiErrorResponse("You do not have a walker profile.", "WALKER_NOT_FOUND"), statusCode: StatusCodes.Status403Forbidden),
+                "BOOKING_NOT_FOUND"        => Results.NotFound(new ApiErrorResponse("Booking not found.", "BOOKING_NOT_FOUND")),
+                "UNAUTHORIZED"             => Results.Json(new ApiErrorResponse("Booking is not assigned to you.", "UNAUTHORIZED"), statusCode: StatusCodes.Status403Forbidden),
+                "BOOKING_NOT_ACCEPTED"     => Results.Conflict(new ApiErrorResponse("Booking is not in accepted status.", "BOOKING_NOT_ACCEPTED")),
+                "WALKER_HAS_ACTIVE_SESSION"=> Results.Conflict(new ApiErrorResponse("You already have an active walk session.", "WALKER_HAS_ACTIVE_SESSION")),
+                _ when session is not null => Results.Created($"/api/walk-sessions/{session.Id}", session),
+                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("StartWalkSessionFromBooking")
+        .WithSummary("Start a walk session from an accepted booking (walker only)")
+        .Produces<BookingSessionResponse>(StatusCodes.Status201Created)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
+
+        group.MapGet("/{sessionId:guid}", async (
+            Guid sessionId,
+            IWalkSessionService service) =>
+        {
+            var (session, errorCode) = await service.GetSessionDetailAsync(sessionId);
+            return errorCode switch
+            {
+                "SESSION_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
+                _ when session is not null => Results.Ok(session),
+                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("GetWalkSessionById")
+        .WithSummary("Get full session details by ID")
+        .Produces<BookingSessionResponse>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{sessionId:guid}/finish", async (
+            Guid sessionId,
+            FinishSessionRequest request,
+            HttpContext ctx,
+            IWalkSessionService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (session, errorCode) = await service.FinishAsync(userId, sessionId, request);
+            return errorCode switch
+            {
+                "WALKER_NOT_FOUND"          => Results.Json(new ApiErrorResponse("You do not have a walker profile.", "WALKER_NOT_FOUND"), statusCode: StatusCodes.Status403Forbidden),
+                "SESSION_NOT_FOUND"         => Results.NotFound(new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
+                "UNAUTHORIZED"              => Results.Json(new ApiErrorResponse("Session is not yours.", "UNAUTHORIZED"), statusCode: StatusCodes.Status403Forbidden),
+                "SESSION_NOT_ACTIVE"        => Results.Conflict(new ApiErrorResponse("Session is not in progress.", "SESSION_NOT_ACTIVE")),
+                "SESSION_NOT_BOOKING_BASED" => Results.Conflict(new ApiErrorResponse("Session was not started from a booking.", "SESSION_NOT_BOOKING_BASED")),
+                "BOOKING_NOT_FOUND"         => Results.NotFound(new ApiErrorResponse("Linked booking not found.", "BOOKING_NOT_FOUND")),
+                _ when session is not null  => Results.Ok(session),
+                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("FinishWalkSession")
+        .WithSummary("Finish an active walk session and complete the linked booking (walker only)")
+        .Produces<BookingSessionResponse>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
+        .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
+
         group.MapGet("/{sessionId:guid}/route", async (
             Guid sessionId,
             HttpContext ctx,

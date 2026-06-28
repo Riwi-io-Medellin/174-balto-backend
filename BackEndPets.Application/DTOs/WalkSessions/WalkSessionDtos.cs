@@ -24,3 +24,19 @@ public sealed record LocationUpdatedPayload(
     double Latitude,
     double Longitude,
     DateTime Timestamp);
+
+// ── Booking-based session lifecycle ─────────────────────────────────────────
+
+public sealed record StartSessionFromBookingRequest(Guid BookingId);
+
+public sealed record FinishSessionRequest(double TotalDistanceMeters, int TotalDurationSeconds);
+
+public sealed record BookingSessionResponse(
+    Guid Id,
+    Guid WalkerId,
+    Guid BookingId,
+    string Status,
+    DateTime StartedAt,
+    DateTime? FinishedAt,
+    double? TotalDistanceMeters,
+    int? TotalDurationSeconds);

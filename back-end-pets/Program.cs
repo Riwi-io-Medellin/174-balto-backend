@@ -99,5 +99,7 @@ app.MapBusinessServicesEndpoints();
 app.MapPetHistoryEndpoints();
 app.MapUploadEndpoints();
 app.MapNotificationsEndpoints();
+app.MapWalkerAvailabilityEndpoints();
+app.MapWalkBookingEndpoints();
 
 app.Run();

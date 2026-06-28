@@ -21,4 +21,18 @@ public interface IWalkSessionService
 
     Task<(IReadOnlyCollection<WalkRoutePointResponse>? Points, string? ErrorCode)> GetRouteAsync(
         Guid currentUserId, Guid sessionId);
+
+    // ── Booking-based lifecycle ───────────────────────────────────────────────
+
+    Task<(BookingSessionResponse? Session, string? ErrorCode)> StartFromBookingAsync(
+        Guid walkerUserId, Guid bookingId);
+
+    Task<(BookingSessionResponse? Session, string? ErrorCode)> FinishAsync(
+        Guid walkerUserId, Guid sessionId, FinishSessionRequest request);
+
+    Task<(BookingSessionResponse? Session, string? ErrorCode)> GetSessionDetailAsync(
+        Guid sessionId);
+
+    Task<(BookingSessionResponse? Session, string? ErrorCode)> GetActiveForWalkerAsync(
+        Guid walkerUserId);
 }

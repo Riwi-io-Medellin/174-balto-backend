@@ -11,7 +11,8 @@ public sealed class WalkSessionService(
     IWalkRoutePointRepository routePointRepo,
     IPetWalkingHistoryRepository historyRepo,
     INotificationService notificationService,
-    IWalkerRepository walkerRepo) : IWalkSessionService
+    IWalkerRepository walkerRepo,
+    IWalkBookingRepository bookingRepo) : IWalkSessionService
 {
     public async Task<(WalkSessionResponse? Session, string? ErrorCode)> StartSessionAsync(
         Guid currentUserId, StartWalkSessionRequest request)
@@ -172,4 +173,86 @@ public sealed class WalkSessionService(
 
     private static WalkSessionResponse MapSession(WalkSession s, IReadOnlyList<Guid> historyIds) =>
         new(s.Id, s.WalkerId, historyIds, s.Status, s.StartedAt, s.EndedAt);
+
+    // ── Booking-based lifecycle ───────────────────────────────────────────────
+
+    public async Task<(BookingSessionResponse? Session, string? ErrorCode)> StartFromBookingAsync(
+        Guid walkerUserId, Guid bookingId)
+    {
+        var walker = await walkerRepo.GetByUserIdAsync(walkerUserId);
+        if (walker is null) return (null, "WALKER_NOT_FOUND");
+
+        var booking = await bookingRepo.GetByIdAsync(bookingId);
+        if (booking is null) return (null, "BOOKING_NOT_FOUND");
+        if (booking.WalkerId != walker.Id) return (null, "UNAUTHORIZED");
+        if (booking.Status != "accepted") return (null, "BOOKING_NOT_ACCEPTED");
+
+        var existing = await sessionRepo.GetActiveByWalkerIdAsync(walker.Id);
+        if (existing is not null) return (null, "WALKER_HAS_ACTIVE_SESSION");
+
+        var session = new WalkSession
+        {
+            WalkerId  = walker.Id,
+            BookingId = bookingId,
+            Status    = "in_progress",
+            StartedAt = DateTime.UtcNow
+        };
+
+        var created = await sessionRepo.StartFromBookingAsync(session, booking);
+        return (MapBookingSession(created), null);
+    }
+
+    public async Task<(BookingSessionResponse? Session, string? ErrorCode)> FinishAsync(
+        Guid walkerUserId, Guid sessionId, FinishSessionRequest request)
+    {
+        var walker = await walkerRepo.GetByUserIdAsync(walkerUserId);
+        if (walker is null) return (null, "WALKER_NOT_FOUND");
+
+        var session = await sessionRepo.GetByIdAsync(sessionId);
+        if (session is null) return (null, "SESSION_NOT_FOUND");
+        if (session.WalkerId != walker.Id) return (null, "UNAUTHORIZED");
+        if (session.Status != "in_progress") return (null, "SESSION_NOT_ACTIVE");
+        if (session.BookingId is null) return (null, "SESSION_NOT_BOOKING_BASED");
+
+        var booking = await bookingRepo.GetByIdAsync(session.BookingId.Value);
+        if (booking is null) return (null, "BOOKING_NOT_FOUND");
+
+        session.Status               = "completed";
+        session.EndedAt              = DateTime.UtcNow;
+        session.TotalDistanceMeters  = request.TotalDistanceMeters;
+        session.TotalDurationSeconds = request.TotalDurationSeconds;
+
+        await sessionRepo.FinishFromBookingAsync(session, booking);
+        return (MapBookingSession(session), null);
+    }
+
+    public async Task<(BookingSessionResponse? Session, string? ErrorCode)> GetSessionDetailAsync(
+        Guid sessionId)
+    {
+        var session = await sessionRepo.GetByIdAsync(sessionId);
+        if (session is null) return (null, "SESSION_NOT_FOUND");
+        return (MapBookingSession(session), null);
+    }
+
+    public async Task<(BookingSessionResponse? Session, string? ErrorCode)> GetActiveForWalkerAsync(
+        Guid walkerUserId)
+    {
+        var walker = await walkerRepo.GetByUserIdAsync(walkerUserId);
+        if (walker is null) return (null, "WALKER_NOT_FOUND");
+
+        var session = await sessionRepo.GetActiveByWalkerIdAsync(walker.Id);
+        if (session is null) return (null, "NO_ACTIVE_SESSION");
+
+        return (MapBookingSession(session), null);
+    }
+
+    private static BookingSessionResponse MapBookingSession(WalkSession s) => new(
+        s.Id,
+        s.WalkerId ?? Guid.Empty,
+        s.BookingId ?? Guid.Empty,
+        s.Status,
+        s.StartedAt,
+        s.EndedAt,
+        s.TotalDistanceMeters,
+        s.TotalDurationSeconds);
 }

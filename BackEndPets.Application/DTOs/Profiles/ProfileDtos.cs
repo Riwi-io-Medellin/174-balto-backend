@@ -47,8 +47,37 @@ public sealed record BusinessResponse(
     string VerificationStatus,
     DateTime CreatedAt);
 
+public sealed record WalkerProfileResponse(
+    Guid Id,
+    Guid UserId,
+    string VerificationStatus,
+    bool Available,
+    string? WorkLocation,
+    string? Experience,
+    string? Description,
+    string? Bio,
+    decimal? HourlyRate,
+    decimal? ServiceRadiusKm,
+    int? YearsOfExperience,
+    bool IsAcceptingBookings,
+    string? DocumentName,
+    string? DocumentNumber,
+    double? WorkLatitude,
+    double? WorkLongitude,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
+
+public sealed record UpdateWalkerProfileRequest(
+    string? Bio,
+    decimal? HourlyRate,
+    decimal? ServiceRadiusKm,
+    int? YearsOfExperience,
+    bool? IsAcceptingBookings,
+    double? WorkLatitude,
+    double? WorkLongitude);
+
 public sealed record WalkerFilterRequest(
-    bool? Available, 
+    bool? Available,
     string? WorkLocation);
 
 public sealed record BusinessFilterRequest(

@@ -130,6 +130,66 @@ public sealed class ProfileService(
             b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt);
     }
     
+    public async Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId)
+    {
+        var walker = await walkerRepository.GetByUserIdAsync(userId);
+        return walker is null
+            ? (null, "WALKER_NOT_FOUND")
+            : (MapWalkerProfile(walker), null);
+    }
+
+    public async Task<(WalkerProfileResponse? Profile, string? ErrorCode)> UpdateMyWalkerProfileAsync(
+        Guid userId, UpdateWalkerProfileRequest request)
+    {
+        var walker = await walkerRepository.GetByUserIdAsync(userId);
+        if (walker is null)
+            return (null, "WALKER_NOT_FOUND");
+
+        if (walker.VerificationStatus != "approved")
+            return (null, "WALKER_NOT_APPROVED");
+
+        if (request.HourlyRate.HasValue && request.HourlyRate.Value < 0)
+            return (null, "HOURLY_RATE_INVALID");
+
+        if (request.ServiceRadiusKm.HasValue && request.ServiceRadiusKm.Value <= 0)
+            return (null, "SERVICE_RADIUS_INVALID");
+
+        if (request.YearsOfExperience.HasValue && request.YearsOfExperience.Value < 0)
+            return (null, "YEARS_OF_EXPERIENCE_INVALID");
+
+        if (request.Bio is not null)
+            walker.Bio = request.Bio.Trim();
+
+        if (request.HourlyRate.HasValue)
+            walker.HourlyRate = request.HourlyRate.Value;
+
+        if (request.ServiceRadiusKm.HasValue)
+            walker.ServiceRadiusKm = request.ServiceRadiusKm.Value;
+
+        if (request.YearsOfExperience.HasValue)
+            walker.YearsOfExperience = request.YearsOfExperience.Value;
+
+        if (request.IsAcceptingBookings.HasValue)
+            walker.IsAcceptingBookings = request.IsAcceptingBookings.Value;
+
+        if (request.WorkLatitude.HasValue)
+            walker.WorkLatitude = request.WorkLatitude.Value;
+
+        if (request.WorkLongitude.HasValue)
+            walker.WorkLongitude = request.WorkLongitude.Value;
+
+        await walkerRepository.UpdateAsync(walker);
+        return (MapWalkerProfile(walker), null);
+    }
+
+    private static WalkerProfileResponse MapWalkerProfile(Walker w) => new(
+        w.Id, w.UserId, w.VerificationStatus,
+        w.Available, w.WorkLocation, w.Experience, w.Description,
+        w.Bio, w.HourlyRate, w.ServiceRadiusKm, w.YearsOfExperience, w.IsAcceptingBookings,
+        w.DocumentName, w.DocumentNumber,
+        w.WorkLatitude, w.WorkLongitude,
+        w.CreatedAt, w.UpdatedAt);
+
     public async Task<IReadOnlyCollection<WalkerRecommendationResponse>> GetWalkerRecommendationsAsync(
         WalkerRecommendationRequest request)
     {
