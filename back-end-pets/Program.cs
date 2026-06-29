@@ -95,6 +95,23 @@ await using (var scope = app.Services.CreateAsyncScope())
     var db = scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>();
     await db.Database.MigrateAsync();
 
+    // walk_sessions: create if missing, then add columns that were added after initial schema.
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS walk_sessions (
+            id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+            walker_id               UUID,
+            booking_id              UUID,
+            status                  VARCHAR(50) NOT NULL DEFAULT 'pending',
+            started_at              TIMESTAMP   NOT NULL DEFAULT NOW(),
+            ended_at                TIMESTAMP,
+            total_distance_meters   DOUBLE PRECISION,
+            total_duration_seconds  INTEGER
+        );
+        ALTER TABLE walk_sessions ADD COLUMN IF NOT EXISTS booking_id             UUID;
+        ALTER TABLE walk_sessions ADD COLUMN IF NOT EXISTS total_distance_meters  DOUBLE PRECISION;
+        ALTER TABLE walk_sessions ADD COLUMN IF NOT EXISTS total_duration_seconds INTEGER;
+        """);
+
     // walk_bookings was added after initial DB setup with no EF migrations, so create if missing.
     await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS walk_bookings (
@@ -112,6 +129,7 @@ await using (var scope = app.Services.CreateAsyncScope())
             created_at          TIMESTAMP    NOT NULL DEFAULT NOW(),
             updated_at          TIMESTAMP    NOT NULL DEFAULT NOW()
         );
+        ALTER TABLE walk_bookings ADD COLUMN IF NOT EXISTS walk_session_id UUID;
         """);
 
     // walkers table was created before DocumentNumber/Bio/HourlyRate/IsAcceptingBookings/WorkLatitude/WorkLongitude
