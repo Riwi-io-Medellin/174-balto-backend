@@ -66,8 +66,10 @@ public sealed class WalkerRepository(AppIdentityDbContext dbContext) : IWalkerRe
             .Join(dbContext.Users,
                 w => w.UserId,
                 u => u.Id,
-                (w, u) => new WalkerUserProjection(w, u.FirstName, u.LastName, u.PhotoUrl))
+                (w, u) => new { Walker = w, User = u })
             .OrderBy(x => x.Walker.CreatedAt)
+            .Select(x => new WalkerUserProjection(
+                x.Walker, x.User.FirstName, x.User.LastName, x.User.PhotoUrl))
             .ToListAsync();
     }
 
