@@ -114,6 +114,20 @@ await using (var scope = app.Services.CreateAsyncScope())
         );
         """);
 
+    // walkers table was created before DocumentNumber/Bio/HourlyRate/IsAcceptingBookings/WorkLatitude/WorkLongitude
+    // columns were added to the entity, so add them if missing.
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS document_name VARCHAR(255);
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS document_number VARCHAR(100);
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS bio TEXT;
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS hourly_rate NUMERIC(10,2);
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS service_radius_km NUMERIC(8,2);
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS years_of_experience INTEGER;
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS is_accepting_bookings BOOLEAN NOT NULL DEFAULT false;
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_latitude DOUBLE PRECISION;
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_longitude DOUBLE PRECISION;
+        """);
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await IdentitySeeder.SeedDemoUserAsync(userManager);
 }
