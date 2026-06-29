@@ -44,9 +44,12 @@ public sealed class ProfileService(
 
         var created = await walkerRepository.CreateAsync(new Walker { UserId = userId });
 
+        var user = await userManager.FindByIdAsync(userId.ToString());
         return (new WalkerResponse(
             created.Id,
             created.UserId,
+            $"{user?.FirstName ?? ""} {user?.LastName ?? ""}".Trim(),
+            user?.PhotoUrl,
             created.VerificationStatus,
             created.Available,
             created.WorkLocation,
@@ -104,17 +107,28 @@ public sealed class ProfileService(
         }
     }
     
-    public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync(bool? available = null, string? workLocation = null) =>
-        (await walkerRepository.GetAllAsync(available, workLocation))
-        .Select(w => new WalkerResponse(w.Id, w.UserId, w.VerificationStatus,
-            w.Available, w.WorkLocation, w.Experience, w.Description, w.CreatedAt))
-        .ToList();
+    public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync(bool? available = null, string? workLocation = null)
+    {
+        var projections = await walkerRepository.GetAllWithUserAsync(available, workLocation);
+        return projections.Select(p => new WalkerResponse(
+            p.Walker.Id, p.Walker.UserId,
+            $"{p.FirstName} {p.LastName}", p.PhotoUrl,
+            p.Walker.VerificationStatus, p.Walker.Available,
+            p.Walker.WorkLocation, p.Walker.Experience,
+            p.Walker.Description, p.Walker.CreatedAt))
+            .ToList();
+    }
 
     public async Task<WalkerResponse?> GetWalkerByIdAsync(Guid id)
     {
-        var w = await walkerRepository.GetByIdAsync(id);
-        return w is null ? null : new WalkerResponse(w.Id, w.UserId, w.VerificationStatus,
-            w.Available, w.WorkLocation, w.Experience, w.Description, w.CreatedAt);
+        var projection = await walkerRepository.GetByIdWithUserAsync(id);
+        if (projection is null) return null;
+        return new WalkerResponse(
+            projection.Walker.Id, projection.Walker.UserId,
+            $"{projection.FirstName} {projection.LastName}", projection.PhotoUrl,
+            projection.Walker.VerificationStatus, projection.Walker.Available,
+            projection.Walker.WorkLocation, projection.Walker.Experience,
+            projection.Walker.Description, projection.Walker.CreatedAt);
     }
 
     public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null) =>

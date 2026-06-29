@@ -48,6 +48,29 @@ public sealed class WalkerRepository(AppIdentityDbContext dbContext) : IWalkerRe
         return walker;
     }
 
+    public async Task<IReadOnlyCollection<WalkerUserProjection>> GetAllWithUserAsync(
+        bool? available = null, string? workLocation = null)
+    {
+        var query = dbContext.Walkers
+            .Where(w => w.VerificationStatus == "approved")
+            .AsQueryable();
+
+        if (available.HasValue)
+            query = query.Where(w => w.Available == available.Value);
+
+        if (!string.IsNullOrWhiteSpace(workLocation))
+            query = query.Where(w => w.WorkLocation != null &&
+                                     w.WorkLocation.ToLower().Contains(workLocation.ToLower()));
+
+        return await query
+            .Join(dbContext.Users,
+                w => w.UserId,
+                u => u.Id,
+                (w, u) => new WalkerUserProjection(w, u.FirstName, u.LastName, u.PhotoUrl))
+            .OrderBy(x => x.Walker.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<IReadOnlyCollection<WalkerUserProjection>> GetApprovedAcceptingWithUserAsync() =>
         await dbContext.Walkers
             .Where(w => w.VerificationStatus == "approved" && w.IsAcceptingBookings)

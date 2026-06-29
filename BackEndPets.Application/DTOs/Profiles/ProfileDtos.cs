@@ -18,6 +18,8 @@ public sealed record BusinessSummary(
 public sealed record WalkerResponse(
     Guid Id,
     Guid UserId,
+    string FullName,
+    string? ProfilePhoto,
     string VerificationStatus,
     bool Available,
     string? WorkLocation,
