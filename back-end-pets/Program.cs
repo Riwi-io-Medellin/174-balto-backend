@@ -1,3 +1,4 @@
+using BackEndPets.API.Converters;
 using BackEndPets.API.Endpoints;
 using BackEndPets.API.Hubs;
 using BackEndPets.Application;
@@ -51,6 +52,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new UtcDateTimeJsonConverter());
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
