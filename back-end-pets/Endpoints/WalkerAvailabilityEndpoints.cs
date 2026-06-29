@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Walkers;
 using BackEndPets.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BackEndPets.API.Endpoints;
 
@@ -37,7 +38,7 @@ public static class WalkerAvailabilityEndpoints
 
         group.MapPut("/", async (
             HttpContext ctx,
-            IEnumerable<AvailabilitySlotRequest> slots,
+            [FromBody] IEnumerable<AvailabilitySlotRequest> slots,
             IWalkerAvailabilityService service) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -90,7 +91,7 @@ public static class WalkerAvailabilityEndpoints
 
         group.MapPut("/exceptions", async (
             HttpContext ctx,
-            IEnumerable<AvailabilityExceptionRequest> exceptions,
+            [FromBody] IEnumerable<AvailabilityExceptionRequest> exceptions,
             IWalkerAvailabilityService service) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
