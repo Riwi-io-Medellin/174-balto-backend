@@ -15,7 +15,10 @@ public sealed record NotificationResponse(
 
 public sealed record NotificationSummaryResponse(
     int UnreadCount,
-    IReadOnlyCollection<NotificationResponse> Notifications);
+    IReadOnlyCollection<NotificationResponse> Notifications,
+    int Page,
+    int PageSize,
+    int TotalCount);
 
 public sealed record CreateNotificationRequest(
     Guid UserId,

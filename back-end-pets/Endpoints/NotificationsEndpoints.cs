@@ -15,6 +15,8 @@ public static class NotificationsEndpoints
 
         group.MapGet("/", async (
             bool? unreadOnly,
+            int page,
+            int pageSize,
             HttpContext ctx,
             INotificationService service) =>
         {
@@ -22,7 +24,8 @@ public static class NotificationsEndpoints
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            return Results.Ok(await service.GetMyNotificationsAsync(userId, unreadOnly));
+            var result = await service.GetMyNotificationsAsync(userId, unreadOnly, page, pageSize);
+            return Results.Ok(result);
         })
         .WithName("GetMyNotifications")
         .WithSummary("Get all notifications for the current user")

@@ -21,8 +21,8 @@ public sealed class ChatService(
         if (string.IsNullOrWhiteSpace(request.Message))
             return (null, "VALIDATION_FAILED");
 
-        var pets    = await petService.GetByUserIdAsync(userId);
-        var history = await walkingHistoryService.GetMyHistoryAsync(userId);
+        var pets    = (await petService.GetByUserIdAsync(userId)).Items;
+        var history = (await walkingHistoryService.GetMyHistoryAsync(userId)).Items;
 
         var petContext = pets.Count == 0
             ? "El usuario no tiene mascotas registradas."

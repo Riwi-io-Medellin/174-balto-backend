@@ -196,7 +196,7 @@ public sealed class ProfileService(
         var walkers = await walkerRepository.GetAllAsync(available: true);
         var result = new List<(Walker Walker, int Score, List<string> Reasons)>();
 
-        foreach (var w in walkers.Where(w => w.VerificationStatus == "verified"))
+        foreach (var w in walkers.Where(w => w.VerificationStatus == "approved"))
         {
             var reasons = new List<string>();
             var score = 0;

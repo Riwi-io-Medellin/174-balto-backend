@@ -1,3 +1,4 @@
+using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Pets;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
@@ -28,15 +29,22 @@ public sealed class PetHistoryService(
         return (MapResponse(created), null);
     }
 
-    public async Task<(IReadOnlyCollection<PetHistoryResponse>? Histories, string? ErrorCode)> GetByPetIdAsync(
-        Guid userId, Guid petId)
+    public async Task<(PagedResult<PetHistoryResponse>? Result, string? ErrorCode)> GetByPetIdAsync(
+        Guid userId, Guid petId, int page = 1, int pageSize = 20)
     {
         var pet = await petRepository.GetByIdAsync(petId);
         if (pet is null) return (null, "PET_NOT_FOUND");
         if (pet.UserId != userId) return (null, "UNAUTHORIZED");
 
-        var histories = await historyRepository.GetByPetIdAsync(petId);
-        return (histories.Select(MapResponse).ToList(), null);
+        var all = await historyRepository.GetByPetIdAsync(petId);
+        var totalCount = all.Count;
+        var paged = all
+            .OrderByDescending(h => h.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapResponse)
+            .ToList();
+        return (new PagedResult<PetHistoryResponse>(paged, page, pageSize, totalCount), null);
     }
 
     public async Task<(bool Success, string? ErrorCode)> DeleteAsync(Guid userId, Guid historyId)

@@ -1,3 +1,4 @@
+using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.WalkingHistory;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
@@ -39,19 +40,35 @@ public sealed class WalkingHistoryService(
         return history is null ? null : MapResponse(history);
     }
 
-    public async Task<IReadOnlyCollection<WalkingHistoryResponse>> GetMyHistoryAsync(Guid userId) =>
-        (await historyRepository.GetByUserIdAsync(userId))
+    public async Task<PagedResult<WalkingHistoryResponse>> GetMyHistoryAsync(
+        Guid userId, int page = 1, int pageSize = 20)
+    {
+        var all = await historyRepository.GetByUserIdAsync(userId);
+        var totalCount = all.Count;
+        var paged = all
+            .OrderByDescending(h => h.StartTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(MapResponse)
             .ToList();
+        return new PagedResult<WalkingHistoryResponse>(paged, page, pageSize, totalCount);
+    }
 
-    public async Task<IReadOnlyCollection<WalkingHistoryResponse>> GetByWalkerAsync(Guid userId)
+    public async Task<PagedResult<WalkingHistoryResponse>> GetByWalkerAsync(
+        Guid userId, int page = 1, int pageSize = 20)
     {
         var walker = await walkerRepository.GetByUserIdAsync(userId);
-        if (walker is null) return [];
+        if (walker is null) return new PagedResult<WalkingHistoryResponse>([], page, pageSize, 0);
 
-        return (await historyRepository.GetByWalkerIdAsync(walker.Id))
+        var all = await historyRepository.GetByWalkerIdAsync(walker.Id);
+        var totalCount = all.Count;
+        var paged = all
+            .OrderByDescending(h => h.StartTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(MapResponse)
             .ToList();
+        return new PagedResult<WalkingHistoryResponse>(paged, page, pageSize, totalCount);
     }
 
     private static WalkingHistoryResponse MapResponse(PetWalkingHistory h) =>

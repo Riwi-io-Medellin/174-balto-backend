@@ -1,3 +1,4 @@
+using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Walkers;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;

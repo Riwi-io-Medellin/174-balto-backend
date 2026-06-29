@@ -1,3 +1,4 @@
+using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Pets;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
@@ -31,10 +32,18 @@ public sealed class PetService(IPetRepository petRepository) : IPetService
         return pet is null ? null : MapResponse(pet);
     }
 
-    public async Task<IReadOnlyCollection<PetResponse>> GetByUserIdAsync(Guid userId) =>
-        (await petRepository.GetByUserIdAsync(userId))
+    public async Task<PagedResult<PetResponse>> GetByUserIdAsync(Guid userId, int page = 1, int pageSize = 20)
+    {
+        var all = await petRepository.GetByUserIdAsync(userId);
+        var totalCount = all.Count;
+        var paged = all
+            .OrderBy(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(MapResponse)
             .ToList();
+        return new PagedResult<PetResponse>(paged, page, pageSize, totalCount);
+    }
 
     public async Task<(PetResponse? Pet, string? ErrorCode)> UpdateAsync(Guid userId, Guid petId, UpdatePetRequest request)
     {

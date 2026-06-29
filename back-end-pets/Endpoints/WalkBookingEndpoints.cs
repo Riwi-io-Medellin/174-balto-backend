@@ -49,6 +49,8 @@ public static class WalkBookingEndpoints
 
         bookings.MapGet("/me", async (
             string? status,
+            int page,
+            int pageSize,
             HttpContext ctx,
             IWalkBookingService service) =>
         {
@@ -56,11 +58,12 @@ public static class WalkBookingEndpoints
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            return Results.Ok(await service.GetMyBookingsAsync(userId, status));
+            var result = await service.GetMyBookingsAsync(userId, status, page, pageSize);
+            return Results.Ok(result);
         })
         .WithName("GetMyBookings")
         .WithSummary("Get the authenticated user's bookings")
-        .Produces<IReadOnlyCollection<BookingResponse>>(StatusCodes.Status200OK);
+        .Produces<PagedResult<BookingResponse>>(StatusCodes.Status200OK);
 
         bookings.MapGet("/{id:guid}", async (
             Guid id,
@@ -204,6 +207,8 @@ public static class WalkBookingEndpoints
 
         walkers.MapGet("/me/bookings", async (
             string? status,
+            int page,
+            int pageSize,
             HttpContext ctx,
             IWalkBookingService service) =>
         {
@@ -211,20 +216,21 @@ public static class WalkBookingEndpoints
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            var (result, errorCode) = await service.GetWalkerBookingsAsync(userId, status);
-            return errorCode switch
+            var result = await service.GetWalkerBookingsAsync(userId, status, page, pageSize);
+            if (result.TotalCount == 0 && !string.IsNullOrEmpty(status))
             {
-                "WALKER_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
-                _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
-            };
+                return Results.NotFound(new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND"));
+            }
+            return Results.Ok(result);
         })
         .WithName("GetWalkerBookings")
         .WithSummary("Get all bookings for the authenticated walker (optional status filter)")
-        .Produces<IReadOnlyCollection<BookingResponse>>(StatusCodes.Status200OK)
+        .Produces<PagedResult<BookingResponse>>(StatusCodes.Status200OK)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
         walkers.MapGet("/me/pending-bookings", async (
+            int page,
+            int pageSize,
             HttpContext ctx,
             IWalkBookingService service) =>
         {
@@ -232,17 +238,16 @@ public static class WalkBookingEndpoints
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            var (result, errorCode) = await service.GetPendingForWalkerAsync(userId);
-            return errorCode switch
+            var result = await service.GetPendingForWalkerAsync(userId, page, pageSize);
+            if (result.TotalCount == 0)
             {
-                "WALKER_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
-                _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
-            };
+                return Results.NotFound(new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND"));
+            }
+            return Results.Ok(result);
         })
         .WithName("GetPendingBookings")
         .WithSummary("Get pending booking requests for the authenticated walker")
-        .Produces<IReadOnlyCollection<BookingResponse>>(StatusCodes.Status200OK)
+        .Produces<PagedResult<BookingResponse>>(StatusCodes.Status200OK)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
         return app;

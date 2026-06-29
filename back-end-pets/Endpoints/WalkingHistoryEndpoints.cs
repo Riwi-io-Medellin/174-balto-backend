@@ -42,29 +42,39 @@ public static class WalkingHistoryEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
-        group.MapGet("/me", async (HttpContext ctx, IWalkingHistoryService service) =>
+        group.MapGet("/me", async (
+            int page,
+            int pageSize,
+            HttpContext ctx,
+            IWalkingHistoryService service) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            return Results.Ok(await service.GetMyHistoryAsync(userId));
+            var result = await service.GetMyHistoryAsync(userId, page, pageSize);
+            return Results.Ok(result);
         })
         .WithName("GetMyWalkingHistory")
         .WithSummary("Get all walking history entries for the current user")
-        .Produces<IReadOnlyCollection<WalkingHistoryResponse>>(StatusCodes.Status200OK);
+        .Produces<PagedResult<WalkingHistoryResponse>>(StatusCodes.Status200OK);
 
-        group.MapGet("/walker", async (HttpContext ctx, IWalkingHistoryService service) =>
+        group.MapGet("/walker", async (
+            int page,
+            int pageSize,
+            HttpContext ctx,
+            IWalkingHistoryService service) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            return Results.Ok(await service.GetByWalkerAsync(userId));
+            var result = await service.GetByWalkerAsync(userId, page, pageSize);
+            return Results.Ok(result);
         })
         .WithName("GetWalkerHistory")
         .WithSummary("Get all walking history entries assigned to the current walker")
-        .Produces<IReadOnlyCollection<WalkingHistoryResponse>>(StatusCodes.Status200OK);
+        .Produces<PagedResult<WalkingHistoryResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, HttpContext ctx, IWalkingHistoryService service) =>
         {

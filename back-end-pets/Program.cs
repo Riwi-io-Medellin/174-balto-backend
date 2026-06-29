@@ -49,6 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
+builder.Services.AddOpenApi();
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -70,12 +71,32 @@ await using (var scope = app.Services.CreateAsyncScope())
     var db = scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>();
     await db.Database.MigrateAsync();
 
+    // walk_bookings was added after initial DB setup with no EF migrations, so create if missing.
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS walk_bookings (
+            id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+            client_user_id      UUID         NOT NULL,
+            walker_id           UUID         NOT NULL,
+            pet_id              UUID         NOT NULL,
+            status              VARCHAR(50)  NOT NULL DEFAULT 'pending',
+            slot_start          TIMESTAMP    NOT NULL,
+            duration_minutes    INTEGER      NOT NULL,
+            snapshot_hourly_rate NUMERIC(10,2),
+            total_price         NUMERIC(10,2),
+            special_instructions TEXT,
+            walk_session_id     UUID,
+            created_at          TIMESTAMP    NOT NULL DEFAULT NOW(),
+            updated_at          TIMESTAMP    NOT NULL DEFAULT NOW()
+        );
+        """);
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await IdentitySeeder.SeedDemoUserAsync(userManager);
 }
 
 app.MapGet("/health", () => Results.Ok("OK"));
 
+app.MapOpenApi();
 app.MapSwaggerEndpoints();
 
 app.UseHttpsRedirection();

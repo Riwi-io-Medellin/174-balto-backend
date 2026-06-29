@@ -1,5 +1,5 @@
+using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Feedback;
-using BackEndPets.Application.DTOs.Walkers;
 
 namespace BackEndPets.Application.DTOs.Walkers;
 
@@ -41,8 +41,4 @@ public sealed record WalkerDetailResponse(
     IReadOnlyCollection<AvailabilitySlotResponse> WeeklyAvailability,
     IReadOnlyCollection<AvailableSlotResponse> AvailableSlots);
 
-public sealed record PagedResult<T>(
-    IReadOnlyCollection<T> Items,
-    int Page,
-    int PageSize,
-    int TotalCount);
+

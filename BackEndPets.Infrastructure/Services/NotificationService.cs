@@ -38,14 +38,20 @@ public sealed class NotificationService(
     }
 
     public async Task<NotificationSummaryResponse> GetMyNotificationsAsync(
-        Guid userId, bool? unreadOnly = null)
+        Guid userId, bool? unreadOnly = null, int page = 1, int pageSize = 20)
     {
-        var notifications = await notificationRepository.GetByUserIdAsync(userId, unreadOnly);
+        var all = await notificationRepository.GetByUserIdAsync(userId, unreadOnly);
         var unreadCount = await notificationRepository.GetUnreadCountAsync(userId);
+        var totalCount = all.Count;
 
-        return new NotificationSummaryResponse(
-            unreadCount,
-            notifications.Select(MapResponse).ToList());
+        var paged = all
+            .OrderByDescending(n => n.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapResponse)
+            .ToList();
+
+        return new NotificationSummaryResponse(unreadCount, paged, page, pageSize, totalCount);
     }
 
     public async Task<(NotificationResponse? Notification, string? ErrorCode)> MarkAsReadAsync(

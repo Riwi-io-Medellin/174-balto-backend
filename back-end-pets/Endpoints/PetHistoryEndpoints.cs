@@ -44,6 +44,8 @@ public static class PetHistoryEndpoints
 
         group.MapGet("/{petId:guid}/history", async (
             Guid petId,
+            int page,
+            int pageSize,
             HttpContext ctx,
             IPetHistoryService service) =>
         {
@@ -51,7 +53,7 @@ public static class PetHistoryEndpoints
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            var (histories, errorCode) = await service.GetByPetIdAsync(userId, petId);
+            var (result, errorCode) = await service.GetByPetIdAsync(userId, petId, page, pageSize);
             return errorCode switch
             {
                 "PET_NOT_FOUND" => Results.NotFound(
@@ -59,12 +61,12 @@ public static class PetHistoryEndpoints
                 "UNAUTHORIZED" => Results.Json(
                     new ApiErrorResponse("You do not own this pet.", "UNAUTHORIZED"),
                     statusCode: StatusCodes.Status403Forbidden),
-                _ => Results.Ok(histories)
+                _ => Results.Ok(result)
             };
         })
         .WithName("GetPetHistory")
         .WithSummary("Get all history entries for a pet (owner only)")
-        .Produces<IReadOnlyCollection<PetHistoryResponse>>(StatusCodes.Status200OK)
+        .Produces<PagedResult<PetHistoryResponse>>(StatusCodes.Status200OK)
         .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 

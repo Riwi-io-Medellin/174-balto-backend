@@ -26,17 +26,22 @@ public static class PetsEndpoints
         .WithSummary("Register a new pet for the current user")
         .Produces<PetResponse>(StatusCodes.Status201Created);
 
-        group.MapGet("/me", async (HttpContext ctx, IPetService service) =>
+        group.MapGet("/me", async (
+            int page,
+            int pageSize,
+            HttpContext ctx,
+            IPetService service) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
-            return Results.Ok(await service.GetByUserIdAsync(userId));
+            var result = await service.GetByUserIdAsync(userId, page, pageSize);
+            return Results.Ok(result);
         })
         .WithName("GetMyPets")
         .WithSummary("Get all pets of the current user")
-        .Produces<IReadOnlyCollection<PetResponse>>(StatusCodes.Status200OK);
+        .Produces<PagedResult<PetResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, IPetService service) =>
         {

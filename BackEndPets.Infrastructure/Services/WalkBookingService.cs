@@ -1,4 +1,6 @@
 using BackEndPets.Application.DTOs.Bookings;
+using BackEndPets.Application.DTOs.Common;
+using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
 using BackEndPets.Domain.Interfaces;
@@ -9,7 +11,8 @@ public sealed class WalkBookingService(
     IWalkBookingRepository bookingRepository,
     IWalkerRepository walkerRepository,
     IPetRepository petRepository,
-    IAvailabilityEngine availabilityEngine) : IWalkBookingService
+    IAvailabilityEngine availabilityEngine,
+    INotificationService notificationService) : IWalkBookingService
 {
     // Terminal states — no further transitions allowed from these.
     private static readonly string[] TerminalStatuses =
@@ -60,14 +63,31 @@ public sealed class WalkBookingService(
         };
 
         var created = await bookingRepository.CreateAsync(booking);
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: walker.UserId,
+            Type: "system",
+            Title: "Nueva solicitud de paseo",
+            Body: $"Un cliente ha solicitado un paseo para el {slotStartUtc:dd/MM/yyyy HH:mm}.",
+            EntityId: created.Id,
+            EntityType: "walk_booking"));
+
         return (Map(created), null);
     }
 
-    public async Task<IReadOnlyCollection<BookingResponse>> GetMyBookingsAsync(
-        Guid clientUserId, string? status = null) =>
-        (await bookingRepository.GetByClientUserIdAsync(clientUserId, status))
+    public async Task<PagedResult<BookingResponse>> GetMyBookingsAsync(
+        Guid clientUserId, string? status = null, int page = 1, int pageSize = 20)
+    {
+        var all = await bookingRepository.GetByClientUserIdAsync(clientUserId, status);
+        var totalCount = all.Count;
+        var paged = all
+            .OrderByDescending(b => b.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(Map)
             .ToList();
+        return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
+    }
 
     public async Task<(BookingResponse? Result, string? ErrorCode)> GetByIdAsync(
         Guid currentUserId, Guid bookingId)
@@ -85,24 +105,38 @@ public sealed class WalkBookingService(
         return (null, "UNAUTHORIZED");
     }
 
-    public async Task<(IReadOnlyCollection<BookingResponse>? Result, string? ErrorCode)> GetPendingForWalkerAsync(
-        Guid walkerUserId)
+    public async Task<PagedResult<BookingResponse>> GetPendingForWalkerAsync(
+        Guid walkerUserId, int page = 1, int pageSize = 20)
     {
         var walker = await walkerRepository.GetByUserIdAsync(walkerUserId);
-        if (walker is null) return (null, "WALKER_NOT_FOUND");
+        if (walker is null) return new PagedResult<BookingResponse>([], page, pageSize, 0);
 
-        var bookings = await bookingRepository.GetByWalkerIdAsync(walker.Id, status: "pending");
-        return (bookings.Select(Map).ToList(), null);
+        var all = await bookingRepository.GetByWalkerIdAsync(walker.Id, status: "pending");
+        var totalCount = all.Count;
+        var paged = all
+            .OrderByDescending(b => b.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(Map)
+            .ToList();
+        return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
     }
 
-    public async Task<(IReadOnlyCollection<BookingResponse>? Result, string? ErrorCode)> GetWalkerBookingsAsync(
-        Guid walkerUserId, string? status = null)
+    public async Task<PagedResult<BookingResponse>> GetWalkerBookingsAsync(
+        Guid walkerUserId, string? status = null, int page = 1, int pageSize = 20)
     {
         var walker = await walkerRepository.GetByUserIdAsync(walkerUserId);
-        if (walker is null) return (null, "WALKER_NOT_FOUND");
+        if (walker is null) return new PagedResult<BookingResponse>([], page, pageSize, 0);
 
-        var bookings = await bookingRepository.GetByWalkerIdAsync(walker.Id, status);
-        return (bookings.Select(Map).ToList(), null);
+        var all = await bookingRepository.GetByWalkerIdAsync(walker.Id, status);
+        var totalCount = all.Count;
+        var paged = all
+            .OrderByDescending(b => b.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(Map)
+            .ToList();
+        return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
     }
 
     public async Task<(BookingResponse? Result, string? ErrorCode)> AcceptAsync(
@@ -118,6 +152,15 @@ public sealed class WalkBookingService(
 
         booking.Status = "accepted";
         var updated = await bookingRepository.UpdateAsync(booking);
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: booking.ClientUserId,
+            Type: "system",
+            Title: "Reserva aceptada",
+            Body: "El paseador ha aceptado tu solicitud de paseo.",
+            EntityId: updated.Id,
+            EntityType: "walk_booking"));
+
         return (Map(updated), null);
     }
 
@@ -135,6 +178,15 @@ public sealed class WalkBookingService(
 
         booking.Status = "rejected";
         var updated = await bookingRepository.UpdateAsync(booking);
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: booking.ClientUserId,
+            Type: "system",
+            Title: "Reserva rechazada",
+            Body: "El paseador ha rechazado tu solicitud de paseo.",
+            EntityId: updated.Id,
+            EntityType: "walk_booking"));
+
         return (Map(updated), null);
     }
 
@@ -152,6 +204,15 @@ public sealed class WalkBookingService(
 
         booking.Status = "walker_cancelled";
         var updated = await bookingRepository.UpdateAsync(booking);
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: booking.ClientUserId,
+            Type: "system",
+            Title: "Reserva cancelada",
+            Body: "El paseador ha cancelado la reserva.",
+            EntityId: updated.Id,
+            EntityType: "walk_booking"));
+
         return (Map(updated), null);
     }
 
@@ -166,6 +227,19 @@ public sealed class WalkBookingService(
 
         booking.Status = "owner_cancelled";
         var updated = await bookingRepository.UpdateAsync(booking);
+
+        var walkerOwner = await walkerRepository.GetByIdAsync(booking.WalkerId);
+        if (walkerOwner is not null)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: walkerOwner.UserId,
+                Type: "system",
+                Title: "Reserva cancelada",
+                Body: "El cliente ha cancelado la reserva.",
+                EntityId: updated.Id,
+                EntityType: "walk_booking"));
+        }
+
         return (Map(updated), null);
     }
 
