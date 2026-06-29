@@ -33,7 +33,19 @@ public static class DocsEndpoints
       deepLinking: true,
       persistAuthorization: true,
       presets: [SwaggerUIBundle.presets.apis],
-      layout: 'BaseLayout'
+      layout: 'BaseLayout',
+      requestInterceptor: function(request) {
+        try {
+          var url = new URL(request.url);
+          if (url.hostname === 'localhost') {
+            url.protocol = window.location.protocol;
+            url.hostname = window.location.hostname;
+            url.port = window.location.port;
+            request.url = url.toString();
+          }
+        } catch(e) {}
+        return request;
+      }
     });
   </script>
 </body>
