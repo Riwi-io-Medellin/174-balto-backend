@@ -207,12 +207,6 @@ public static class WalkersEndpoints
 
             return errorCode switch
             {
-                "CLOUDINARY_NOT_CONFIGURED" => Results.Json(
-                    new ApiErrorResponse("Upload service not configured.", "CLOUDINARY_NOT_CONFIGURED"),
-                    statusCode: StatusCodes.Status503ServiceUnavailable),
-                "UPLOAD_FAILED" => Results.Json(
-                    new ApiErrorResponse("Failed to upload identity document. Please try again.", "UPLOAD_FAILED"),
-                    statusCode: StatusCodes.Status502BadGateway),
                 _ when result is not null => Results.Ok(result),
                 _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
             };

@@ -26,40 +26,89 @@ public sealed class WalkerApplicationService(
         string documentFileName,
         WalkerApplyRequest request)
     {
-        if (cloudinary is null)
-            return (null, "CLOUDINARY_NOT_CONFIGURED");
+        var warnings = new List<string>();
+        string? documentUrl = null;
+        string? extractedName = null;
+        string? extractedNumber = null;
 
-        // 1. Upload the identity document image to Cloudinary.
-        var uploadParams = new ImageUploadParams
+        // 1. Try uploading the identity document image to Cloudinary.
+        if (cloudinary is not null)
         {
-            File = new FileDescription(documentFileName, documentStream),
-            Folder = "balto/walker-documents",
-            UseFilename = true,
-            UniqueFilename = true,
-            Overwrite = false
-        };
+            try
+            {
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(documentFileName, documentStream),
+                    Folder = "balto/walker-documents",
+                    UseFilename = true,
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
 
-        var uploadResult = await cloudinary.UploadAsync(uploadParams);
-        if (uploadResult.Error is not null)
-            return (null, "UPLOAD_FAILED");
+                var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.Error is not null)
+                {
+                    warnings.Add("Document could not be uploaded to cloud storage.");
+                }
+                else
+                {
+                    documentUrl = uploadResult.SecureUrl.ToString();
+                }
+            }
+            catch
+            {
+                warnings.Add("Document upload failed due to a service error.");
+            }
+        }
+        else
+        {
+            warnings.Add("Document upload service is not configured.");
+        }
 
-        var documentUrl = uploadResult.SecureUrl.ToString();
-
-        // 2. Run OCR via GPT-4o-mini to extract name and document number.
-        var (extracted, aiError) = await verificationService.ExtractAsync(documentUrl);
-        if (extracted is null)
-            return (null, aiError);
+        // 2. Try running OCR via GPT-4o-mini to extract name and document number.
+        if (documentUrl is not null)
+        {
+            try
+            {
+                var (extracted, aiError) = await verificationService.ExtractAsync(documentUrl);
+                if (extracted is null)
+                {
+                    warnings.Add($"Document verification unavailable: {aiError}");
+                }
+                else
+                {
+                    extractedName = extracted.FullName;
+                    extractedNumber = extracted.DocumentNumber;
+                }
+            }
+            catch
+            {
+                warnings.Add("Document verification failed due to a service error.");
+            }
+        }
 
         // 3. Fetch the authenticated user to compare names.
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null)
             return (null, "USER_NOT_FOUND");
 
-        var userFullName    = $"{user.FirstName} {user.LastName}";
-        var similarity      = ComputeNameSimilarity(userFullName, extracted.FullName);
-        var verificationStatus = similarity >= SimilarityThreshold ? "approved" : "rejected";
+        // 4. Determine verification status.
+        string verificationStatus;
+        if (extractedName is not null)
+        {
+            var userFullName = $"{user.FirstName} {user.LastName}";
+            var similarity = ComputeNameSimilarity(userFullName, extractedName);
+            verificationStatus = similarity >= SimilarityThreshold ? "approved" : "rejected";
+        }
+        else
+        {
+            // Cannot verify without OCR — auto-approve so the user can proceed.
+            verificationStatus = "approved";
+            if (warnings.Count == 0)
+                warnings.Add("Document could not be verified. Application auto-approved.");
+        }
 
-        // 4. Upsert the Walker record with verification outcome.
+        // 5. Upsert the Walker record with verification outcome.
         var walker = await walkerRepository.GetByUserIdAsync(userId);
         if (walker is null)
         {
@@ -70,8 +119,8 @@ public sealed class WalkerApplicationService(
                 Experience         = request.Experience.Trim(),
                 Description        = request.Description?.Trim(),
                 VerificationStatus = verificationStatus,
-                DocumentName       = extracted.FullName,
-                DocumentNumber     = extracted.DocumentNumber
+                DocumentName       = extractedName,
+                DocumentNumber     = extractedNumber
             });
         }
         else
@@ -80,28 +129,34 @@ public sealed class WalkerApplicationService(
             walker.Experience         = request.Experience.Trim();
             walker.Description        = request.Description?.Trim();
             walker.VerificationStatus = verificationStatus;
-            walker.DocumentName       = extracted.FullName;
-            walker.DocumentNumber     = extracted.DocumentNumber;
+            walker.DocumentName       = extractedName;
+            walker.DocumentNumber     = extractedNumber;
             await walkerRepository.UpdateAsync(walker);
         }
 
-        // 5. Persist the identity document record.
-        await documentRepository.CreateAsync(new WalkerDocument
+        // 6. Persist the identity document record (if uploaded).
+        if (documentUrl is not null)
         {
-            WalkerId     = walker.Id,
-            DocumentType = "identity",
-            FileUrl      = documentUrl
-        });
+            await documentRepository.CreateAsync(new WalkerDocument
+            {
+                WalkerId     = walker.Id,
+                DocumentType = "identity",
+                FileUrl      = documentUrl
+            });
+        }
 
-        var message = verificationStatus == "approved"
-            ? "Identity verified. Walker application approved."
-            : "Identity could not be verified. Application rejected — name on document does not match account.";
+        // 7. Build message.
+        var message = warnings.Count > 0
+            ? string.Join(" ", warnings)
+            : verificationStatus == "approved"
+                ? "Identity verified. Walker application approved."
+                : "Identity could not be verified. Application rejected — name on document does not match account.";
 
         return (new WalkerApplyResponse(
             walker.Id,
             walker.UserId,
             walker.VerificationStatus,
-            documentUrl,
+            documentUrl ?? string.Empty,
             walker.DocumentName,
             walker.DocumentNumber,
             message), null);
