@@ -116,11 +116,13 @@ public sealed class AvailabilityEngine(
 
             for (int t = startMin; t + durationMinutes <= endMin; t += 30)
             {
-                var slotStart = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t));
-                var slotEnd   = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t + durationMinutes));
+                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t));
+                var slotEndTime   = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t + durationMinutes));
+                // Walker times are Colombia local (UTC-5); convert to UTC for storage/comparison.
+                var colombiaOffset = TimeSpan.FromHours(-5);
                 result.Add(new AvailableSlotResponse(
-                    date.ToDateTime(slotStart, DateTimeKind.Utc),
-                    date.ToDateTime(slotEnd,   DateTimeKind.Utc)));
+                    new DateTimeOffset(date.Year, date.Month, date.Day, slotStartTime.Hour, slotStartTime.Minute, 0, colombiaOffset).UtcDateTime,
+                    new DateTimeOffset(date.Year, date.Month, date.Day, slotEndTime.Hour,   slotEndTime.Minute,   0, colombiaOffset).UtcDateTime));
             }
         }
 
