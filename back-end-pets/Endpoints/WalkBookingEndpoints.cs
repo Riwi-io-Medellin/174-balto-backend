@@ -48,11 +48,11 @@ public static class WalkBookingEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
         bookings.MapGet("/me", async (
-            string? status,
-            int page,
-            int pageSize,
             HttpContext ctx,
-            IWalkBookingService service) =>
+            IWalkBookingService service,
+            string? status = null,
+            int page = 1,
+            int pageSize = 20) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
