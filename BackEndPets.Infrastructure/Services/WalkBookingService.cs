@@ -4,6 +4,8 @@ using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
 using BackEndPets.Domain.Interfaces;
+using BackEndPets.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace BackEndPets.Infrastructure.Services;
 
@@ -13,7 +15,8 @@ public sealed class WalkBookingService(
     IPetRepository petRepository,
     IAvailabilityEngine availabilityEngine,
     INotificationService notificationService,
-    IWalkSessionRepository sessionRepository) : IWalkBookingService
+    IWalkSessionRepository sessionRepository,
+    UserManager<ApplicationUser> userManager) : IWalkBookingService
 {
     // Terminal states — no further transitions allowed from these.
     private static readonly string[] TerminalStatuses =
@@ -127,9 +130,9 @@ public sealed class WalkBookingService(
             .OrderByDescending(b => b.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(b => Map(b))
             .ToList();
-        return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
+        var owners = await LoadOwnersAsync(paged);
+        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, ownerOf: owners.GetValueOrDefault(b.ClientUserId))).ToList(), page, pageSize, totalCount);
     }
 
     public async Task<PagedResult<BookingResponse>> GetWalkerBookingsAsync(
@@ -146,7 +149,8 @@ public sealed class WalkBookingService(
             .Take(pageSize)
             .ToList();
         var sessions = await LoadSessionsAsync(paged);
-        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, sessions)).ToList(), page, pageSize, totalCount);
+        var owners = await LoadOwnersAsync(paged);
+        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, sessions, ownerOf: owners.GetValueOrDefault(b.ClientUserId))).ToList(), page, pageSize, totalCount);
     }
 
     public async Task<(BookingResponse? Result, string? ErrorCode)> AcceptAsync(
@@ -253,16 +257,19 @@ public sealed class WalkBookingService(
         return (Map(updated), null);
     }
 
-    private static BookingResponse Map(WalkBooking b, WalkSession? session = null) => new(
+    private static BookingResponse Map(WalkBooking b, WalkSession? session = null, ApplicationUser? ownerOf = null) => new(
         b.Id, b.ClientUserId, b.WalkerId, b.PetId,
         b.Status, b.SlotStart, b.DurationMinutes,
         b.SnapshotHourlyRate, b.TotalPrice, b.IsExclusive, b.SpecialInstructions,
         b.WalkSessionId, b.CreatedAt, b.UpdatedAt,
         session?.TotalDistanceMeters,
-        session?.TotalDurationSeconds);
+        session?.TotalDurationSeconds,
+        ownerOf?.Latitude,
+        ownerOf?.Longitude,
+        ownerOf?.Address ?? ownerOf?.Location);
 
-    private static BookingResponse Map(WalkBooking b, IReadOnlyDictionary<Guid, WalkSession> sessions) =>
-        Map(b, b.WalkSessionId.HasValue ? sessions.GetValueOrDefault(b.WalkSessionId.Value) : null);
+    private static BookingResponse Map(WalkBooking b, IReadOnlyDictionary<Guid, WalkSession> sessions, ApplicationUser? ownerOf = null) =>
+        Map(b, b.WalkSessionId.HasValue ? sessions.GetValueOrDefault(b.WalkSessionId.Value) : null, ownerOf);
 
     private async Task<IReadOnlyDictionary<Guid, WalkSession>> LoadSessionsAsync(IEnumerable<WalkBooking> bookings)
     {
@@ -271,5 +278,16 @@ public sealed class WalkBookingService(
             .Select(b => b.WalkSessionId!.Value)
             .Distinct();
         return await sessionRepository.GetByIdsAsync(ids);
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, ApplicationUser>> LoadOwnersAsync(IEnumerable<WalkBooking> bookings)
+    {
+        var result = new Dictionary<Guid, ApplicationUser>();
+        foreach (var userId in bookings.Select(b => b.ClientUserId).Distinct())
+        {
+            var user = await userManager.FindByIdAsync(userId.ToString());
+            if (user is not null) result[userId] = user;
+        }
+        return result;
     }
 }

@@ -24,4 +24,7 @@ public sealed record BookingResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     double? TotalDistanceMeters,
-    int? TotalDurationSeconds);
+    int? TotalDurationSeconds,
+    double? OwnerLatitude,
+    double? OwnerLongitude,
+    string? OwnerAddress);

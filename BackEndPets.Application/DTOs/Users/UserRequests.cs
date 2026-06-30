@@ -11,7 +11,9 @@ public sealed record CreateUserRequest(
     string? PhoneExtra = null,
     string? Location = null,
     string? Address = null,
-    string? PhotoUrl = null);
+    string? PhotoUrl = null,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record UpdateUserRequest(
     string FirstName,
@@ -22,7 +24,9 @@ public sealed record UpdateUserRequest(
     string? PhoneExtra = null,
     string? Location = null,
     string? Address = null,
-    string? PhotoUrl = null);
+    string? PhotoUrl = null,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record UserResponse(
     Guid Id,
@@ -36,4 +40,6 @@ public sealed record UserResponse(
     string? Location,
     string? Address,
     string? PhotoUrl,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    double? Latitude,
+    double? Longitude);

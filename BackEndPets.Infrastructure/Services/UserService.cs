@@ -43,6 +43,8 @@ public sealed class UserService(UserManager<ApplicationUser> userManager) : IUse
             Location = request.Location?.Trim(),
             Address = request.Address?.Trim(),
             PhotoUrl = request.PhotoUrl?.Trim(),
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
             EmailConfirmed = true
         };
 
@@ -67,6 +69,8 @@ public sealed class UserService(UserManager<ApplicationUser> userManager) : IUse
         user.Location = request.Location?.Trim();
         user.Address = request.Address?.Trim();
         user.PhotoUrl = request.PhotoUrl?.Trim();
+        user.Latitude = request.Latitude;
+        user.Longitude = request.Longitude;
         user.UserName = $"{user.FirstName}.{user.LastName}";
 
         var result = await userManager.UpdateAsync(user);
@@ -106,5 +110,7 @@ public sealed class UserService(UserManager<ApplicationUser> userManager) : IUse
         user.Location,
         user.Address,
         user.PhotoUrl,
-        user.CreatedAt);
+        user.CreatedAt,
+        user.Latitude,
+        user.Longitude);
 }
