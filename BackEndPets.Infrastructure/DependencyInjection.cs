@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddScoped<IWalkerMarketplaceService, WalkerMarketplaceService>();
         services.AddScoped<IPaymentOrderRepository, PaymentOrderRepository>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IAdminVerificationService, AdminVerificationService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 

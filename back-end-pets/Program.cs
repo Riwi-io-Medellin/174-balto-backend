@@ -195,6 +195,7 @@ app.MapWalkerAvailabilityEndpoints();
 app.MapWalkBookingEndpoints();
 app.MapChatEndpoints();
 app.MapPaymentsEndpoints();
+app.MapAdminVerificationEndpoints();
 app.UseGlobalExceptionHandler();
 
 app.Run();
