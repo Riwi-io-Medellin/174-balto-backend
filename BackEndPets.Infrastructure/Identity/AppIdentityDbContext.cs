@@ -24,6 +24,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkerAvailability> WalkerAvailabilities => Set<WalkerAvailability>();
     public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
     public DbSet<WalkBooking> WalkBookings => Set<WalkBooking>();
+    public DbSet<PaymentOrder> PaymentOrders => Set<PaymentOrder>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -303,6 +304,24 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(x => x.WalkSessionId).HasColumnName("walk_session_id");
             b.Property(x => x.CreatedAt).HasColumnName("created_at");
             b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        });
+
+        builder.Entity<PaymentOrder>(b =>
+        {
+            b.ToTable("payment_orders");
+            b.HasKey(o => o.Id);
+            b.Property(o => o.Id).HasColumnName("id");
+            b.Property(o => o.BookingId).HasColumnName("booking_id");
+            b.Property(o => o.ClientUserId).HasColumnName("client_user_id");
+            b.Property(o => o.Amount).HasColumnName("amount").HasColumnType("numeric(10,2)");
+            b.Property(o => o.Currency).HasColumnName("currency");
+            b.Property(o => o.Status).HasColumnName("status");
+            b.Property(o => o.ProviderReference).HasColumnName("provider_reference");
+            b.Property(o => o.ProviderTransactionId).HasColumnName("provider_transaction_id");
+            b.Property(o => o.CreatedAt).HasColumnName("created_at");
+            b.Property(o => o.UpdatedAt).HasColumnName("updated_at");
+            b.HasIndex(o => o.BookingId).IsUnique();
+            b.HasIndex(o => o.ProviderReference).IsUnique();
         });
     }
 }

@@ -71,6 +71,8 @@ public static class DependencyInjection
         services.AddScoped<IWalkBookingRepository, WalkBookingRepository>();
         services.AddScoped<IWalkBookingService, WalkBookingService>();
         services.AddScoped<IWalkerMarketplaceService, WalkerMarketplaceService>();
+        services.AddScoped<IPaymentOrderRepository, PaymentOrderRepository>();
+        services.AddScoped<IPaymentService, PaymentService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
