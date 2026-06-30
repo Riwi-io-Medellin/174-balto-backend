@@ -119,11 +119,10 @@ public sealed class AvailabilityEngine(
             {
                 var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t));
                 var slotEndTime   = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t + durationMinutes));
-                // Walker times are Colombia local (UTC-5); convert to UTC for storage/comparison.
-                var colombiaOffset = TimeSpan.FromHours(-5);
+                // Store Colombia local time directly — no UTC conversion needed.
                 result.Add(new AvailableSlotResponse(
-                    new DateTimeOffset(date.Year, date.Month, date.Day, slotStartTime.Hour, slotStartTime.Minute, 0, colombiaOffset).UtcDateTime,
-                    new DateTimeOffset(date.Year, date.Month, date.Day, slotEndTime.Hour,   slotEndTime.Minute,   0, colombiaOffset).UtcDateTime));
+                    new DateTime(date.Year, date.Month, date.Day, slotStartTime.Hour, slotStartTime.Minute, 0),
+                    new DateTime(date.Year, date.Month, date.Day, slotEndTime.Hour,   slotEndTime.Minute,   0)));
             }
         }
 

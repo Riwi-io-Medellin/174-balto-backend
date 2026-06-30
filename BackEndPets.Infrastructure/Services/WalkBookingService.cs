@@ -37,16 +37,20 @@ public sealed class WalkBookingService(
         if (walker.VerificationStatus != "approved") return (null, "WALKER_NOT_APPROVED");
         if (!walker.IsAcceptingBookings) return (null, "WALKER_NOT_ACCEPTING_BOOKINGS");
 
-        var slotStartUtc = DateTime.SpecifyKind(request.SlotStart, DateTimeKind.Utc);
+        // SlotStart arrives as Colombia local time (no Z suffix) — keep as Unspecified.
+        var slotStart = DateTime.SpecifyKind(request.SlotStart, DateTimeKind.Unspecified);
 
-        if (slotStartUtc <= DateTime.UtcNow)
+        var colombiaZone  = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+        var nowColombia   = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, colombiaZone);
+
+        if (slotStart <= nowColombia)
             return (null, "SLOT_IN_PAST");
 
-        var slotDate = DateOnly.FromDateTime(slotStartUtc);
+        var slotDate = DateOnly.FromDateTime(slotStart);
         var availableSlots = await availabilityEngine.ComputeSlotsAsync(
             walker.Id, slotDate, request.DurationMinutes, walker.MaxDogs);
 
-        if (!availableSlots.Any(s => s.Start == slotStartUtc))
+        if (!availableSlots.Any(s => s.Start == slotStart))
             return (null, "SLOT_NOT_AVAILABLE");
 
         decimal? basePrice = walker.HourlyRate.HasValue
@@ -62,7 +66,7 @@ public sealed class WalkBookingService(
             ClientUserId        = clientUserId,
             WalkerId            = walker.Id,
             PetId               = request.PetId,
-            SlotStart           = slotStartUtc,
+            SlotStart           = slotStart,
             DurationMinutes     = request.DurationMinutes,
             SnapshotHourlyRate  = walker.HourlyRate,
             TotalPrice          = totalPrice,
@@ -73,13 +77,11 @@ public sealed class WalkBookingService(
 
         var created = await bookingRepository.CreateAsync(booking);
 
-        var colombiaZone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
-        var slotStartColombia = TimeZoneInfo.ConvertTimeFromUtc(slotStartUtc, colombiaZone);
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: walker.UserId,
             Type: "system",
             Title: "Nueva solicitud de paseo",
-            Body: $"Un cliente ha solicitado un paseo para el {slotStartColombia:dd/MM/yyyy HH:mm}.",
+            Body: $"Un cliente ha solicitado un paseo para el {slotStart:dd/MM/yyyy HH:mm}.",
             EntityId: created.Id,
             EntityType: "walk_booking"));
 
