@@ -25,6 +25,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
     public DbSet<WalkBooking> WalkBookings => Set<WalkBooking>();
     public DbSet<PaymentOrder> PaymentOrders => Set<PaymentOrder>();
+    public DbSet<CommunityAlert> CommunityAlerts => Set<CommunityAlert>();
+    public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -48,6 +50,11 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(u => u.Phone).HasColumnName("phone").HasColumnType("varchar(30)");
             b.Property(u => u.PhoneExtra).HasColumnName("phone_extra").HasColumnType("varchar(30)");
             b.Property(u => u.PhotoUrl).HasColumnName("photo_url");
+            b.Property(u => u.AdminStatus).HasColumnName("admin_status");
+            b.Property(u => u.AdminReason).HasColumnName("admin_reason");
+            b.Property(u => u.AdminModeratedByUserId).HasColumnName("admin_moderated_by_user_id");
+            b.Property(u => u.AdminModeratedAt).HasColumnName("admin_moderated_at");
+            b.Property(u => u.DeletedAt).HasColumnName("deleted_at");
             b.Property(u => u.CreatedAt).HasColumnName("created_at");
 
             // Usamos el email como username, así no se duplica info.
@@ -94,6 +101,11 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(w => w.IsAcceptingBookings).HasColumnName("is_accepting_bookings");
             b.Property(w => w.WorkLatitude).HasColumnName("work_latitude");
             b.Property(w => w.WorkLongitude).HasColumnName("work_longitude");
+            b.Property(w => w.AdminStatus).HasColumnName("admin_status");
+            b.Property(w => w.AdminReason).HasColumnName("admin_reason");
+            b.Property(w => w.AdminModeratedByUserId).HasColumnName("admin_moderated_by_user_id");
+            b.Property(w => w.AdminModeratedAt).HasColumnName("admin_moderated_at");
+            b.Property(w => w.DeletedAt).HasColumnName("deleted_at");
             b.Property(w => w.CreatedAt).HasColumnName("created_at");
             b.Property(w => w.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(w => w.UserId).IsUnique();
@@ -322,6 +334,44 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(o => o.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(o => o.BookingId).IsUnique();
             b.HasIndex(o => o.ProviderReference).IsUnique();
+        });
+
+        builder.Entity<CommunityAlert>(b =>
+        {
+            b.ToTable("community_alerts");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.Id).HasColumnName("id");
+            b.Property(a => a.ReporterUserId).HasColumnName("reporter_user_id");
+            b.Property(a => a.AlertType).HasColumnName("alert_type");
+            b.Property(a => a.PetName).HasColumnName("pet_name");
+            b.Property(a => a.Species).HasColumnName("species");
+            b.Property(a => a.Description).HasColumnName("description");
+            b.Property(a => a.LastSeenLocation).HasColumnName("last_seen_location");
+            b.Property(a => a.EvidenceUrl).HasColumnName("evidence_url");
+            b.Property(a => a.Status).HasColumnName("status");
+            b.Property(a => a.ModerationReason).HasColumnName("moderation_reason");
+            b.Property(a => a.ModeratedByUserId).HasColumnName("moderated_by_user_id");
+            b.Property(a => a.ModeratedAt).HasColumnName("moderated_at");
+            b.Property(a => a.CreatedAt).HasColumnName("created_at");
+            b.Property(a => a.UpdatedAt).HasColumnName("updated_at");
+            b.HasIndex(a => a.Status);
+            b.HasIndex(a => a.AlertType);
+        });
+
+        builder.Entity<AdminAuditLog>(b =>
+        {
+            b.ToTable("admin_audit_logs");
+            b.HasKey(l => l.Id);
+            b.Property(l => l.Id).HasColumnName("id");
+            b.Property(l => l.ActorUserId).HasColumnName("actor_user_id");
+            b.Property(l => l.Action).HasColumnName("action");
+            b.Property(l => l.EntityType).HasColumnName("entity_type");
+            b.Property(l => l.EntityId).HasColumnName("entity_id");
+            b.Property(l => l.Reason).HasColumnName("reason");
+            b.Property(l => l.SnapshotJson).HasColumnName("snapshot_json").HasColumnType("jsonb");
+            b.Property(l => l.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(l => new { l.EntityType, l.EntityId });
+            b.HasIndex(l => l.CreatedAt);
         });
     }
 }
