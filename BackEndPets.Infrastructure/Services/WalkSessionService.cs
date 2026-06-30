@@ -193,6 +193,14 @@ public sealed class WalkSessionService(
         var booking = await bookingRepo.GetByIdAsync(bookingId);
         if (booking is null) return (null, "BOOKING_NOT_FOUND");
         if (booking.WalkerId != walker.Id) return (null, "UNAUTHORIZED");
+
+        // Idempotent re-entry: walk already started for this booking → return existing session.
+        if (booking.Status == "in_progress" && booking.WalkSessionId.HasValue)
+        {
+            var resumeSession = await sessionRepo.GetByIdAsync(booking.WalkSessionId.Value);
+            if (resumeSession is not null) return (MapBookingSession(resumeSession), null);
+        }
+
         if (booking.Status != "accepted") return (null, "BOOKING_NOT_ACCEPTED");
 
         var existing = await sessionRepo.GetActiveByWalkerIdAsync(walker.Id);
