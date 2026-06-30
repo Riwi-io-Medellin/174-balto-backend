@@ -73,11 +73,13 @@ public sealed class WalkBookingService(
 
         var created = await bookingRepository.CreateAsync(booking);
 
+        var colombiaZone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+        var slotStartColombia = TimeZoneInfo.ConvertTimeFromUtc(slotStartUtc, colombiaZone);
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: walker.UserId,
             Type: "system",
             Title: "Nueva solicitud de paseo",
-            Body: $"Un cliente ha solicitado un paseo para el {slotStartUtc:dd/MM/yyyy HH:mm}.",
+            Body: $"Un cliente ha solicitado un paseo para el {slotStartColombia:dd/MM/yyyy HH:mm}.",
             EntityId: created.Id,
             EntityType: "walk_booking"));
 
