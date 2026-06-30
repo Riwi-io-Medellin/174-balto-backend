@@ -1,4 +1,5 @@
 using BackEndPets.API.Converters;
+using BackEndPets.API.Middleware;
 using BackEndPets.API.Endpoints;
 using BackEndPets.API.Hubs;
 using BackEndPets.Application;
