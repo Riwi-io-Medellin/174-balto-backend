@@ -74,6 +74,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentOrderRepository, PaymentOrderRepository>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IAdminVerificationService, AdminVerificationService>();
+        services.AddScoped<IAdminOperationsService, AdminOperationsService>();
         
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
