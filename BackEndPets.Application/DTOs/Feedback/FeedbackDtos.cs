@@ -17,7 +17,13 @@ public sealed record FeedbackResponse(
     string TargetType,
     int Rating,
     string? Comment,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string UserName,
+    string? UserAvatarUrl);
+
+public sealed record UpdateFeedbackRequest(
+    int Rating,
+    string? Comment);
 
 public sealed record FeedbackSummaryResponse(
     Guid TargetId,

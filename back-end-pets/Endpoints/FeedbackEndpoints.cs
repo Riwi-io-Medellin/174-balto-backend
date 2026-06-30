@@ -99,6 +99,64 @@ public static class FeedbackEndpoints
         .Produces<FeedbackSummaryResponse>(StatusCodes.Status200OK)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
+        group.MapPut("/{feedbackId:guid}", async (
+            Guid feedbackId,
+            UpdateFeedbackRequest request,
+            HttpContext ctx,
+            IFeedbackService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (feedback, errorCode) = await service.UpdateFeedbackAsync(userId, feedbackId, request);
+            return errorCode switch
+            {
+                "INVALID_RATING" => Results.BadRequest(
+                    new ApiErrorResponse("Rating must be between 1 and 5.", "INVALID_RATING")),
+                "FEEDBACK_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Feedback not found.", "FEEDBACK_NOT_FOUND")),
+                "NOT_FEEDBACK_OWNER" => Results.Json(
+                    new ApiErrorResponse("You can only edit your own feedback.", "NOT_FEEDBACK_OWNER"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ when feedback is not null => Results.Ok(feedback),
+                _ => ResultsExtensions.UnhandledError()
+            };
+        })
+        .WithName("UpdateFeedback")
+        .WithSummary("Update your own feedback (rating and/or comment)")
+        .Produces<FeedbackResponse>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/{feedbackId:guid}", async (
+            Guid feedbackId,
+            HttpContext ctx,
+            IFeedbackService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (success, errorCode) = await service.DeleteFeedbackAsync(userId, feedbackId);
+            return errorCode switch
+            {
+                "FEEDBACK_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Feedback not found.", "FEEDBACK_NOT_FOUND")),
+                "NOT_FEEDBACK_OWNER" => Results.Json(
+                    new ApiErrorResponse("You can only delete your own feedback.", "NOT_FEEDBACK_OWNER"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ when success => Results.NoContent(),
+                _ => ResultsExtensions.UnhandledError()
+            };
+        })
+        .WithName("DeleteFeedback")
+        .WithSummary("Delete your own feedback")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         return app;
     }
 }

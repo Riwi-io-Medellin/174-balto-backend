@@ -38,7 +38,7 @@ public sealed class FeedbackService(
         };
 
         var created = await feedbackRepository.CreateAsync(feedback);
-        return (MapResponse(created), null);
+        return await MapCreatedResponse(created.Id);
     }
 
     public async Task<(FeedbackResponse? Feedback, string? ErrorCode)> CreateBusinessFeedbackAsync(
@@ -63,7 +63,36 @@ public sealed class FeedbackService(
         };
 
         var created = await feedbackRepository.CreateAsync(feedback);
-        return (MapResponse(created), null);
+        return await MapCreatedResponse(created.Id);
+    }
+
+    public async Task<(FeedbackResponse? Feedback, string? ErrorCode)> UpdateFeedbackAsync(
+        Guid userId, Guid feedbackId, UpdateFeedbackRequest request)
+    {
+        if (request.Rating is < 1 or > 5)
+            return (null, "INVALID_RATING");
+
+        var existing = await feedbackRepository.GetByIdAsync(feedbackId);
+        if (existing is null) return (null, "FEEDBACK_NOT_FOUND");
+
+        if (existing.UserId != userId) return (null, "NOT_FEEDBACK_OWNER");
+
+        existing.Rating = request.Rating;
+        existing.Comment = request.Comment?.Trim();
+
+        var updated = await feedbackRepository.UpdateAsync(existing);
+        return await MapCreatedResponse(updated.Id);
+    }
+
+    public async Task<(bool Success, string? ErrorCode)> DeleteFeedbackAsync(Guid userId, Guid feedbackId)
+    {
+        var existing = await feedbackRepository.GetByIdAsync(feedbackId);
+        if (existing is null) return (false, "FEEDBACK_NOT_FOUND");
+
+        if (existing.UserId != userId) return (false, "NOT_FEEDBACK_OWNER");
+
+        await feedbackRepository.DeleteAsync(existing);
+        return (true, null);
     }
 
     public async Task<FeedbackSummaryResponse?> GetByWalkerAsync(Guid walkerId)
@@ -84,8 +113,8 @@ public sealed class FeedbackService(
 
     private async Task<FeedbackSummaryResponse> BuildSummaryAsync(Guid targetId, string targetType)
     {
-        var feedbacks = await feedbackRepository.GetByTargetAsync(targetId, targetType);
-        var average = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
+        var feedbacks = await feedbackRepository.GetByTargetWithUserAsync(targetId, targetType);
+        var average = feedbacks.Count > 0 ? feedbacks.Average(f => f.Feedback.Rating) : 0.0;
 
         return new FeedbackSummaryResponse(
             targetId,
@@ -95,6 +124,16 @@ public sealed class FeedbackService(
             feedbacks.Select(MapResponse).ToList());
     }
 
-    private static FeedbackResponse MapResponse(Feedback f) =>
-        new(f.Id, f.UserId, f.TargetId, f.TargetType, f.Rating, f.Comment, f.CreatedAt);
+    private async Task<(FeedbackResponse? Feedback, string? ErrorCode)> MapCreatedResponse(Guid feedbackId)
+    {
+        var projection = await feedbackRepository.GetByIdWithUserAsync(feedbackId);
+        if (projection is null) return (null, "FEEDBACK_NOT_FOUND");
+
+        return (MapResponse(projection), null);
+    }
+
+    private static FeedbackResponse MapResponse(FeedbackWithUserProjection p) =>
+        new(p.Feedback.Id, p.Feedback.UserId, p.Feedback.TargetId, p.Feedback.TargetType,
+            p.Feedback.Rating, p.Feedback.Comment, p.Feedback.CreatedAt,
+            $"{p.FirstName} {p.LastName}", p.PhotoUrl);
 }
