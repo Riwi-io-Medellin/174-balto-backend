@@ -33,7 +33,7 @@ public static class PaymentsEndpoints
                 "UNAUTHORIZED"       => Results.Json(new ApiErrorResponse("You do not own this booking.", "UNAUTHORIZED"), statusCode: StatusCodes.Status403Forbidden),
                 "AMOUNT_REQUIRED"    => Results.BadRequest(new ApiErrorResponse("Booking has no price set.", "AMOUNT_REQUIRED")),
                 _ when result is not null => Results.Created($"/api/payments/bookings/{bookingId}", result),
-                _                         => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                         => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreatePaymentOrder")
@@ -61,7 +61,7 @@ public static class PaymentsEndpoints
                 "UNAUTHORIZED"      => Results.Json(new ApiErrorResponse("You do not own this booking.", "UNAUTHORIZED"), statusCode: StatusCodes.Status403Forbidden),
                 "ORDER_NOT_FOUND"   => Results.NotFound(new ApiErrorResponse("Payment order not found.", "ORDER_NOT_FOUND")),
                 _ when result is not null => Results.Ok(result),
-                _                         => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                         => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetPaymentOrder")
@@ -93,7 +93,7 @@ public static class PaymentsEndpoints
                 "INVALID_SIGNATURE" => Results.Json(new ApiErrorResponse("Invalid signature.", "INVALID_SIGNATURE"), statusCode: StatusCodes.Status401Unauthorized),
                 "ORDER_NOT_FOUND"   => Results.NotFound(new ApiErrorResponse("Order not found.", "ORDER_NOT_FOUND")),
                 null                => Results.Ok(),
-                _                   => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                   => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("WompiWebhook")

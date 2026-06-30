@@ -25,7 +25,7 @@ public static class ChatEndpoints
                 {
                     "VALIDATION_FAILED" => Results.BadRequest(new ApiErrorResponse("Message is required.", "VALIDATION_FAILED")),
                     "AI_UNAVAILABLE"    => Results.StatusCode(503),
-                    _                   => Results.StatusCode(500)
+                    _                   => ResultsExtensions.UnhandledError()
                 };
             })
             .WithTags("Chat")

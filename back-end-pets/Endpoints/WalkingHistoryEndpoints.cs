@@ -33,7 +33,7 @@ public static class WalkingHistoryEndpoints
                 "WALKER_NOT_FOUND" => Results.NotFound(
                     new ApiErrorResponse("Walker not found.", "WALKER_NOT_FOUND")),
                 _ when history is not null => Results.Created($"/api/walking-history/{history.Id}", history),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreateWalkingHistory")

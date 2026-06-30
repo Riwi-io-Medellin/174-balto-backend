@@ -33,7 +33,7 @@ public static class BusinessAssetsEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 _ when document is not null => Results.Created(
                     $"/api/businesses/{businessId}/documents/{document.Id}", document),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("AddBusinessDocument")

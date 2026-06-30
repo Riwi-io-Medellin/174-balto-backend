@@ -39,16 +39,33 @@ public static class AuthEndpoints
         // ── Login ─────────────────────────────────────────────────────────────
         group.MapPost("/login", async (LoginRequest request, IAuthService service) =>
         {
-            var auth = await service.LoginAsync(request);
-            return auth is null
-                ? Results.Unauthorized()
-                : Results.Ok(auth);
+            var (tokens, errorCode) = await service.LoginAsync(request);
+        
+            if (tokens is not null)
+                return Results.Ok(tokens);
+        
+            var error = new ApiErrorResponse(
+                errorCode switch
+                {
+                    "INVALID_CREDENTIALS" => "Email or password is incorrect.",
+                    "VALIDATION_FAILED"   => "Email and password are required.",
+                    _                     => "Unable to log in."
+                },
+                errorCode ?? "LOGIN_FAILED");
+        
+            return errorCode switch
+            {
+                "INVALID_CREDENTIALS" => Results.Json(error, statusCode: StatusCodes.Status401Unauthorized),
+                "VALIDATION_FAILED"   => Results.BadRequest(error),
+                _                     => Results.StatusCode(StatusCodes.Status500InternalServerError)
+            };
         })
         .AllowAnonymous()
         .WithName("Login")
         .WithSummary("Log in and get tokens")
-        .Produces<AuthResponse>()
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<AuthResponse>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ApiErrorResponse>(StatusCodes.Status401Unauthorized);
 
         // ── Refresh ───────────────────────────────────────────────────────────
         group.MapPost("/refresh", async (RefreshTokenRequest request, IAuthService service) =>
