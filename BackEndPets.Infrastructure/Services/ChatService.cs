@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using BackEndPets.Application.DTOs.Chat;
@@ -13,7 +14,10 @@ public sealed class ChatService(
     IConfiguration configuration,
     ILogger<ChatService> logger) : IChatService
 {
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
 
     public async Task<(ChatMessageResponse? Response, string? ErrorCode)> SendMessageAsync(
         Guid userId, ChatMessageRequest request)
@@ -59,43 +63,49 @@ public sealed class ChatService(
             8. Sé amable, breve y útil.
             """;
 
-        // Construir turns — tipados para que compile
-        var turns = (request.History ?? [])
-            .Where(t => t.Role is "user" or "assistant")
-            .Select(t => new GeminiContent(
-                Role:  t.Role == "assistant" ? "model" : "user",
-                Parts: [new GeminiPart(t.Content)]))
-            .ToList();
+        // Build OpenAI messages: system prompt + history + current user message
+        var messages = new List<object>
+        {
+            new { role = "system", content = systemPrompt },
+        };
 
-        turns.Add(new GeminiContent("user", [new GeminiPart(request.Message)]));
+        foreach (var turn in (request.History ?? []).Where(t => t.Role is "user" or "assistant"))
+        {
+            messages.Add(new { role = turn.Role, content = turn.Content });
+        }
+
+        messages.Add(new { role = "user", content = request.Message });
 
         var body = JsonSerializer.Serialize(new
         {
-            system_instruction = new { parts = new[] { new { text = systemPrompt } } },
-            contents = turns
-        }, JsonOpts);
+            model      = "gpt-4o-mini",
+            messages,
+            max_tokens = 1000,
+        });
 
-        var apiKey = configuration["Gemini:ApiKey"]
-            ?? throw new InvalidOperationException("Gemini:ApiKey not configured.");
+        var apiKey = configuration["OpenAI:ApiKey"]
+            ?? throw new InvalidOperationException("OpenAI:ApiKey not configured.");
 
         using var http = new HttpClient();
+        http.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", apiKey);
 
         HttpResponseMessage httpResponse;
         try
         {
             httpResponse = await http.PostAsync(
-                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}",
+                "https://api.openai.com/v1/chat/completions",
                 new StringContent(body, Encoding.UTF8, "application/json"));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Gemini API call failed.");
+            logger.LogError(ex, "OpenAI API call failed.");
             return (null, "AI_UNAVAILABLE");
         }
 
         if (!httpResponse.IsSuccessStatusCode)
         {
-            logger.LogError("Gemini returned {Status}", httpResponse.StatusCode);
+            logger.LogError("OpenAI returned {Status}", httpResponse.StatusCode);
             return (null, "AI_UNAVAILABLE");
         }
 
@@ -103,10 +113,9 @@ public sealed class ChatService(
         using var doc    = JsonDocument.Parse(responseJson);
 
         var reply = doc.RootElement
-            .GetProperty("candidates")[0]
+            .GetProperty("choices")[0]
+            .GetProperty("message")
             .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
             .GetString();
 
         if (string.IsNullOrWhiteSpace(reply))
@@ -114,7 +123,4 @@ public sealed class ChatService(
 
         return (new ChatMessageResponse(reply), null);
     }
-
-    private sealed record GeminiContent(string Role, GeminiPart[] Parts);
-    private sealed record GeminiPart(string Text);
 }
