@@ -66,6 +66,7 @@ public sealed record WalkerProfileResponse(
     string? DocumentNumber,
     double? WorkLatitude,
     double? WorkLongitude,
+    int? MaxDogs,
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
@@ -76,7 +77,8 @@ public sealed record UpdateWalkerProfileRequest(
     int? YearsOfExperience,
     bool? IsAcceptingBookings,
     double? WorkLatitude,
-    double? WorkLongitude);
+    double? WorkLongitude,
+    int? MaxDogs);
 
 public sealed record WalkerFilterRequest(
     bool? Available,

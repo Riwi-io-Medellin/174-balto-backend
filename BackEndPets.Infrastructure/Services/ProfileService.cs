@@ -171,6 +171,9 @@ public sealed class ProfileService(
         if (request.YearsOfExperience.HasValue && request.YearsOfExperience.Value < 0)
             return (null, "YEARS_OF_EXPERIENCE_INVALID");
 
+        if (request.MaxDogs.HasValue && request.MaxDogs.Value < 1)
+            return (null, "MAX_DOGS_INVALID");
+
         if (request.Bio is not null)
             walker.Bio = request.Bio.Trim();
 
@@ -192,6 +195,9 @@ public sealed class ProfileService(
         if (request.WorkLongitude.HasValue)
             walker.WorkLongitude = request.WorkLongitude.Value;
 
+        if (request.MaxDogs.HasValue)
+            walker.MaxDogs = request.MaxDogs.Value;
+
         await walkerRepository.UpdateAsync(walker);
         return (MapWalkerProfile(walker), null);
     }
@@ -201,7 +207,7 @@ public sealed class ProfileService(
         w.Available, w.WorkLocation, w.Experience, w.Description,
         w.Bio, w.HourlyRate, w.ServiceRadiusKm, w.YearsOfExperience, w.IsAcceptingBookings,
         w.DocumentName, w.DocumentNumber,
-        w.WorkLatitude, w.WorkLongitude,
+        w.WorkLatitude, w.WorkLongitude, w.MaxDogs,
         w.CreatedAt, w.UpdatedAt);
 
     public async Task<IReadOnlyCollection<WalkerRecommendationResponse>> GetWalkerRecommendationsAsync(

@@ -5,7 +5,8 @@ public sealed record CreateBookingRequest(
     Guid PetId,
     DateTime SlotStart,
     int DurationMinutes,
-    string? SpecialInstructions);
+    string? SpecialInstructions,
+    bool IsExclusive = false);
 
 public sealed record BookingResponse(
     Guid Id,
@@ -17,6 +18,7 @@ public sealed record BookingResponse(
     int DurationMinutes,
     decimal? SnapshotHourlyRate,
     decimal? TotalPrice,
+    bool IsExclusive,
     string? SpecialInstructions,
     Guid? WalkSessionId,
     DateTime CreatedAt,

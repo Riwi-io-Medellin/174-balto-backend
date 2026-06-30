@@ -7,7 +7,8 @@ namespace BackEndPets.Infrastructure.Services;
 
 public sealed class AvailabilityEngine(
     IWalkerAvailabilityRepository availabilityRepository,
-    IWalkerAvailabilityExceptionRepository exceptionRepository) : IAvailabilityEngine
+    IWalkerAvailabilityExceptionRepository exceptionRepository,
+    IWalkBookingRepository bookingRepository) : IAvailabilityEngine
 {
     public async Task<IReadOnlyCollection<AvailabilitySlotResponse>> GetWeeklyAsync(Guid walkerId) =>
         (await availabilityRepository.GetByWalkerIdAsync(walkerId))
@@ -82,7 +83,7 @@ public sealed class AvailabilityEngine(
     }
 
     public async Task<IReadOnlyCollection<AvailableSlotResponse>> ComputeSlotsAsync(
-        Guid walkerId, DateOnly date, int durationMinutes)
+        Guid walkerId, DateOnly date, int durationMinutes, int? maxDogs = null)
     {
         var dayOfWeek = (int)date.DayOfWeek;
 
@@ -126,7 +127,26 @@ public sealed class AvailabilityEngine(
             }
         }
 
-        return result;
+        if (maxDogs is null)
+            return result;
+
+        // Filter out slots where active bookings (pending/accepted) already fill capacity
+        var allBookings = await bookingRepository.GetByWalkerIdAsync(walkerId, status: null);
+        var activeBookings = allBookings
+            .Where(b => b.Status is "pending" or "accepted")
+            .ToList();
+
+        return result
+            .Where(slot =>
+            {
+                var overlapping = activeBookings.Count(b =>
+                {
+                    var bookingEnd = b.SlotStart.AddMinutes(b.DurationMinutes);
+                    return b.SlotStart < slot.End && bookingEnd > slot.Start;
+                });
+                return overlapping < maxDogs.Value;
+            })
+            .ToList();
     }
 
     private static AvailabilitySlotResponse MapSlot(WalkerAvailability a) =>

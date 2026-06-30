@@ -18,6 +18,7 @@ public sealed class Walker
     public bool IsAcceptingBookings { get; set; } = false;
     public double? WorkLatitude { get; set; }
     public double? WorkLongitude { get; set; }
+    public int? MaxDogs { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

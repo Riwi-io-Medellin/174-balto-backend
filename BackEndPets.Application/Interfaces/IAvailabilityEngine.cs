@@ -31,7 +31,8 @@ public interface IAvailabilityEngine
     /// Generates bookable time slots for a walker on a given date.
     /// Applies exceptions on top of weekly schedule. Slots step every 30 min.
     /// Allowed durations: 30, 60, 90.
+    /// When maxDogs is provided, slots already at capacity (overlapping active bookings >= maxDogs) are excluded.
     /// </summary>
     Task<IReadOnlyCollection<AvailableSlotResponse>> ComputeSlotsAsync(
-        Guid walkerId, DateOnly date, int durationMinutes);
+        Guid walkerId, DateOnly date, int durationMinutes, int? maxDogs = null);
 }

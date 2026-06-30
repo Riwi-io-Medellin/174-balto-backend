@@ -59,6 +59,6 @@ public sealed class WalkerAvailabilityService(
         if (walker.VerificationStatus != "approved") return (null, "WALKER_NOT_APPROVED");
         if (!walker.IsAcceptingBookings) return (null, "WALKER_NOT_ACCEPTING_BOOKINGS");
 
-        return (await engine.ComputeSlotsAsync(walkerId, date, durationMinutes), null);
+        return (await engine.ComputeSlotsAsync(walkerId, date, durationMinutes, walker.MaxDogs), null);
     }
 }

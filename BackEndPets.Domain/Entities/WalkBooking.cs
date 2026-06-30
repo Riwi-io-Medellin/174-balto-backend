@@ -11,6 +11,7 @@ public sealed class WalkBooking
     public int DurationMinutes { get; set; }        // 30 | 60 | 90
     public decimal? SnapshotHourlyRate { get; set; } // walker's rate at booking time
     public decimal? TotalPrice { get; set; }
+    public bool IsExclusive { get; set; } = false;
     public string? SpecialInstructions { get; set; }
     public Guid? WalkSessionId { get; set; }        // set when status → accepted
     public DateTime CreatedAt { get; set; }

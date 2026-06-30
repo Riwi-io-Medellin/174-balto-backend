@@ -38,7 +38,7 @@ public sealed class WalkerMarketplaceService(
         var withAvailability = new List<(WalkerUserProjection Projection, double Distance)>();
         foreach (var (proj, dist) in inRadius)
         {
-            var slots = await availabilityEngine.ComputeSlotsAsync(proj.Walker.Id, query.Date, query.DurationMinutes);
+            var slots = await availabilityEngine.ComputeSlotsAsync(proj.Walker.Id, query.Date, query.DurationMinutes, proj.Walker.MaxDogs);
             if (slots.Count > 0)
                 withAvailability.Add((proj, dist));
         }
@@ -68,7 +68,8 @@ public sealed class WalkerMarketplaceService(
                 proj.Walker.YearsOfExperience,
                 proj.Walker.ServiceRadiusKm,
                 Math.Round(dist, 2),
-                HasAvailability: true));
+                HasAvailability: true,
+                proj.Walker.MaxDogs));
         }
 
         return (new PagedResult<WalkerSummaryResponse>(items, page, pageSize, totalCount), null);
@@ -90,7 +91,7 @@ public sealed class WalkerMarketplaceService(
 
         IReadOnlyCollection<AvailableSlotResponse> availableSlots = [];
         if (date.HasValue && durationMinutes is 30 or 60 or 90)
-            availableSlots = await availabilityEngine.ComputeSlotsAsync(walker.Id, date.Value, durationMinutes!.Value);
+            availableSlots = await availabilityEngine.ComputeSlotsAsync(walker.Id, date.Value, durationMinutes!.Value, walker.MaxDogs);
 
         return (new WalkerDetailResponse(
             walker.Id,
@@ -105,6 +106,7 @@ public sealed class WalkerMarketplaceService(
             Math.Round(avg, 1),
             feedbacks.Count,
             completedBookings.Count,
+            walker.MaxDogs,
             weeklySlots,
             availableSlots), null);
     }

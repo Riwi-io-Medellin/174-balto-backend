@@ -41,13 +41,17 @@ public sealed class WalkBookingService(
 
         var slotDate = DateOnly.FromDateTime(slotStartUtc);
         var availableSlots = await availabilityEngine.ComputeSlotsAsync(
-            walker.Id, slotDate, request.DurationMinutes);
+            walker.Id, slotDate, request.DurationMinutes, walker.MaxDogs);
 
         if (!availableSlots.Any(s => s.Start == slotStartUtc))
             return (null, "SLOT_NOT_AVAILABLE");
 
-        decimal? totalPrice = walker.HourlyRate.HasValue
-            ? Math.Round(walker.HourlyRate.Value * request.DurationMinutes / 60m, 2)
+        decimal? basePrice = walker.HourlyRate.HasValue
+            ? walker.HourlyRate.Value * request.DurationMinutes / 60m
+            : null;
+
+        decimal? totalPrice = basePrice.HasValue
+            ? Math.Round(request.IsExclusive ? basePrice.Value * 1.5m : basePrice.Value, 2)
             : null;
 
         var booking = new WalkBooking
@@ -59,6 +63,7 @@ public sealed class WalkBookingService(
             DurationMinutes     = request.DurationMinutes,
             SnapshotHourlyRate  = walker.HourlyRate,
             TotalPrice          = totalPrice,
+            IsExclusive         = request.IsExclusive,
             SpecialInstructions = request.SpecialInstructions?.Trim(),
             Status              = "pending"
         };
@@ -251,7 +256,7 @@ public sealed class WalkBookingService(
     private static BookingResponse Map(WalkBooking b, WalkSession? session = null) => new(
         b.Id, b.ClientUserId, b.WalkerId, b.PetId,
         b.Status, b.SlotStart, b.DurationMinutes,
-        b.SnapshotHourlyRate, b.TotalPrice, b.SpecialInstructions,
+        b.SnapshotHourlyRate, b.TotalPrice, b.IsExclusive, b.SpecialInstructions,
         b.WalkSessionId, b.CreatedAt, b.UpdatedAt,
         session?.TotalDistanceMeters,
         session?.TotalDurationSeconds);

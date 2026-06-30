@@ -94,6 +94,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(w => w.IsAcceptingBookings).HasColumnName("is_accepting_bookings");
             b.Property(w => w.WorkLatitude).HasColumnName("work_latitude");
             b.Property(w => w.WorkLongitude).HasColumnName("work_longitude");
+            b.Property(w => w.MaxDogs).HasColumnName("max_dogs");
             b.Property(w => w.CreatedAt).HasColumnName("created_at");
             b.Property(w => w.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(w => w.UserId).IsUnique();
@@ -300,6 +301,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(x => x.DurationMinutes).HasColumnName("duration_minutes");
             b.Property(x => x.SnapshotHourlyRate).HasColumnName("snapshot_hourly_rate").HasColumnType("numeric(10,2)");
             b.Property(x => x.TotalPrice).HasColumnName("total_price").HasColumnType("numeric(10,2)");
+            b.Property(x => x.IsExclusive).HasColumnName("is_exclusive");
             b.Property(x => x.SpecialInstructions).HasColumnName("special_instructions");
             b.Property(x => x.WalkSessionId).HasColumnName("walk_session_id");
             b.Property(x => x.CreatedAt).HasColumnName("created_at");

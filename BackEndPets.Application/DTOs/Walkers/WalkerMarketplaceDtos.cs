@@ -23,7 +23,8 @@ public sealed record WalkerSummaryResponse(
     int? YearsOfExperience,
     decimal? ServiceRadiusKm,
     double DistanceKm,
-    bool HasAvailability);
+    bool HasAvailability,
+    int? MaxDogs);
 
 public sealed record WalkerDetailResponse(
     Guid Id,
@@ -38,6 +39,7 @@ public sealed record WalkerDetailResponse(
     double AverageRating,
     int TotalReviews,
     int CompletedWalks,
+    int? MaxDogs,
     IReadOnlyCollection<AvailabilitySlotResponse> WeeklyAvailability,
     IReadOnlyCollection<AvailableSlotResponse> AvailableSlots);
 
