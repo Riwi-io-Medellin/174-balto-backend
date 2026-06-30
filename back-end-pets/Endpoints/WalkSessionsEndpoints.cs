@@ -268,13 +268,20 @@ public static class WalkSessionsEndpoints
             Guid sessionId,
             FinishSessionRequest request,
             HttpContext ctx,
-            IWalkSessionService service) =>
+            IWalkSessionService service,
+            IHubContext<WalkTrackingHub> hub) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Results.Unauthorized();
 
             var (session, errorCode) = await service.FinishAsync(userId, sessionId, request);
+            if (session is not null)
+            {
+                await hub.Clients.Group($"walk-{sessionId}").SendAsync("WalkCompleted");
+                return Results.Ok(session);
+            }
+
             return errorCode switch
             {
                 "WALKER_NOT_FOUND"          => Results.Json(new ApiErrorResponse("You do not have a walker profile.", "WALKER_NOT_FOUND"), statusCode: StatusCodes.Status403Forbidden),
@@ -283,7 +290,6 @@ public static class WalkSessionsEndpoints
                 "SESSION_NOT_ACTIVE"        => Results.Conflict(new ApiErrorResponse("Session is not in progress.", "SESSION_NOT_ACTIVE")),
                 "SESSION_NOT_BOOKING_BASED" => Results.Conflict(new ApiErrorResponse("Session was not started from a booking.", "SESSION_NOT_BOOKING_BASED")),
                 "BOOKING_NOT_FOUND"         => Results.NotFound(new ApiErrorResponse("Linked booking not found.", "BOOKING_NOT_FOUND")),
-                _ when session is not null  => Results.Ok(session),
                 _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
