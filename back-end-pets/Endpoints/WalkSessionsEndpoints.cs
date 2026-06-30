@@ -42,7 +42,7 @@ public static class WalkSessionsEndpoints
                 "UNAUTHORIZED" => Results.Json(
                     new ApiErrorResponse("You are not assigned to this walk.", "UNAUTHORIZED"),
                     statusCode: StatusCodes.Status403Forbidden),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("StartWalkSession")
@@ -79,7 +79,7 @@ public static class WalkSessionsEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 "INVALID_STATUS_TRANSITION" => Results.Conflict(
                     new ApiErrorResponse("Session is not in progress.", "INVALID_STATUS_TRANSITION")),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("AddWalkLocation")
@@ -115,7 +115,7 @@ public static class WalkSessionsEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 "INVALID_STATUS_TRANSITION" => Results.Conflict(
                     new ApiErrorResponse("Session is not in progress.", "INVALID_STATUS_TRANSITION")),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("PauseWalkSession")
@@ -151,7 +151,7 @@ public static class WalkSessionsEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 "INVALID_STATUS_TRANSITION" => Results.Conflict(
                     new ApiErrorResponse("Session is not paused.", "INVALID_STATUS_TRANSITION")),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("ResumeWalkSession")
@@ -187,7 +187,7 @@ public static class WalkSessionsEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 "INVALID_STATUS_TRANSITION" => Results.Conflict(
                     new ApiErrorResponse("Session cannot be completed from its current state.", "INVALID_STATUS_TRANSITION")),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("CompleteWalkSession")
@@ -211,7 +211,7 @@ public static class WalkSessionsEndpoints
                 "WALKER_NOT_FOUND"   => Results.NotFound(new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
                 "NO_ACTIVE_SESSION"  => Results.NotFound(new ApiErrorResponse("No active session.", "NO_ACTIVE_SESSION")),
                 _ when session is not null => Results.Ok(session),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("GetActiveWalkSession")
@@ -237,7 +237,7 @@ public static class WalkSessionsEndpoints
                 "BOOKING_NOT_ACCEPTED"     => Results.Conflict(new ApiErrorResponse("Booking is not in accepted status.", "BOOKING_NOT_ACCEPTED")),
                 "WALKER_HAS_ACTIVE_SESSION"=> Results.Conflict(new ApiErrorResponse("You already have an active walk session.", "WALKER_HAS_ACTIVE_SESSION")),
                 _ when session is not null => Results.Created($"/api/walk-sessions/{session.Id}", session),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("StartWalkSessionFromBooking")
@@ -256,7 +256,7 @@ public static class WalkSessionsEndpoints
             {
                 "SESSION_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
                 _ when session is not null => Results.Ok(session),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("GetWalkSessionById")
@@ -284,7 +284,7 @@ public static class WalkSessionsEndpoints
                 "SESSION_NOT_BOOKING_BASED" => Results.Conflict(new ApiErrorResponse("Session was not started from a booking.", "SESSION_NOT_BOOKING_BASED")),
                 "BOOKING_NOT_FOUND"         => Results.NotFound(new ApiErrorResponse("Linked booking not found.", "BOOKING_NOT_FOUND")),
                 _ when session is not null  => Results.Ok(session),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("FinishWalkSession")
@@ -314,7 +314,7 @@ public static class WalkSessionsEndpoints
                 "UNAUTHORIZED" => Results.Json(
                     new ApiErrorResponse("You do not have access to this session.", "UNAUTHORIZED"),
                     statusCode: StatusCodes.Status403Forbidden),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
             };
         })
         .WithName("GetWalkRoute")

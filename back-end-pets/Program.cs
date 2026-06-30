@@ -157,6 +157,13 @@ await using (var scope = app.Services.CreateAsyncScope())
 
 app.MapGet("/health", () => Results.Ok("OK"));
 
+app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
+{
+    ctx.Response.StatusCode = 500;
+    ctx.Response.ContentType = "application/json";
+    await ctx.Response.WriteAsJsonAsync(new { code = "INTERNAL_SERVER_ERROR", error = "An unexpected error occurred." });
+}));
+
 app.UseForwardedHeaders();
 app.UseCors("AllowAll");
 app.MapOpenApi();
