@@ -147,6 +147,14 @@ public sealed class WalkSessionService(
         {
             var histories = await historyRepo.GetBySessionIdAsync(sessionId);
             var isOwner = histories.Any(h => h.UserId == currentUserId);
+
+            if (!isOwner && session.BookingId is not null)
+            {
+                var booking = await bookingRepo.GetByIdAsync(session.BookingId.Value);
+                if (booking?.ClientUserId == currentUserId)
+                    isOwner = true;
+            }
+
             if (!isOwner) return (null, "UNAUTHORIZED");
         }
 
