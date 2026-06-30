@@ -239,6 +239,18 @@ public sealed class WalkSessionService(
         session.TotalDurationSeconds = request.TotalDurationSeconds;
 
         await sessionRepo.FinishFromBookingAsync(session, booking);
+
+        await historyRepo.CreateAsync(new PetWalkingHistory
+        {
+            UserId        = booking.ClientUserId,
+            PetId         = booking.PetId,
+            WalkerId      = booking.WalkerId,
+            WalkSessionId = session.Id,
+            Cost          = booking.TotalPrice,
+            StartTime     = session.StartedAt,
+            EndTime       = session.EndedAt
+        });
+
         return (MapBookingSession(session), null);
     }
 
