@@ -6,7 +6,8 @@ namespace BackEndPets.Infrastructure.Services;
 public sealed class WalkSessionAuthorizationService(
     IWalkSessionRepository sessionRepo,
     IPetWalkingHistoryRepository historyRepo,
-    IWalkerRepository walkerRepo) : IWalkSessionAuthorizationService
+    IWalkerRepository walkerRepo,
+    IWalkBookingRepository bookingRepo) : IWalkSessionAuthorizationService
 {
     public async Task<WalkGroupAccessResult> CanJoinWalkGroupAsync(Guid userId, Guid sessionId)
     {
@@ -20,10 +21,16 @@ public sealed class WalkSessionAuthorizationService(
             return new WalkGroupAccessResult(true, null);
 
         var histories = await historyRepo.GetBySessionIdAsync(sessionId);
-        var isOwner = histories.Any(h => h.UserId == userId);
+        if (histories.Any(h => h.UserId == userId))
+            return new WalkGroupAccessResult(true, null);
 
-        return isOwner
-            ? new WalkGroupAccessResult(true, null)
-            : new WalkGroupAccessResult(false, "Unauthorized.");
+        if (session.BookingId is not null)
+        {
+            var booking = await bookingRepo.GetByIdAsync(session.BookingId.Value);
+            if (booking?.ClientUserId == userId)
+                return new WalkGroupAccessResult(true, null);
+        }
+
+        return new WalkGroupAccessResult(false, "Unauthorized.");
     }
 }
