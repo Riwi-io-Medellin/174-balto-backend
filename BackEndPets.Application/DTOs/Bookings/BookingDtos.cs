@@ -20,4 +20,6 @@ public sealed record BookingResponse(
     string? SpecialInstructions,
     Guid? WalkSessionId,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    double? TotalDistanceMeters,
+    int? TotalDurationSeconds);

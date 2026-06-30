@@ -278,7 +278,11 @@ public static class WalkSessionsEndpoints
             var (session, errorCode) = await service.FinishAsync(userId, sessionId, request);
             if (session is not null)
             {
-                await hub.Clients.Group($"walk-{sessionId}").SendAsync("WalkCompleted");
+                await hub.Clients.Group($"walk-{sessionId}").SendAsync("WalkCompleted", new
+                {
+                    distanceMeters  = session.TotalDistanceMeters,
+                    durationSeconds = session.TotalDurationSeconds
+                });
                 return Results.Ok(session);
             }
 

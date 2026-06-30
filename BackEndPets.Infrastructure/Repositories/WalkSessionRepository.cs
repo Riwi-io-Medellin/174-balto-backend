@@ -10,6 +10,14 @@ public sealed class WalkSessionRepository(AppIdentityDbContext dbContext) : IWal
     public Task<WalkSession?> GetByIdAsync(Guid sessionId) =>
         dbContext.WalkSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
 
+    public async Task<IReadOnlyDictionary<Guid, WalkSession>> GetByIdsAsync(IEnumerable<Guid> ids)
+    {
+        var idList = ids.ToList();
+        if (idList.Count == 0) return new Dictionary<Guid, WalkSession>();
+        var sessions = await dbContext.WalkSessions.Where(s => idList.Contains(s.Id)).ToListAsync();
+        return sessions.ToDictionary(s => s.Id);
+    }
+
     public async Task<WalkSession> CreateAsync(WalkSession session)
     {
         session.Id = Guid.NewGuid();

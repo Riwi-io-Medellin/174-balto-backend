@@ -12,7 +12,8 @@ public sealed class WalkBookingService(
     IWalkerRepository walkerRepository,
     IPetRepository petRepository,
     IAvailabilityEngine availabilityEngine,
-    INotificationService notificationService) : IWalkBookingService
+    INotificationService notificationService,
+    IWalkSessionRepository sessionRepository) : IWalkBookingService
 {
     // Terminal states — no further transitions allowed from these.
     private static readonly string[] TerminalStatuses =
@@ -84,9 +85,9 @@ public sealed class WalkBookingService(
             .OrderByDescending(b => b.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(Map)
             .ToList();
-        return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
+        var sessions = await LoadSessionsAsync(paged);
+        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, sessions)).ToList(), page, pageSize, totalCount);
     }
 
     public async Task<(BookingResponse? Result, string? ErrorCode)> GetByIdAsync(
@@ -95,12 +96,16 @@ public sealed class WalkBookingService(
         var booking = await bookingRepository.GetByIdAsync(bookingId);
         if (booking is null) return (null, "BOOKING_NOT_FOUND");
 
+        WalkSession? session = booking.WalkSessionId.HasValue
+            ? await sessionRepository.GetByIdAsync(booking.WalkSessionId.Value)
+            : null;
+
         if (booking.ClientUserId == currentUserId)
-            return (Map(booking), null);
+            return (Map(booking, session), null);
 
         var walker = await walkerRepository.GetByUserIdAsync(currentUserId);
         if (walker is not null && walker.Id == booking.WalkerId)
-            return (Map(booking), null);
+            return (Map(booking, session), null);
 
         return (null, "UNAUTHORIZED");
     }
@@ -117,7 +122,7 @@ public sealed class WalkBookingService(
             .OrderByDescending(b => b.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(Map)
+            .Select(b => Map(b))
             .ToList();
         return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
     }
@@ -134,9 +139,9 @@ public sealed class WalkBookingService(
             .OrderByDescending(b => b.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(Map)
             .ToList();
-        return new PagedResult<BookingResponse>(paged, page, pageSize, totalCount);
+        var sessions = await LoadSessionsAsync(paged);
+        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, sessions)).ToList(), page, pageSize, totalCount);
     }
 
     public async Task<(BookingResponse? Result, string? ErrorCode)> AcceptAsync(
@@ -243,9 +248,23 @@ public sealed class WalkBookingService(
         return (Map(updated), null);
     }
 
-    private static BookingResponse Map(WalkBooking b) => new(
+    private static BookingResponse Map(WalkBooking b, WalkSession? session = null) => new(
         b.Id, b.ClientUserId, b.WalkerId, b.PetId,
         b.Status, b.SlotStart, b.DurationMinutes,
         b.SnapshotHourlyRate, b.TotalPrice, b.SpecialInstructions,
-        b.WalkSessionId, b.CreatedAt, b.UpdatedAt);
+        b.WalkSessionId, b.CreatedAt, b.UpdatedAt,
+        session?.TotalDistanceMeters,
+        session?.TotalDurationSeconds);
+
+    private static BookingResponse Map(WalkBooking b, IReadOnlyDictionary<Guid, WalkSession> sessions) =>
+        Map(b, b.WalkSessionId.HasValue ? sessions.GetValueOrDefault(b.WalkSessionId.Value) : null);
+
+    private async Task<IReadOnlyDictionary<Guid, WalkSession>> LoadSessionsAsync(IEnumerable<WalkBooking> bookings)
+    {
+        var ids = bookings
+            .Where(b => b.WalkSessionId.HasValue)
+            .Select(b => b.WalkSessionId!.Value)
+            .Distinct();
+        return await sessionRepository.GetByIdsAsync(ids);
+    }
 }
