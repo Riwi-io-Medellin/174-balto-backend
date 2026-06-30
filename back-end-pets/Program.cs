@@ -185,5 +185,6 @@ app.MapUploadEndpoints();
 app.MapNotificationsEndpoints();
 app.MapWalkerAvailabilityEndpoints();
 app.MapWalkBookingEndpoints();
+app.MapChatEndpoints();
 
 app.Run();
