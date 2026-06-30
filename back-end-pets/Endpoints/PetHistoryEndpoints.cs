@@ -33,7 +33,7 @@ public static class PetHistoryEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 _ when history is not null => Results.Created(
                     $"/api/pets/{petId}/history/{history.Id}", history),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreatePetHistory")

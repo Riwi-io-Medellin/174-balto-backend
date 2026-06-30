@@ -27,7 +27,7 @@ public static class WalkersEndpoints
                 "WALKER_ALREADY_EXISTS" => Results.Conflict(
                     new ApiErrorResponse("User is already registered as a walker.", "WALKER_ALREADY_EXISTS")),
                 _ when walker is not null => Results.Created($"/api/walkers/{walker.Id}", walker),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("BecomeWalker")
@@ -52,7 +52,7 @@ public static class WalkersEndpoints
             {
                 "INVALID_DURATION" => Results.BadRequest(new ApiErrorResponse("durationMinutes must be 30, 60, or 90.", "INVALID_DURATION")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("SearchWalkers")
@@ -71,7 +71,7 @@ public static class WalkersEndpoints
             {
                 "WALKER_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Walker not found.", "WALKER_NOT_FOUND")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetWalkerDetail")
@@ -91,7 +91,7 @@ public static class WalkersEndpoints
                 "WALKER_NOT_FOUND" => Results.NotFound(
                     new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
                 _ when profile is not null => Results.Ok(profile),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetMyWalkerProfile")
@@ -119,7 +119,7 @@ public static class WalkersEndpoints
                 "YEARS_OF_EXPERIENCE_INVALID" => Results.BadRequest(
                     new ApiErrorResponse("yearsOfExperience must be >= 0.", "YEARS_OF_EXPERIENCE_INVALID")),
                 _ when profile is not null => Results.Ok(profile),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("UpdateMyWalkerProfile")
@@ -151,7 +151,7 @@ public static class WalkersEndpoints
                 "WALKER_NOT_APPROVED"           => Results.Conflict(new ApiErrorResponse("Walker is not approved.", "WALKER_NOT_APPROVED")),
                 "WALKER_NOT_ACCEPTING_BOOKINGS" => Results.Conflict(new ApiErrorResponse("Walker is not accepting bookings.", "WALKER_NOT_ACCEPTING_BOOKINGS")),
                 _ when result is not null       => Results.Ok(result),
-                _                               => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                               => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetWalkerAvailableSlots")
@@ -208,7 +208,7 @@ public static class WalkersEndpoints
             return errorCode switch
             {
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("ApplyAsWalker")

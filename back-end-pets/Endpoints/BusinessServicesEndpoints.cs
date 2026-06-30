@@ -35,7 +35,7 @@ public static class BusinessServicesEndpoints
                     new ApiErrorResponse("Price must be 0 or greater.", "INVALID_PRICE")),
                 _ when created is not null => Results.Created(
                     $"/api/businesses/{businessId}/services/{created.Id}", created),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreateBusinessService")

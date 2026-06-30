@@ -193,5 +193,7 @@ app.MapNotificationsEndpoints();
 app.MapWalkerAvailabilityEndpoints();
 app.MapWalkBookingEndpoints();
 app.MapChatEndpoints();
+app.MapPaymentsEndpoints();
+app.UseGlobalExceptionHandler();
 
 app.Run();

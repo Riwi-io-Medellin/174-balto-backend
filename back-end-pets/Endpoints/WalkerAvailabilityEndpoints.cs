@@ -28,7 +28,7 @@ public static class WalkerAvailabilityEndpoints
                 "WALKER_NOT_FOUND" => Results.NotFound(
                     new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetMyAvailability")
@@ -57,7 +57,7 @@ public static class WalkerAvailabilityEndpoints
                 "INVALID_TIME_RANGE" => Results.BadRequest(
                     new ApiErrorResponse("startTime must be earlier than endTime.", "INVALID_TIME_RANGE")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("ReplaceMyAvailability")
@@ -81,7 +81,7 @@ public static class WalkerAvailabilityEndpoints
                 "WALKER_NOT_FOUND" => Results.NotFound(
                     new ApiErrorResponse("Walker profile not found.", "WALKER_NOT_FOUND")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetMyAvailabilityExceptions")
@@ -114,7 +114,7 @@ public static class WalkerAvailabilityEndpoints
                 "INVALID_TIME_RANGE" => Results.BadRequest(
                     new ApiErrorResponse("startTime must be earlier than endTime.", "INVALID_TIME_RANGE")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("ReplaceMyAvailabilityExceptions")

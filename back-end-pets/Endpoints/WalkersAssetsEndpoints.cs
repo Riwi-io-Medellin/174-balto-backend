@@ -29,7 +29,7 @@ public static class WalkerAssetsEndpoints
                 "WALKER_NOT_FOUND" => Results.NotFound(
                     new ApiErrorResponse("You do not have a walker profile.", "WALKER_NOT_FOUND")),
                 _ when photo is not null => Results.Created($"/api/walkers/me/gallery/{photo.Id}", photo),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("AddWalkerPhoto")
@@ -87,7 +87,7 @@ public static class WalkerAssetsEndpoints
                 "WALKER_NOT_FOUND" => Results.NotFound(
                     new ApiErrorResponse("You do not have a walker profile.", "WALKER_NOT_FOUND")),
                 _ when document is not null => Results.Created($"/api/walkers/me/documents/{document.Id}", document),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("AddWalkerDocument")

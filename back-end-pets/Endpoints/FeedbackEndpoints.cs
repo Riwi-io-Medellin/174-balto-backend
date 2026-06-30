@@ -35,7 +35,7 @@ public static class FeedbackEndpoints
                 "FEEDBACK_ALREADY_EXISTS" => Results.Conflict(
                     new ApiErrorResponse("You have already reviewed this walker.", "FEEDBACK_ALREADY_EXISTS")),
                 _ when feedback is not null => Results.Created($"/api/feedback/walkers/{feedback.Id}", feedback),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreateWalkerFeedback")
@@ -65,7 +65,7 @@ public static class FeedbackEndpoints
                 "FEEDBACK_ALREADY_EXISTS" => Results.Conflict(
                     new ApiErrorResponse("You have already reviewed this business.", "FEEDBACK_ALREADY_EXISTS")),
                 _ when feedback is not null => Results.Created($"/api/feedback/businesses/{feedback.Id}", feedback),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreateBusinessFeedback")

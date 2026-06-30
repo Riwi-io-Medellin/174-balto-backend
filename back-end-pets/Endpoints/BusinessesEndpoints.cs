@@ -35,7 +35,7 @@ public static class BusinessesEndpoints
                     "A business with this email already exists.",
                     "EMAIL_ALREADY_TAKEN")),
                 _ when business is not null => Results.Created($"/api/businesses/{business.Id}", business),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreateBusiness")

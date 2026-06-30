@@ -36,7 +36,7 @@ public static class WalkBookingEndpoints
                 "SLOT_IN_PAST"                  => Results.BadRequest(new ApiErrorResponse("Slot start must be in the future.", "SLOT_IN_PAST")),
                 "SLOT_NOT_AVAILABLE"            => Results.Conflict(new ApiErrorResponse("Requested slot is not available for this walker.", "SLOT_NOT_AVAILABLE")),
                 _ when result is not null       => Results.Created($"/api/walk-bookings/{result.Id}", result),
-                _                               => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                               => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CreateBooking")
@@ -80,7 +80,7 @@ public static class WalkBookingEndpoints
                 "BOOKING_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Booking not found.", "BOOKING_NOT_FOUND")),
                 "UNAUTHORIZED"      => Results.Json(new ApiErrorResponse("Access denied.", "UNAUTHORIZED"), statusCode: StatusCodes.Status403Forbidden),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("GetBookingById")
@@ -106,7 +106,7 @@ public static class WalkBookingEndpoints
                 "UNAUTHORIZED"      => Results.Json(new ApiErrorResponse("This booking is not assigned to you.", "UNAUTHORIZED"), statusCode: StatusCodes.Status403Forbidden),
                 "BOOKING_NOT_PENDING" => Results.Conflict(new ApiErrorResponse("Booking is not in pending status.", "BOOKING_NOT_PENDING")),
                 _ when result is not null => Results.Ok(result),
-                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _ => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("AcceptBooking")
@@ -134,7 +134,7 @@ public static class WalkBookingEndpoints
                 "CANNOT_REJECT_COMPLETED"  => Results.Conflict(new ApiErrorResponse("Cannot reject a completed booking.", "CANNOT_REJECT_COMPLETED")),
                 "BOOKING_ALREADY_RESOLVED" => Results.Conflict(new ApiErrorResponse("Booking is already in a terminal state.", "BOOKING_ALREADY_RESOLVED")),
                 _ when result is not null  => Results.Ok(result),
-                _                          => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                          => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("RejectBooking")
@@ -162,7 +162,7 @@ public static class WalkBookingEndpoints
                 "BOOKING_ALREADY_RESOLVED" => Results.Conflict(new ApiErrorResponse("Booking is already in a terminal state.", "BOOKING_ALREADY_RESOLVED")),
                 "CANNOT_CANCEL_COMPLETED"  => Results.Conflict(new ApiErrorResponse("Cannot cancel a completed booking.", "CANNOT_CANCEL_COMPLETED")),
                 _ when result is not null  => Results.Ok(result),
-                _                          => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                          => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CancelBookingByWalker")
@@ -189,7 +189,7 @@ public static class WalkBookingEndpoints
                 "BOOKING_ALREADY_RESOLVED" => Results.Conflict(new ApiErrorResponse("Booking is already in a terminal state.", "BOOKING_ALREADY_RESOLVED")),
                 "CANNOT_CANCEL_COMPLETED"  => Results.Conflict(new ApiErrorResponse("Cannot cancel a completed booking.", "CANNOT_CANCEL_COMPLETED")),
                 _ when result is not null  => Results.Ok(result),
-                _                          => Results.StatusCode(StatusCodes.Status500InternalServerError)
+                _                          => ResultsExtensions.UnhandledError()
             };
         })
         .WithName("CancelBookingByOwner")

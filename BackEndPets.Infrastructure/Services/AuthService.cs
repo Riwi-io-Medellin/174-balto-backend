@@ -95,19 +95,22 @@ public sealed class AuthService(
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
-    public async Task<AuthResponse?> LoginAsync(LoginRequest request)
+    public async Task<(AuthResponse? Tokens, string? ErrorCode)> LoginAsync(LoginRequest request)
     {
         var email = request.Email?.Trim();
+    
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
-            return null;
-
+            return (null, "VALIDATION_FAILED");
+    
         var user = await userManager.FindByEmailAsync(email);
-        if (user is null) return null;
-
+        if (user is null)
+            return (null, "INVALID_CREDENTIALS");
+    
         var passwordIsValid = await userManager.CheckPasswordAsync(user, request.Password);
-        if (!passwordIsValid) return null;
-
-        return CreateTokens(user.Email ?? email, user.Id.ToString());
+        if (!passwordIsValid)
+            return (null, "INVALID_CREDENTIALS");
+    
+        return (CreateTokens(user.Email ?? email, user.Id.ToString()), null);
     }
 
     // ── Refresh / Logout ──────────────────────────────────────────────────────
