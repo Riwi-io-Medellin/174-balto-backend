@@ -9,7 +9,7 @@ public sealed class FeedbackService(
     IFeedbackRepository feedbackRepository,
     IWalkerRepository walkerRepository,
     IBusinessRepository businessRepository,
-    IPetWalkingHistoryRepository historyRepository) : IFeedbackService
+    IWalkBookingRepository bookingRepository) : IFeedbackService
 {
     public async Task<(FeedbackResponse? Feedback, string? ErrorCode)> CreateWalkerFeedbackAsync(
         Guid userId, CreateWalkerFeedbackRequest request)
@@ -20,9 +20,8 @@ public sealed class FeedbackService(
         var walker = await walkerRepository.GetByIdAsync(request.WalkerId);
         if (walker is null) return (null, "WALKER_NOT_FOUND");
 
-        // Solo owners que tuvieron paseo con este walker
-        var histories = await historyRepository.GetByUserIdAsync(userId);
-        var hadWalk = histories.Any(h => h.WalkerId == request.WalkerId);
+        var bookings = await bookingRepository.GetByClientUserIdAsync(userId, status: "completed");
+        var hadWalk = bookings.Any(b => b.WalkerId == request.WalkerId);
         if (!hadWalk) return (null, "NO_WALK_HISTORY");
 
         if (await feedbackRepository.ExistsAsync(userId, request.WalkerId, "walker"))
