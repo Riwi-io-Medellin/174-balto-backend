@@ -34,15 +34,15 @@ public sealed class WalkSessionRepository(AppIdentityDbContext dbContext) : IWal
 
         session.Id = Guid.NewGuid();
         dbContext.WalkSessions.Add(session);
+        await dbContext.SaveChangesAsync(); // INSERT walk_sessions before booking FK update
 
         booking.Status        = "in_progress";
         booking.WalkSessionId = session.Id;
         booking.UpdatedAt     = DateTime.UtcNow;
         dbContext.WalkBookings.Update(booking);
+        await dbContext.SaveChangesAsync(); // UPDATE walk_bookings (FK row now exists)
 
-        await dbContext.SaveChangesAsync();
         await tx.CommitAsync();
-
         return session;
     }
 
