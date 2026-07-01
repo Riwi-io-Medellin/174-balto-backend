@@ -15,6 +15,7 @@ public static class UsersEndpoints
         group.MapGet("/", async (IUserService service) => Results.Ok(await service.GetAllAsync()))
             .WithName("GetUsers")
             .WithSummary("List users")
+            .RequireAuthorization("AdminOnly")
             .Produces<IReadOnlyCollection<UserResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{id:guid}", async (Guid id, IUserService service) =>

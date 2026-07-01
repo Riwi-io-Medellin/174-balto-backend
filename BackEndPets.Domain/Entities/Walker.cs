@@ -19,6 +19,11 @@ public sealed class Walker
     public double? WorkLatitude { get; set; }
     public double? WorkLongitude { get; set; }
     public int? MaxDogs { get; set; }
+    public string AdminStatus { get; set; } = "active";
+    public string? AdminReason { get; set; }
+    public Guid? AdminModeratedByUserId { get; set; }
+    public DateTime? AdminModeratedAt { get; set; }
+    public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
