@@ -26,15 +26,5 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public string? PhotoUrl { get; set; }
 
-    public string AdminStatus { get; set; } = "active";
-
-    public string? AdminReason { get; set; }
-
-    public Guid? AdminModeratedByUserId { get; set; }
-
-    public DateTime? AdminModeratedAt { get; set; }
-
-    public DateTime? DeletedAt { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

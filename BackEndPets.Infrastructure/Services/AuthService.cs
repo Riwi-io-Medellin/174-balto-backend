@@ -89,8 +89,7 @@ public sealed class AuthService(
             return new RegisterResult(null, code, firstError?.Description ?? "Unable to register user.");
         }
 
-        var roles = await userManager.GetRolesAsync(user);
-        var tokens = CreateTokens(user.Email ?? email, user.Id.ToString(), roles);
+        var tokens = CreateTokens(user.Email ?? email, user.Id.ToString());
         return new RegisterResult(tokens, null, null);
     }
 
@@ -111,8 +110,7 @@ public sealed class AuthService(
         if (!passwordIsValid)
             return (null, "INVALID_CREDENTIALS");
     
-        var roles = await userManager.GetRolesAsync(user);
-        return (CreateTokens(user.Email ?? email, user.Id.ToString(), roles), null);
+        return (CreateTokens(user.Email ?? email, user.Id.ToString()), null);
     }
 
     // ── Refresh / Logout ──────────────────────────────────────────────────────
@@ -130,7 +128,7 @@ public sealed class AuthService(
         }
 
         RefreshTokens.TryRemove(request.RefreshToken, out _);
-        return Task.FromResult<AuthResponse?>(CreateTokens(storedToken.Email, storedToken.UserId, storedToken.Roles));
+        return Task.FromResult<AuthResponse?>(CreateTokens(storedToken.Email, storedToken.UserId));
     }
 
     public Task<bool> LogoutAsync(LogoutRequest request)
@@ -352,8 +350,7 @@ public sealed class AuthService(
                 new UserLoginInfo(provider, providerKey, provider));
         }
 
-        var roles = await userManager.GetRolesAsync(user);
-        var tokens = CreateTokens(user.Email ?? email, user.Id.ToString(), roles);
+        var tokens = CreateTokens(user.Email ?? email, user.Id.ToString());
         return (tokens, null);
     }
 
@@ -434,42 +431,31 @@ public sealed class AuthService(
             FamilyName: claims.GetValueOrDefault("family_name")));
     }
 
-    private AuthResponse CreateTokens(string email, string userId, IEnumerable<string>? roles = null)
+    private AuthResponse CreateTokens(string email, string userId)
     {
         var accessExpiresAt  = DateTimeOffset.UtcNow.AddHours(1);
         var refreshExpiresAt = DateTimeOffset.UtcNow.AddDays(7);
 
-        var roleList = roles?.Distinct(StringComparer.OrdinalIgnoreCase).ToArray() ?? [];
-        var accessToken  = CreateAccessToken(email, userId, roleList, accessExpiresAt);
+        var accessToken  = CreateAccessToken(email, userId, accessExpiresAt);
         var refreshToken = Guid.NewGuid().ToString("N");
 
-        RefreshTokens[refreshToken] = new RefreshTokenRecord(email, userId, roleList, refreshExpiresAt);
+        RefreshTokens[refreshToken] = new RefreshTokenRecord(email, userId, refreshExpiresAt);
 
         return new AuthResponse(accessToken, refreshToken, accessExpiresAt);
     }
 
-    private string CreateAccessToken(
-        string email,
-        string userId,
-        IReadOnlyCollection<string> roles,
-        DateTimeOffset expiresAt)
+    private string CreateAccessToken(string email, string userId, DateTimeOffset expiresAt)
     {
         var issuer   = configuration["Jwt:Issuer"]   ?? "balto";
         var audience = configuration["Jwt:Audience"] ?? "balto.api";
         var key      = configuration["Jwt:Key"]      ?? "dev-only-change-this-secret-key-32-chars";
 
-        var claims = new List<Claim>
+        var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub,   userId),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(ClaimTypes.NameIdentifier,     userId)
         };
-
-        foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-            claims.Add(new Claim("role", role));
-        }
 
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
@@ -485,11 +471,7 @@ public sealed class AuthService(
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private sealed record RefreshTokenRecord(
-        string Email,
-        string UserId,
-        IReadOnlyCollection<string> Roles,
-        DateTimeOffset ExpiresAt);
+    private sealed record RefreshTokenRecord(string Email, string UserId, DateTimeOffset ExpiresAt);
 
     private sealed record GoogleTokenPayload(
         string Sub, string Email,

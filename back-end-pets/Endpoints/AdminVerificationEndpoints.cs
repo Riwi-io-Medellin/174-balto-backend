@@ -10,7 +10,7 @@ public static class AdminVerificationEndpoints
     {
         var group = app.MapGroup("/api/admin/verification")
             .WithTags("Admin Verification")
-            .RequireAuthorization("AdminOnly");
+            .RequireAuthorization();
 
         group.MapGet("/businesses", async (string? status, IAdminVerificationService service) =>
                 Results.Ok(await service.GetBusinessesAsync(status)))

@@ -13,7 +13,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
-using System.Security.Claims;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -35,7 +34,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateLifetime = true,
-            RoleClaimType = ClaimTypes.Role,
             ClockSkew = TimeSpan.Zero
         };
         options.Events = new JwtBearerEvents
@@ -53,10 +51,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-});
+builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -155,58 +150,10 @@ await using (var scope = app.Services.CreateAsyncScope())
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS is_accepting_bookings BOOLEAN NOT NULL DEFAULT false;
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_latitude DOUBLE PRECISION;
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_longitude DOUBLE PRECISION;
-        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS max_dogs INTEGER;
-        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_status VARCHAR(30) NOT NULL DEFAULT 'active';
-        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_reason TEXT;
-        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_moderated_by_user_id UUID;
-        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_moderated_at TIMESTAMP;
-        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_status VARCHAR(30) NOT NULL DEFAULT 'active';
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_reason TEXT;
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_moderated_by_user_id UUID;
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_moderated_at TIMESTAMP;
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
-        """);
-
-    await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS community_alerts (
-            id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-            reporter_user_id        UUID        NOT NULL,
-            alert_type              VARCHAR(30) NOT NULL,
-            pet_name                VARCHAR(160) NOT NULL,
-            species                 VARCHAR(80),
-            description             TEXT        NOT NULL,
-            last_seen_location      TEXT,
-            evidence_url            TEXT,
-            status                  VARCHAR(30) NOT NULL DEFAULT 'active',
-            moderation_reason       TEXT,
-            moderated_by_user_id    UUID,
-            moderated_at            TIMESTAMP,
-            created_at              TIMESTAMP   NOT NULL DEFAULT NOW(),
-            updated_at              TIMESTAMP   NOT NULL DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS ix_community_alerts_status ON community_alerts(status);
-        CREATE INDEX IF NOT EXISTS ix_community_alerts_type ON community_alerts(alert_type);
-        CREATE TABLE IF NOT EXISTS admin_audit_logs (
-            id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-            actor_user_id   UUID        NOT NULL,
-            action          VARCHAR(120) NOT NULL,
-            entity_type     VARCHAR(80) NOT NULL,
-            entity_id       UUID        NOT NULL,
-            reason          TEXT        NOT NULL,
-            snapshot_json   JSONB       NOT NULL DEFAULT '{}'::jsonb,
-            created_at      TIMESTAMP   NOT NULL DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS ix_admin_audit_entity ON admin_audit_logs(entity_type, entity_id);
-        CREATE INDEX IF NOT EXISTS ix_admin_audit_created ON admin_audit_logs(created_at);
         """);
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-    await IdentitySeeder.SeedDemoUserAsync(userManager, roleManager);
+    await IdentitySeeder.SeedDemoUserAsync(userManager);
 }
 
 app.MapGet("/health", () => Results.Ok("OK"));
@@ -249,7 +196,6 @@ app.MapWalkBookingEndpoints();
 app.MapChatEndpoints();
 app.MapPaymentsEndpoints();
 app.MapAdminVerificationEndpoints();
-app.MapAdminOperationsEndpoints();
 app.UseGlobalExceptionHandler();
 
 app.Run();
