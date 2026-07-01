@@ -99,7 +99,8 @@ public sealed class WalkBookingService(
             .Take(pageSize)
             .ToList();
         var sessions = await LoadSessionsAsync(paged);
-        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, sessions)).ToList(), page, pageSize, totalCount);
+        var walkers = await LoadWalkerProjectionsAsync(paged);
+        return new PagedResult<BookingResponse>(paged.Select(b => Map(b, sessions, walkerInfo: walkers.GetValueOrDefault(b.WalkerId))).ToList(), page, pageSize, totalCount);
     }
 
     public async Task<(BookingResponse? Result, string? ErrorCode)> GetByIdAsync(
@@ -261,7 +262,7 @@ public sealed class WalkBookingService(
         return (Map(updated), null);
     }
 
-    private static BookingResponse Map(WalkBooking b, WalkSession? session = null, ApplicationUser? ownerOf = null) => new(
+    private static BookingResponse Map(WalkBooking b, WalkSession? session = null, ApplicationUser? ownerOf = null, WalkerUserProjection? walkerInfo = null) => new(
         b.Id, b.ClientUserId, b.WalkerId, b.PetId,
         b.Status, b.SlotStart, b.DurationMinutes,
         b.SnapshotHourlyRate, b.TotalPrice, b.IsExclusive, b.SpecialInstructions,
@@ -270,10 +271,12 @@ public sealed class WalkBookingService(
         session?.TotalDurationSeconds,
         ownerOf?.Latitude,
         ownerOf?.Longitude,
-        ownerOf?.Address ?? ownerOf?.Location);
+        ownerOf?.Address ?? ownerOf?.Location,
+        walkerInfo is not null ? $"{walkerInfo.FirstName} {walkerInfo.LastName}" : null,
+        walkerInfo?.PhotoUrl);
 
-    private static BookingResponse Map(WalkBooking b, IReadOnlyDictionary<Guid, WalkSession> sessions, ApplicationUser? ownerOf = null) =>
-        Map(b, b.WalkSessionId.HasValue ? sessions.GetValueOrDefault(b.WalkSessionId.Value) : null, ownerOf);
+    private static BookingResponse Map(WalkBooking b, IReadOnlyDictionary<Guid, WalkSession> sessions, ApplicationUser? ownerOf = null, WalkerUserProjection? walkerInfo = null) =>
+        Map(b, b.WalkSessionId.HasValue ? sessions.GetValueOrDefault(b.WalkSessionId.Value) : null, ownerOf, walkerInfo);
 
     private async Task<IReadOnlyDictionary<Guid, WalkSession>> LoadSessionsAsync(IEnumerable<WalkBooking> bookings)
     {
@@ -291,6 +294,17 @@ public sealed class WalkBookingService(
         {
             var user = await userManager.FindByIdAsync(userId.ToString());
             if (user is not null) result[userId] = user;
+        }
+        return result;
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, WalkerUserProjection>> LoadWalkerProjectionsAsync(IEnumerable<WalkBooking> bookings)
+    {
+        var result = new Dictionary<Guid, WalkerUserProjection>();
+        foreach (var walkerId in bookings.Select(b => b.WalkerId).Distinct())
+        {
+            var projection = await walkerRepository.GetByIdWithUserAsync(walkerId);
+            if (projection is not null) result[walkerId] = projection;
         }
         return result;
     }

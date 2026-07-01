@@ -25,7 +25,9 @@ public sealed record WalkerResponse(
     string? WorkLocation,
     string? Experience,
     string? Description,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    double AverageRating = 0,
+    int TotalReviews = 0);
 
 public sealed record CreateBusinessRequest(
     string Name,

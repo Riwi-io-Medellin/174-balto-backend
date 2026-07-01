@@ -27,4 +27,6 @@ public sealed record BookingResponse(
     int? TotalDurationSeconds,
     double? OwnerLatitude,
     double? OwnerLongitude,
-    string? OwnerAddress);
+    string? OwnerAddress,
+    string? WalkerName = null,
+    string? WalkerPhotoUrl = null);

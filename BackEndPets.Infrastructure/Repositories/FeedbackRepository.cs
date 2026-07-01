@@ -34,14 +34,20 @@ public sealed class FeedbackRepository(AppIdentityDbContext dbContext) : IFeedba
             .OrderByDescending(f => f.CreatedAt)
             .ToListAsync();
 
+    public async Task<IReadOnlyCollection<Feedback>> GetByTargetsAsync(IEnumerable<Guid> targetIds, string targetType) =>
+        await dbContext.Feedbacks
+            .Where(f => targetIds.Contains(f.TargetId) && f.TargetType == targetType)
+            .ToListAsync();
+
     public async Task<IReadOnlyCollection<FeedbackWithUserProjection>> GetByTargetWithUserAsync(Guid targetId, string targetType) =>
         await dbContext.Feedbacks
             .Where(f => f.TargetId == targetId && f.TargetType == targetType)
             .Join(dbContext.Users,
                 f => f.UserId,
                 u => u.Id,
-                (f, u) => new FeedbackWithUserProjection(f, u.FirstName, u.LastName, u.PhotoUrl))
-            .OrderByDescending(f => f.Feedback.CreatedAt)
+                (f, u) => new { Feedback = f, User = u })
+            .OrderByDescending(x => x.Feedback.CreatedAt)
+            .Select(x => new FeedbackWithUserProjection(x.Feedback, x.User.FirstName, x.User.LastName, x.User.PhotoUrl))
             .ToListAsync();
 
     public Task<bool> ExistsAsync(Guid userId, Guid targetId, string targetType) =>
