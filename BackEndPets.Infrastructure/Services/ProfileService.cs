@@ -110,25 +110,40 @@ public sealed class ProfileService(
     public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync(bool? available = null, string? workLocation = null)
     {
         var projections = await walkerRepository.GetAllWithUserAsync(available, workLocation);
-        return projections.Select(p => new WalkerResponse(
-            p.Walker.Id, p.Walker.UserId,
-            $"{p.FirstName} {p.LastName}", p.PhotoUrl,
-            p.Walker.VerificationStatus, p.Walker.Available,
-            p.Walker.WorkLocation, p.Walker.Experience,
-            p.Walker.Description, p.Walker.CreatedAt))
-            .ToList();
+        var walkerIds = projections.Select(p => p.Walker.Id).ToList();
+        var feedbacks = await feedbackRepository.GetByTargetsAsync(walkerIds, "walker");
+        var ratingMap = feedbacks
+            .GroupBy(f => f.TargetId)
+            .ToDictionary(g => g.Key, g => (Average: g.Average(f => f.Rating), Count: g.Count()));
+
+        return projections.Select(p =>
+        {
+            var (avg, count) = ratingMap.GetValueOrDefault(p.Walker.Id, (0.0, 0));
+            return new WalkerResponse(
+                p.Walker.Id, p.Walker.UserId,
+                $"{p.FirstName} {p.LastName}", p.PhotoUrl,
+                p.Walker.VerificationStatus, p.Walker.Available,
+                p.Walker.WorkLocation, p.Walker.Experience,
+                p.Walker.Description, p.Walker.CreatedAt,
+                Math.Round(avg, 1), count);
+        }).ToList();
     }
 
     public async Task<WalkerResponse?> GetWalkerByIdAsync(Guid id)
     {
         var projection = await walkerRepository.GetByIdWithUserAsync(id);
         if (projection is null) return null;
+
+        var feedbacks = await feedbackRepository.GetByTargetAsync(id, "walker");
+        var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
+
         return new WalkerResponse(
             projection.Walker.Id, projection.Walker.UserId,
             $"{projection.FirstName} {projection.LastName}", projection.PhotoUrl,
             projection.Walker.VerificationStatus, projection.Walker.Available,
             projection.Walker.WorkLocation, projection.Walker.Experience,
-            projection.Walker.Description, projection.Walker.CreatedAt);
+            projection.Walker.Description, projection.Walker.CreatedAt,
+            Math.Round(avg, 1), feedbacks.Count);
     }
 
     public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null) =>
