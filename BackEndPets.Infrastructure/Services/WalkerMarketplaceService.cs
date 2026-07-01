@@ -28,7 +28,7 @@ public sealed class WalkerMarketplaceService(
         var inRadius = walkers
             .Where(p => p.Walker.WorkLatitude.HasValue && p.Walker.WorkLongitude.HasValue)
             .Select(p => (Projection: p,
-                          Distance: Haversine(query.Latitude, query.Longitude,
+                          Distance: GeoUtils.Haversine(query.Latitude, query.Longitude,
                                               p.Walker.WorkLatitude!.Value,
                                               p.Walker.WorkLongitude!.Value)))
             .Where(x => x.Distance <= query.RadiusKm)
@@ -109,16 +109,5 @@ public sealed class WalkerMarketplaceService(
             walker.MaxDogs,
             weeklySlots,
             availableSlots), null);
-    }
-
-    private static double Haversine(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double R = 6371.0;
-        var dLat = (lat2 - lat1) * Math.PI / 180.0;
-        var dLon = (lon2 - lon1) * Math.PI / 180.0;
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
-              + Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0)
-              * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        return R * 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
     }
 }

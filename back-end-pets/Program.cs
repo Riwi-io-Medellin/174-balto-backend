@@ -43,7 +43,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
                 if (!string.IsNullOrEmpty(accessToken) &&
-                    path.StartsWithSegments("/hubs/walk-tracking"))
+                    (path.StartsWithSegments("/hubs/walk-tracking") ||
+                     path.StartsWithSegments("/hubs/home-service-tracking")))
                 {
                     context.Token = accessToken;
                 }
@@ -175,6 +176,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHub<WalkTrackingHub>("/hubs/walk-tracking");
+app.MapHub<HomeServiceTrackingHub>("/hubs/home-service-tracking");
 
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
@@ -196,6 +198,14 @@ app.MapWalkBookingEndpoints();
 app.MapChatEndpoints();
 app.MapPaymentsEndpoints();
 app.MapAdminVerificationEndpoints();
+app.MapHomeServicesEndpoints();
+app.MapHomeProviderServicesEndpoints();
+app.MapHomeProviderAssetsEndpoints();
+app.MapHomeProviderServiceAreasEndpoints();
+app.MapHomeProviderAvailabilityEndpoints();
+app.MapHomeServiceBookingsEndpoints();
+app.MapHomeServiceSessionsEndpoints();
+app.MapFavoriteHomeProvidersEndpoints();
 app.UseGlobalExceptionHandler();
 
 app.Run();
