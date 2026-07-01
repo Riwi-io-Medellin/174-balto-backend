@@ -24,9 +24,6 @@ public sealed class FeedbackService(
         var hadWalk = bookings.Any(b => b.WalkerId == request.WalkerId);
         if (!hadWalk) return (null, "NO_WALK_HISTORY");
 
-        if (await feedbackRepository.ExistsAsync(userId, request.WalkerId, "walker"))
-            return (null, "FEEDBACK_ALREADY_EXISTS");
-
         var feedback = new Feedback
         {
             UserId = userId,
