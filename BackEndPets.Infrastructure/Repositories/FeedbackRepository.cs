@@ -40,8 +40,9 @@ public sealed class FeedbackRepository(AppIdentityDbContext dbContext) : IFeedba
             .Join(dbContext.Users,
                 f => f.UserId,
                 u => u.Id,
-                (f, u) => new FeedbackWithUserProjection(f, u.FirstName, u.LastName, u.PhotoUrl))
-            .OrderByDescending(f => f.Feedback.CreatedAt)
+                (f, u) => new { Feedback = f, User = u })
+            .OrderByDescending(x => x.Feedback.CreatedAt)
+            .Select(x => new FeedbackWithUserProjection(x.Feedback, x.User.FirstName, x.User.LastName, x.User.PhotoUrl))
             .ToListAsync();
 
     public Task<bool> ExistsAsync(Guid userId, Guid targetId, string targetType) =>
