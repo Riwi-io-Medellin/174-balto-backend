@@ -155,6 +155,7 @@ await using (var scope = app.Services.CreateAsyncScope())
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS is_accepting_bookings BOOLEAN NOT NULL DEFAULT false;
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_latitude DOUBLE PRECISION;
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_longitude DOUBLE PRECISION;
+        ALTER TABLE walkers ADD COLUMN IF NOT EXISTS max_dogs INTEGER;
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_status VARCHAR(30) NOT NULL DEFAULT 'active';
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_reason TEXT;
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS admin_moderated_by_user_id UUID;
