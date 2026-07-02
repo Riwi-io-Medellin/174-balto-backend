@@ -55,7 +55,9 @@ public sealed class ProfileService(
             created.WorkLocation,
             created.Experience,
             created.Description,
-            created.CreatedAt), null);
+            created.CreatedAt,
+            created.InstagramUrl,
+            created.FacebookUrl), null);
     }
 
     public async Task<(BusinessResponse? Business, string? ErrorCode)> CreateBusinessAsync(
@@ -96,7 +98,9 @@ public sealed class ProfileService(
                 created.Location,
                 created.Address,
                 created.VerificationStatus,
-                created.CreatedAt), null);
+                created.CreatedAt,
+                created.InstagramUrl,
+                created.FacebookUrl), null);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" } pg)
         {
@@ -106,7 +110,7 @@ public sealed class ProfileService(
             return (null, errorCode);
         }
     }
-    
+
     public async Task<IReadOnlyCollection<WalkerResponse>> GetWalkersAsync(bool? available = null, string? workLocation = null)
     {
         var projections = await walkerRepository.GetAllWithUserAsync(available, workLocation);
@@ -125,6 +129,7 @@ public sealed class ProfileService(
                 p.Walker.VerificationStatus, p.Walker.Available,
                 p.Walker.WorkLocation, p.Walker.Experience,
                 p.Walker.Description, p.Walker.CreatedAt,
+                p.Walker.InstagramUrl, p.Walker.FacebookUrl,
                 Math.Round(avg, 1), count);
         }).ToList();
     }
@@ -143,22 +148,50 @@ public sealed class ProfileService(
             projection.Walker.VerificationStatus, projection.Walker.Available,
             projection.Walker.WorkLocation, projection.Walker.Experience,
             projection.Walker.Description, projection.Walker.CreatedAt,
+            projection.Walker.InstagramUrl, projection.Walker.FacebookUrl,
             Math.Round(avg, 1), feedbacks.Count);
     }
 
     public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null) =>
         (await businessRepository.GetAllAsync(type, location))
         .Select(b => new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
-            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt))
+            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
+            b.CreatedAt, b.InstagramUrl, b.FacebookUrl))
         .ToList();
 
     public async Task<BusinessResponse?> GetBusinessByIdAsync(Guid id)
     {
         var b = await businessRepository.GetByIdAsync(id);
         return b is null ? null : new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
-            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus, b.CreatedAt);
+            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
+            b.CreatedAt, b.InstagramUrl, b.FacebookUrl);
     }
-    
+
+    public async Task<(BusinessResponse? Business, string? ErrorCode)> UpdateMyBusinessAsync(
+        Guid userId, UpdateBusinessRequest request)
+    {
+        var business = (await businessRepository.GetByOwnerIdAsync(userId)).FirstOrDefault();
+        if (business is null)
+            return (null, "BUSINESS_NOT_FOUND");
+
+        if (business.VerificationStatus != "approved")
+            return (null, "BUSINESS_NOT_APPROVED");
+
+        if (request.InstagramUrl is not null)
+            business.InstagramUrl = request.InstagramUrl.Trim();
+
+        if (request.FacebookUrl is not null)
+            business.FacebookUrl = request.FacebookUrl.Trim();
+
+        await businessRepository.UpdateAsync(business);
+
+        return (new BusinessResponse(
+            business.Id, business.OwnerUserId, business.Name, business.Nit,
+            business.Email, business.Phone, business.Type, business.Location,
+            business.Address, business.VerificationStatus,
+            business.CreatedAt, business.InstagramUrl, business.FacebookUrl), null);
+    }
+
     public async Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId)
     {
         var walker = await walkerRepository.GetByUserIdAsync(userId);
@@ -213,6 +246,12 @@ public sealed class ProfileService(
         if (request.MaxDogs.HasValue)
             walker.MaxDogs = request.MaxDogs.Value;
 
+        if (request.InstagramUrl is not null)
+            walker.InstagramUrl = request.InstagramUrl.Trim();
+
+        if (request.FacebookUrl is not null)
+            walker.FacebookUrl = request.FacebookUrl.Trim();
+
         await walkerRepository.UpdateAsync(walker);
         return (MapWalkerProfile(walker), null);
     }
@@ -223,7 +262,8 @@ public sealed class ProfileService(
         w.Bio, w.HourlyRate, w.ServiceRadiusKm, w.YearsOfExperience, w.IsAcceptingBookings,
         w.DocumentName, w.DocumentNumber,
         w.WorkLatitude, w.WorkLongitude, w.MaxDogs,
-        w.CreatedAt, w.UpdatedAt);
+        w.CreatedAt, w.UpdatedAt,
+        w.InstagramUrl, w.FacebookUrl);
 
     public async Task<IReadOnlyCollection<WalkerRecommendationResponse>> GetWalkerRecommendationsAsync(
         WalkerRecommendationRequest request)
@@ -256,7 +296,6 @@ public sealed class ProfileService(
                 score += 1;
             }
 
-            // Scoring por calificación promedio
             var feedbacks = await feedbackRepository.GetByTargetAsync(w.Id, "walker");
             if (feedbacks.Count > 0)
             {

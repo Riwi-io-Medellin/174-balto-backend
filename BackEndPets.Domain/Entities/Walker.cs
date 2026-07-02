@@ -12,6 +12,8 @@ public sealed class Walker
     public string? DocumentName { get; set; }
     public string? DocumentNumber { get; set; }
     public string? Bio { get; set; }
+    public string? InstagramUrl { get; set; }
+    public string? FacebookUrl { get; set; }
     public decimal? HourlyRate { get; set; }
     public decimal? ServiceRadiusKm { get; set; }
     public int? YearsOfExperience { get; set; }

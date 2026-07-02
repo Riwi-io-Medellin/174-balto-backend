@@ -26,6 +26,8 @@ public sealed record WalkerResponse(
     string? Experience,
     string? Description,
     DateTime CreatedAt,
+    string? InstagramUrl,
+    string? FacebookUrl,
     double AverageRating = 0,
     int TotalReviews = 0);
 
@@ -49,7 +51,9 @@ public sealed record BusinessResponse(
     string? Location,
     string? Address,
     string VerificationStatus,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? InstagramUrl,
+    string? FacebookUrl);
 
 public sealed record WalkerProfileResponse(
     Guid Id,
@@ -70,7 +74,9 @@ public sealed record WalkerProfileResponse(
     double? WorkLongitude,
     int? MaxDogs,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string? InstagramUrl,
+    string? FacebookUrl);
 
 public sealed record UpdateWalkerProfileRequest(
     string? Bio,
@@ -80,7 +86,9 @@ public sealed record UpdateWalkerProfileRequest(
     bool? IsAcceptingBookings,
     double? WorkLatitude,
     double? WorkLongitude,
-    int? MaxDogs);
+    int? MaxDogs,
+    string? InstagramUrl,
+    string? FacebookUrl);
 
 public sealed record WalkerFilterRequest(
     bool? Available,
@@ -102,3 +110,7 @@ public sealed record WalkerRecommendationResponse(
     string? Description,
     string VerificationStatus,
     IReadOnlyCollection<string> Reasons);
+
+public sealed record UpdateBusinessRequest(
+    string? InstagramUrl,
+    string? FacebookUrl);

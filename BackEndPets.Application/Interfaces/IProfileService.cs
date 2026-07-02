@@ -16,4 +16,6 @@ public interface IProfileService
     Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId);
     Task<(WalkerProfileResponse? Profile, string? ErrorCode)> UpdateMyWalkerProfileAsync(
         Guid userId, UpdateWalkerProfileRequest request);
+    Task<(BusinessResponse? Business, string? ErrorCode)> UpdateMyBusinessAsync(
+        Guid userId, UpdateBusinessRequest request);
 }
