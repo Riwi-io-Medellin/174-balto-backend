@@ -31,6 +31,12 @@ public sealed class WalkerApplicationService(
         string? extractedName = null;
         string? extractedNumber = null;
 
+        // 0. If the walker is already approved, re-applying must not re-run OCR
+        // verification — a failed name match would silently downgrade an
+        // already-approved walker back to rejected/pending.
+        var existingWalker = await walkerRepository.GetByUserIdAsync(userId);
+        var alreadyApproved = existingWalker is { VerificationStatus: "approved" };
+
         // 1. Try uploading the identity document image to Cloudinary.
         if (cloudinary is not null)
         {
@@ -66,7 +72,7 @@ public sealed class WalkerApplicationService(
         }
 
         // 2. Try running OCR via GPT-4o-mini to extract name and document number.
-        if (documentUrl is not null)
+        if (documentUrl is not null && !alreadyApproved)
         {
             try
             {
@@ -94,7 +100,11 @@ public sealed class WalkerApplicationService(
 
         // 4. Determine verification status.
         string verificationStatus;
-        if (extractedName is not null)
+        if (alreadyApproved)
+        {
+            verificationStatus = "approved";
+        }
+        else if (extractedName is not null)
         {
             var userFullName = $"{user.FirstName} {user.LastName}";
             var similarity = ComputeNameSimilarity(userFullName, extractedName);
@@ -109,7 +119,7 @@ public sealed class WalkerApplicationService(
         }
 
         // 5. Upsert the Walker record with verification outcome.
-        var walker = await walkerRepository.GetByUserIdAsync(userId);
+        var walker = existingWalker;
         if (walker is null)
         {
             walker = await walkerRepository.CreateAsync(new Walker
@@ -129,8 +139,13 @@ public sealed class WalkerApplicationService(
             walker.Experience         = request.Experience.Trim();
             walker.Description        = request.Description?.Trim();
             walker.VerificationStatus = verificationStatus;
-            walker.DocumentName       = extractedName;
-            walker.DocumentNumber     = extractedNumber;
+            // Preserve the previously verified document info when OCR was
+            // skipped for an already-approved walker.
+            if (!alreadyApproved)
+            {
+                walker.DocumentName   = extractedName;
+                walker.DocumentNumber = extractedNumber;
+            }
             await walkerRepository.UpdateAsync(walker);
         }
 
@@ -146,11 +161,13 @@ public sealed class WalkerApplicationService(
         }
 
         // 7. Build message.
-        var message = warnings.Count > 0
-            ? string.Join(" ", warnings)
-            : verificationStatus == "approved"
-                ? "Identity verified. Walker application approved."
-                : "Identity could not be verified. Application rejected — name on document does not match account.";
+        var message = alreadyApproved
+            ? "Walker profile updated. Verification status unchanged (already approved)."
+            : warnings.Count > 0
+                ? string.Join(" ", warnings)
+                : verificationStatus == "approved"
+                    ? "Identity verified. Walker application approved."
+                    : "Identity could not be verified. Application rejected — name on document does not match account.";
 
         return (new WalkerApplyResponse(
             walker.Id,
