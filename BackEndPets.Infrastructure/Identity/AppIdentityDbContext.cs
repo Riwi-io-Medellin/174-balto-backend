@@ -41,6 +41,9 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<HomeServiceSessionEvent> HomeServiceSessionEvents => Set<HomeServiceSessionEvent>();
     public DbSet<FavoriteHomeProvider> FavoriteHomeProviders => Set<FavoriteHomeProvider>();
 
+    public DbSet<BusinessHour> BusinessHours => Set<BusinessHour>();
+    public DbSet<BusinessHourException> BusinessHourExceptions => Set<BusinessHourException>();
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -179,6 +182,33 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(s => s.Price).HasColumnName("price");
             b.Property(s => s.PhotoUrl).HasColumnName("photo_url");
             b.Property(s => s.CreatedAt).HasColumnName("created_at");
+        });
+        
+        builder.Entity<BusinessHour>(b =>
+        {
+            b.ToTable("business_hours");
+            b.HasKey(h => h.Id);
+            b.Property(h => h.Id).HasColumnName("id");
+            b.Property(h => h.BusinessId).HasColumnName("business_id");
+            b.Property(h => h.DayOfWeek).HasColumnName("day_of_week");
+            b.Property(h => h.StartTime).HasColumnName("start_time").HasColumnType("time");
+            b.Property(h => h.EndTime).HasColumnName("end_time").HasColumnType("time");
+            b.Property(h => h.IsActive).HasColumnName("is_active");
+            b.Property(h => h.CreatedAt).HasColumnName("created_at");
+        });
+        
+        builder.Entity<BusinessHourException>(b =>
+        {
+            b.ToTable("business_hours_exceptions");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).HasColumnName("id");
+            b.Property(e => e.BusinessId).HasColumnName("business_id");
+            b.Property(e => e.Date).HasColumnName("date").HasColumnType("date");
+            b.Property(e => e.IsUnavailable).HasColumnName("is_unavailable");
+            b.Property(e => e.StartTime).HasColumnName("start_time").HasColumnType("time");
+            b.Property(e => e.EndTime).HasColumnName("end_time").HasColumnType("time");
+            b.Property(e => e.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(e => new { e.BusinessId, e.Date }).IsUnique();
         });
         
         builder.Entity<Pet>(b =>

@@ -206,6 +206,7 @@ app.MapHomeProviderAvailabilityEndpoints();
 app.MapHomeServiceBookingsEndpoints();
 app.MapHomeServiceSessionsEndpoints();
 app.MapFavoriteHomeProvidersEndpoints();
+app.MapBusinessHourEndpoints();
 app.UseGlobalExceptionHandler();
 
 app.Run();
