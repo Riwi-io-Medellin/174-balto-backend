@@ -1,11 +1,14 @@
 using BackEndPets.Application.DTOs.Admin;
+using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace BackEndPets.Infrastructure.Services;
 
-public sealed class AdminVerificationService(AppIdentityDbContext dbContext) : IAdminVerificationService
+public sealed class AdminVerificationService(
+    AppIdentityDbContext dbContext,
+    INotificationService notificationService) : IAdminVerificationService
 {
     private static readonly HashSet<string> AllowedStatuses = ["pending", "approved", "rejected"];
 
@@ -58,6 +61,19 @@ public sealed class AdminVerificationService(AppIdentityDbContext dbContext) : I
 
         business.VerificationStatus = status;
         await dbContext.SaveChangesAsync();
+
+        if (status is "approved" or "rejected")
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: business.OwnerUserId,
+                Type: status == "approved" ? "business_approved" : "business_rejected",
+                Title: status == "approved" ? "Business Approved" : "Business Rejected",
+                Body: status == "approved"
+                    ? "Your business has been verified and approved."
+                    : "Your business was not approved. Please review the documents you submitted.",
+                EntityId: business.Id,
+                EntityType: "business"));
+        }
 
         return (await GetBusinessesAsync()).FirstOrDefault(b => b.Id == businessId);
     }
@@ -120,6 +136,19 @@ public sealed class AdminVerificationService(AppIdentityDbContext dbContext) : I
         walker.VerificationStatus = status;
         walker.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
+
+        if (status is "approved" or "rejected")
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: walker.UserId,
+                Type: status == "approved" ? "walker_approved" : "walker_rejected",
+                Title: status == "approved" ? "Walker Approved" : "Walker Rejected",
+                Body: status == "approved"
+                    ? "You have been verified and approved as a walker."
+                    : "Your walker verification was not approved. Please review the documents you submitted.",
+                EntityId: walker.Id,
+                EntityType: "walker"));
+        }
 
         return (await GetWalkersAsync()).FirstOrDefault(w => w.Id == walkerId);
     }

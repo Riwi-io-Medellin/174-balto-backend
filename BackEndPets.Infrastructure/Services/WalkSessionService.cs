@@ -218,6 +218,15 @@ public sealed class WalkSessionService(
         };
 
         var created = await sessionRepo.StartFromBookingAsync(session, booking);
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: booking.ClientUserId,
+            Type: "walk_started",
+            Title: "Paseo iniciado",
+            Body: "El paseador ha iniciado el paseo.",
+            EntityId: created.Id,
+            EntityType: "walk_session"));
+
         return (MapBookingSession(created), null);
     }
 
@@ -253,6 +262,14 @@ public sealed class WalkSessionService(
             StartTime     = session.StartedAt,
             EndTime       = session.EndedAt
         });
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: booking.ClientUserId,
+            Type: "walk_finished",
+            Title: "Paseo finalizado",
+            Body: "El paseo ha sido completado.",
+            EntityId: session.Id,
+            EntityType: "walk_session"));
 
         return (MapBookingSession(session), null);
     }
