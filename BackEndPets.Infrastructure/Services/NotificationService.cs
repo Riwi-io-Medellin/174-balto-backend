@@ -12,7 +12,7 @@ public sealed class NotificationService(
     [
         "walk_started", "walk_finished", "walk_cancelled",
         "walker_assigned", "walker_approved", "walker_rejected",
-        "business_approved", "business_rejected", "system"
+        "lost_pet", "business_approved", "business_rejected", "system"
     ];
 
     private static readonly string[] ValidEntityTypes =

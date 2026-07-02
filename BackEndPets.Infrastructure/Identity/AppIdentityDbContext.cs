@@ -229,6 +229,10 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.Description).HasColumnName("description");
             b.Property(p => p.PhotoUrl).HasColumnName("photo_url");
             b.Property(p => p.Weight).HasColumnName("weight").HasColumnType("numeric(5,2)");
+            b.Property(p => p.IsLost).HasColumnName("is_lost");
+            b.Property(p => p.LostLatitude).HasColumnName("lost_latitude");
+            b.Property(p => p.LostLongitude).HasColumnName("lost_longitude");
+            b.Property(p => p.LostAt).HasColumnName("lost_at");
             b.Property(p => p.CreatedAt).HasColumnName("created_at");
         });
         

@@ -97,6 +97,48 @@ public static class PetsEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
+        group.MapPost("/{id:guid}/report-lost", async (
+                Guid id, ReportPetLostRequest request, HttpContext ctx, IPetService service) =>
+            {
+                var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId))
+                    return Results.Unauthorized();
+
+                var (pet, errorCode) = await service.ReportLostAsync(userId, id, request);
+                return errorCode switch
+                {
+                    "PET_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Pet not found.", "PET_NOT_FOUND")),
+                    "UNAUTHORIZED" => Results.Json(new ApiErrorResponse("You do not own this pet.", "UNAUTHORIZED"),
+                        statusCode: StatusCodes.Status403Forbidden),
+                    _ => Results.Ok(pet)
+                };
+            })
+            .WithName("ReportPetLost")
+            .WithSummary("Mark a pet as lost and notify nearby users")
+            .Produces<PetResponse>(StatusCodes.Status200OK)
+            .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/mark-found", async (Guid id, HttpContext ctx, IPetService service) =>
+            {
+                var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId))
+                    return Results.Unauthorized();
+
+                var (pet, errorCode) = await service.MarkFoundAsync(userId, id);
+                return errorCode switch
+                {
+                    "PET_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Pet not found.", "PET_NOT_FOUND")),
+                    "UNAUTHORIZED" => Results.Json(new ApiErrorResponse("You do not own this pet.", "UNAUTHORIZED"),
+                        statusCode: StatusCodes.Status403Forbidden),
+                    _ => Results.Ok(pet)
+                };
+            })
+            .WithName("MarkPetFound")
+            .Produces<PetResponse>(StatusCodes.Status200OK)
+            .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+        
         return app;
     }
 }

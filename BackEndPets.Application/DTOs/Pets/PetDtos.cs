@@ -28,4 +28,12 @@ public sealed record PetResponse(
     string? Description,
     string? PhotoUrl,
     decimal? Weight,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    bool IsLost,
+    double? LostLatitude,
+    double? LostLongitude,
+    DateTime? LostAt);
+    
+public sealed record ReportPetLostRequest(
+    double LostLatitude,
+    double LostLongitude);

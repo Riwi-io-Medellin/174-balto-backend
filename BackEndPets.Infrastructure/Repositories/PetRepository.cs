@@ -37,6 +37,10 @@ public sealed class PetRepository(AppIdentityDbContext dbContext) : IPetReposito
         existing.Description = pet.Description;
         existing.PhotoUrl = pet.PhotoUrl;
         existing.Weight = pet.Weight;
+        existing.IsLost = pet.IsLost;
+        existing.LostLatitude = pet.LostLatitude;
+        existing.LostLongitude = pet.LostLongitude;
+        existing.LostAt = pet.LostAt;
 
         await dbContext.SaveChangesAsync();
         return existing;
