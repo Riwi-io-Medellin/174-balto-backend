@@ -40,3 +40,14 @@ public sealed record BookingSessionResponse(
     DateTime? FinishedAt,
     double? TotalDistanceMeters,
     int? TotalDurationSeconds);
+
+// ── Walk session media ────────────────────────────────────────────────────────
+
+public sealed record AddWalkMediaRequest(string Url, string Type);
+
+public sealed record WalkSessionMediaResponse(
+    Guid Id,
+    Guid WalkSessionId,
+    string Url,
+    string Type,
+    DateTime UploadedAt);

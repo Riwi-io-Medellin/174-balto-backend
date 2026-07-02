@@ -153,6 +153,17 @@ await using (var scope = app.Services.CreateAsyncScope())
         ALTER TABLE walkers ADD COLUMN IF NOT EXISTS work_longitude DOUBLE PRECISION;
         """);
 
+    // Walk session media: photos and videos uploaded by the walker during a walk.
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS walk_session_media (
+            id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+            walk_session_id  UUID        NOT NULL,
+            url              TEXT        NOT NULL,
+            type             VARCHAR(10) NOT NULL DEFAULT 'photo',
+            uploaded_at      TIMESTAMP   NOT NULL DEFAULT NOW()
+        );
+        """);
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await IdentitySeeder.SeedDemoUserAsync(userManager);
 }

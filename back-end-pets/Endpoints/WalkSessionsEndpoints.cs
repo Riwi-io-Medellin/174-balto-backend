@@ -304,6 +304,65 @@ public static class WalkSessionsEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
+        group.MapPost("/{sessionId:guid}/media", async (
+            Guid sessionId,
+            AddWalkMediaRequest request,
+            HttpContext ctx,
+            IWalkSessionService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (media, errorCode) = await service.AddMediaAsync(userId, sessionId, request);
+            if (media is not null)
+                return Results.Created($"/api/walk-sessions/{sessionId}/media/{media.Id}", media);
+
+            return errorCode switch
+            {
+                "SESSION_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
+                "UNAUTHORIZED" => Results.Json(
+                    new ApiErrorResponse("You are not the walker for this session.", "UNAUTHORIZED"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("AddWalkMedia")
+        .WithSummary("Upload a photo or video URL for a walk session (walker only)")
+        .Produces<WalkSessionMediaResponse>(StatusCodes.Status201Created)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/{sessionId:guid}/media", async (
+            Guid sessionId,
+            HttpContext ctx,
+            IWalkSessionService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (media, errorCode) = await service.GetMediaAsync(userId, sessionId);
+            if (media is not null)
+                return Results.Ok(media);
+
+            return errorCode switch
+            {
+                "SESSION_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
+                "UNAUTHORIZED" => Results.Json(
+                    new ApiErrorResponse("You do not have access to this session.", "UNAUTHORIZED"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("GetWalkMedia")
+        .WithSummary("Get all media items for a walk session (walker or pet owner)")
+        .Produces<IReadOnlyCollection<WalkSessionMediaResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         group.MapGet("/{sessionId:guid}/route", async (
             Guid sessionId,
             HttpContext ctx,

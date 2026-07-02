@@ -35,4 +35,12 @@ public interface IWalkSessionService
 
     Task<(BookingSessionResponse? Session, string? ErrorCode)> GetActiveForWalkerAsync(
         Guid walkerUserId);
+
+    // ── Walk session media ────────────────────────────────────────────────────
+
+    Task<(WalkSessionMediaResponse? Media, string? ErrorCode)> AddMediaAsync(
+        Guid walkerUserId, Guid sessionId, AddWalkMediaRequest request);
+
+    Task<(IReadOnlyCollection<WalkSessionMediaResponse>? Media, string? ErrorCode)> GetMediaAsync(
+        Guid currentUserId, Guid sessionId);
 }

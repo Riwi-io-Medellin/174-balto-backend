@@ -14,6 +14,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<PetWalkingHistory> PetWalkingHistories => Set<PetWalkingHistory>();
     public DbSet<WalkSession> WalkSessions => Set<WalkSession>();
     public DbSet<WalkRoutePoint> WalkRoutePoints => Set<WalkRoutePoint>();
+    public DbSet<WalkSessionMedia> WalkSessionMediaItems => Set<WalkSessionMedia>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
     public DbSet<WalkerGallery> WalkerGalleries => Set<WalkerGallery>();
     public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
@@ -277,6 +278,17 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.Latitude).HasColumnName("latitude");
             b.Property(p => p.Longitude).HasColumnName("longitude");
             b.Property(p => p.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<WalkSessionMedia>(b =>
+        {
+            b.ToTable("walk_session_media");
+            b.HasKey(m => m.Id);
+            b.Property(m => m.Id).HasColumnName("id");
+            b.Property(m => m.WalkSessionId).HasColumnName("walk_session_id");
+            b.Property(m => m.Url).HasColumnName("url");
+            b.Property(m => m.Type).HasColumnName("type");
+            b.Property(m => m.UploadedAt).HasColumnName("uploaded_at");
         });
         
         builder.Entity<Feedback>(b =>

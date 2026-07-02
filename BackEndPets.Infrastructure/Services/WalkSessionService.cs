@@ -3,6 +3,8 @@ using BackEndPets.Application.DTOs.WalkSessions;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
 using BackEndPets.Domain.Interfaces;
+using BackEndPets.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackEndPets.Infrastructure.Services;
 
@@ -12,7 +14,8 @@ public sealed class WalkSessionService(
     IPetWalkingHistoryRepository historyRepo,
     INotificationService notificationService,
     IWalkerRepository walkerRepo,
-    IWalkBookingRepository bookingRepo) : IWalkSessionService
+    IWalkBookingRepository bookingRepo,
+    AppIdentityDbContext db) : IWalkSessionService
 {
     public async Task<(WalkSessionResponse? Session, string? ErrorCode)> StartSessionAsync(
         Guid currentUserId, StartWalkSessionRequest request)
@@ -283,4 +286,70 @@ public sealed class WalkSessionService(
         s.EndedAt,
         s.TotalDistanceMeters,
         s.TotalDurationSeconds);
+
+    // ── Walk session media ────────────────────────────────────────────────────
+
+    public async Task<(WalkSessionMediaResponse? Media, string? ErrorCode)> AddMediaAsync(
+        Guid walkerUserId, Guid sessionId, AddWalkMediaRequest request)
+    {
+        var (session, errorCode) = await LoadSessionAsWalkerAsync(walkerUserId, sessionId);
+        if (session is null) return (null, errorCode);
+
+        var media = new WalkSessionMedia
+        {
+            WalkSessionId = sessionId,
+            Url           = request.Url,
+            Type          = request.Type,
+            UploadedAt    = DateTime.UtcNow
+        };
+
+        db.WalkSessionMediaItems.Add(media);
+        await db.SaveChangesAsync();
+
+        return (MapMedia(media), null);
+    }
+
+    public async Task<(IReadOnlyCollection<WalkSessionMediaResponse>? Media, string? ErrorCode)> GetMediaAsync(
+        Guid currentUserId, Guid sessionId)
+    {
+        var session = await sessionRepo.GetByIdAsync(sessionId);
+        if (session is null) return (null, "SESSION_NOT_FOUND");
+
+        // Allow access for the assigned walker or the booking's pet owner.
+        var walker  = await walkerRepo.GetByUserIdAsync(currentUserId);
+        var isWalker = walker is not null && walker.Id == session.WalkerId;
+
+        if (!isWalker)
+        {
+            var isOwner = false;
+
+            if (session.BookingId is not null)
+            {
+                var booking = await bookingRepo.GetByIdAsync(session.BookingId.Value);
+                isOwner = booking?.ClientUserId == currentUserId;
+            }
+
+            if (!isOwner)
+            {
+                var histories = await historyRepo.GetBySessionIdAsync(sessionId);
+                isOwner = histories.Any(h => h.UserId == currentUserId);
+            }
+
+            if (!isOwner) return (null, "UNAUTHORIZED");
+        }
+
+        var items = await db.WalkSessionMediaItems
+            .Where(m => m.WalkSessionId == sessionId)
+            .OrderBy(m => m.UploadedAt)
+            .ToListAsync();
+
+        return (items.Select(MapMedia).ToList(), null);
+    }
+
+    private static WalkSessionMediaResponse MapMedia(WalkSessionMedia m) => new(
+        m.Id,
+        m.WalkSessionId,
+        m.Url,
+        m.Type,
+        m.UploadedAt);
 }
