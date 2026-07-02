@@ -38,4 +38,11 @@ public sealed class BusinessRepository(AppIdentityDbContext dbContext) : IBusine
 
     public Task<Business?> GetByIdAsync(Guid id) =>
         dbContext.Businesses.FirstOrDefaultAsync(b => b.Id == id);
+    
+    public async Task<Business> UpdateAsync(Business business)
+    {
+        dbContext.Businesses.Update(business);
+        await dbContext.SaveChangesAsync();
+        return business;
+    }
 }

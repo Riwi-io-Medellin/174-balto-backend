@@ -118,6 +118,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(w => w.CreatedAt).HasColumnName("created_at");
             b.Property(w => w.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(w => w.UserId).IsUnique();
+            b.Property(w => w.InstagramUrl).HasColumnName("instagram_url");
+            b.Property(w => w.FacebookUrl).HasColumnName("facebook_url");
         });
         
         builder.Entity<WalkerGallery>(b =>
@@ -158,6 +160,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(biz => biz.CreatedAt).HasColumnName("created_at");
             b.HasIndex(biz => biz.Nit).IsUnique();
             b.HasIndex(biz => biz.Email).IsUnique();
+            b.Property(biz => biz.InstagramUrl).HasColumnName("instagram_url");
+            b.Property(biz => biz.FacebookUrl).HasColumnName("facebook_url");
         });
         
         builder.Entity<BusinessDocument>(b =>

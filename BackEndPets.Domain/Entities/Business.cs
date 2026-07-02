@@ -10,6 +10,8 @@ public sealed class Business
     public string? Location { get; set; }
     public string? Address { get; set; }
     public long Phone { get; set; }
+    public string? InstagramUrl { get; set; }
+    public string? FacebookUrl { get; set; }
     public string? Type { get; set; }
     public string VerificationStatus { get; set; } = "pending";
     public DateTime CreatedAt { get; set; }
