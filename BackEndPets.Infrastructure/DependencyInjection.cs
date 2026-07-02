@@ -102,6 +102,9 @@ public static class DependencyInjection
         services.AddScoped<IHomeServiceSessionAuthorizationService, HomeServiceSessionAuthorizationService>();
         services.AddScoped<IFavoriteHomeProviderRepository, FavoriteHomeProviderRepository>();
         services.AddScoped<IFavoriteHomeProviderService, FavoriteHomeProviderService>();
+        services.AddScoped<IBusinessHourRepository, BusinessHourRepository>();
+        services.AddScoped<IBusinessHourExceptionRepository, BusinessHourExceptionRepository>();
+        services.AddScoped<IBusinessHourService, BusinessHourService>();
 
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
