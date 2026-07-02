@@ -174,9 +174,9 @@ public sealed class WalkBookingService(
 
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
-            Type: "system",
-            Title: "Reserva aceptada",
-            Body: "El paseador ha aceptado tu solicitud de paseo.",
+            Type: "walker_assigned",
+            Title: "Booking accepted",
+            Body: "The walker has accepted your walking request.",
             EntityId: updated.Id,
             EntityType: "walk_booking"));
 
@@ -201,8 +201,8 @@ public sealed class WalkBookingService(
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
             Type: "system",
-            Title: "Reserva rechazada",
-            Body: "El paseador ha rechazado tu solicitud de paseo.",
+            Title: "Booking rejected",
+            Body: "The walker has declined your walking request.",
             EntityId: updated.Id,
             EntityType: "walk_booking"));
 
@@ -226,9 +226,9 @@ public sealed class WalkBookingService(
 
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
-            Type: "system",
-            Title: "Reserva cancelada",
-            Body: "El paseador ha cancelado la reserva.",
+            Type: "walk_cancelled",
+            Title: "Booking cancelled",
+            Body: "The walker has cancelled your walking request.",
             EntityId: updated.Id,
             EntityType: "walk_booking"));
 
@@ -252,9 +252,9 @@ public sealed class WalkBookingService(
         {
             await notificationService.CreateAsync(new CreateNotificationRequest(
                 UserId: walkerOwner.UserId,
-                Type: "system",
-                Title: "Reserva cancelada",
-                Body: "El cliente ha cancelado la reserva.",
+                Type: "walk_cancelled",
+                Title: "Booking cancelled",
+                Body: "The client has cancelled your walking request.",
                 EntityId: updated.Id,
                 EntityType: "walk_booking"));
         }
