@@ -13,6 +13,7 @@ public sealed class ProfileService(
     UserManager<ApplicationUser> userManager,
     IWalkerRepository walkerRepository,
     IBusinessRepository businessRepository,
+    IBusinessServiceRepository businessServiceRepository,
     IFeedbackRepository feedbackRepository) : IProfileService
 {
     private static readonly string[] ValidBusinessTypes = ["veterinary", "grooming", "shelter", "petshop", "other"];
@@ -100,7 +101,9 @@ public sealed class ProfileService(
                 created.VerificationStatus,
                 created.CreatedAt,
                 created.InstagramUrl,
-                created.FacebookUrl), null);
+                created.FacebookUrl,
+                null,
+                null), null);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" } pg)
         {
@@ -152,44 +155,74 @@ public sealed class ProfileService(
             Math.Round(avg, 1), feedbacks.Count);
     }
 
-    public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null) =>
-        (await businessRepository.GetAllAsync(type, location))
-        .Select(b => new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
-            b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
-            b.CreatedAt, b.InstagramUrl, b.FacebookUrl))
-        .ToList();
-
+    public async Task<IReadOnlyCollection<BusinessResponse>> GetBusinessesAsync(string? type = null, string? location = null)
+    {
+        var businesses = await businessRepository.GetAllAsync(type, location);
+        var businessIds = businesses.Select(b => b.Id).ToList();
+        var feedbacks = await feedbackRepository.GetByTargetsAsync(businessIds, "business");
+        var ratingMap = feedbacks
+            .GroupBy(f => f.TargetId)
+            .ToDictionary(g => g.Key, g => (Average: g.Average(f => f.Rating), Count: g.Count()));
+    
+        var result = new List<BusinessResponse>();
+        foreach (var b in businesses)
+        {
+            var service = (await businessServiceRepository.GetByBusinessIdAsync(b.Id)).FirstOrDefault();
+            var (avg, count) = ratingMap.GetValueOrDefault(b.Id, (0.0, 0));
+            result.Add(new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
+                b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
+                b.CreatedAt, b.InstagramUrl, b.FacebookUrl,
+                service?.Description, service?.PhotoUrl,
+                Math.Round(avg, 1), count));
+        }
+        return result;
+    }
+    
     public async Task<BusinessResponse?> GetBusinessByIdAsync(Guid id)
     {
         var b = await businessRepository.GetByIdAsync(id);
-        return b is null ? null : new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
+        if (b is null) return null;
+    
+        var service = (await businessServiceRepository.GetByBusinessIdAsync(b.Id)).FirstOrDefault();
+        var feedbacks = await feedbackRepository.GetByTargetAsync(b.Id, "business");
+        var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
+    
+        return new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
             b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
-            b.CreatedAt, b.InstagramUrl, b.FacebookUrl);
+            b.CreatedAt, b.InstagramUrl, b.FacebookUrl,
+            service?.Description, service?.PhotoUrl,
+            Math.Round(avg, 1), feedbacks.Count);
     }
-
+    
     public async Task<(BusinessResponse? Business, string? ErrorCode)> UpdateMyBusinessAsync(
         Guid userId, UpdateBusinessRequest request)
     {
         var business = (await businessRepository.GetByOwnerIdAsync(userId)).FirstOrDefault();
         if (business is null)
             return (null, "BUSINESS_NOT_FOUND");
-
+    
         if (business.VerificationStatus != "approved")
             return (null, "BUSINESS_NOT_APPROVED");
-
+    
         if (request.InstagramUrl is not null)
             business.InstagramUrl = request.InstagramUrl.Trim();
-
+    
         if (request.FacebookUrl is not null)
             business.FacebookUrl = request.FacebookUrl.Trim();
-
+    
         await businessRepository.UpdateAsync(business);
-
+    
+        var service = (await businessServiceRepository.GetByBusinessIdAsync(business.Id)).FirstOrDefault();
+        var feedbacks = await feedbackRepository.GetByTargetAsync(business.Id, "business");
+        var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
+    
         return (new BusinessResponse(
             business.Id, business.OwnerUserId, business.Name, business.Nit,
             business.Email, business.Phone, business.Type, business.Location,
             business.Address, business.VerificationStatus,
-            business.CreatedAt, business.InstagramUrl, business.FacebookUrl), null);
+            business.CreatedAt, business.InstagramUrl, business.FacebookUrl,
+            service?.Description, service?.PhotoUrl,
+            Math.Round(avg, 1), feedbacks.Count), null);
     }
 
     public async Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId)

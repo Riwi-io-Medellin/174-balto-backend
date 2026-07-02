@@ -53,7 +53,11 @@ public sealed record BusinessResponse(
     string VerificationStatus,
     DateTime CreatedAt,
     string? InstagramUrl,
-    string? FacebookUrl);
+    string? FacebookUrl,
+    string? Description,
+    string? PhotoUrl,
+    double AverageRating = 0,
+    int TotalReviews = 0);
 
 public sealed record WalkerProfileResponse(
     Guid Id,
