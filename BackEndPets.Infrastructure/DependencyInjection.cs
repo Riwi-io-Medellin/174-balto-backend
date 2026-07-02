@@ -74,7 +74,35 @@ public static class DependencyInjection
         services.AddScoped<IPaymentOrderRepository, PaymentOrderRepository>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IAdminVerificationService, AdminVerificationService>();
-        
+
+        services.AddScoped<IHomeServiceProviderRepository, HomeServiceProviderRepository>();
+        services.AddScoped<IHomeServiceTypeRepository, HomeServiceTypeRepository>();
+        services.AddScoped<IHomeServiceProviderService, HomeServiceProviderService>();
+        services.AddScoped<IHomeServiceTypeService, HomeServiceTypeService>();
+        services.AddScoped<IHomeProviderDocumentRepository, HomeProviderDocumentRepository>();
+        services.AddScoped<IHomeProviderGalleryRepository, HomeProviderGalleryRepository>();
+        services.AddScoped<IHomeProviderCertificationRepository, HomeProviderCertificationRepository>();
+        services.AddScoped<IHomeProviderSpecialtyRepository, HomeProviderSpecialtyRepository>();
+        services.AddScoped<IHomeProviderAssetsService, HomeProviderAssetsService>();
+        services.AddScoped<IHomeServiceApplicationService, HomeServiceApplicationService>();
+        services.AddScoped<IHomeProviderServiceRepository, HomeProviderServiceRepository>();
+        services.AddScoped<IHomeProviderServicesService, HomeProviderServicesService>();
+        services.AddScoped<IHomeProviderServiceAreaRepository, HomeProviderServiceAreaRepository>();
+        services.AddScoped<IHomeProviderServiceAreaService, HomeProviderServiceAreaService>();
+        services.AddScoped<IHomeProviderAvailabilityRepository, HomeProviderAvailabilityRepository>();
+        services.AddScoped<IHomeProviderAvailabilityExceptionRepository, HomeProviderAvailabilityExceptionRepository>();
+        services.AddScoped<IHomeServiceAvailabilityEngine, HomeServiceAvailabilityEngine>();
+        services.AddScoped<IHomeProviderAvailabilityService, HomeProviderAvailabilityService>();
+        services.AddScoped<IHomeServiceBookingRepository, HomeServiceBookingRepository>();
+        services.AddScoped<IHomeServiceBookingService, HomeServiceBookingService>();
+        services.AddScoped<IHomeServiceMarketplaceService, HomeServiceMarketplaceService>();
+        services.AddScoped<IHomeServiceSessionRepository, HomeServiceSessionRepository>();
+        services.AddScoped<IHomeServiceSessionEventRepository, HomeServiceSessionEventRepository>();
+        services.AddScoped<IHomeServiceSessionService, HomeServiceSessionService>();
+        services.AddScoped<IHomeServiceSessionAuthorizationService, HomeServiceSessionAuthorizationService>();
+        services.AddScoped<IFavoriteHomeProviderRepository, FavoriteHomeProviderRepository>();
+        services.AddScoped<IFavoriteHomeProviderService, FavoriteHomeProviderService>();
+
         services.AddSingleton(typeof(ICrudRepository<>), typeof(InMemoryCrudRepository<>));
 
         return services;

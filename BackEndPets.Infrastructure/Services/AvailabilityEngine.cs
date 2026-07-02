@@ -10,6 +10,17 @@ public sealed class AvailabilityEngine(
     IWalkerAvailabilityExceptionRepository exceptionRepository,
     IWalkBookingRepository bookingRepository) : IAvailabilityEngine
 {
+    // Every booking reserves pickup + walk + travel-to-next-service time, not just the walk itself.
+    private const int PickupBufferMinutes = 15;
+    private const int TravelBufferMinutes = 15;
+
+    /// <summary>
+    /// Total minutes a booking occupies on the walker's calendar, starting at its scheduled start.
+    /// e.g. a 30-minute walk occupies 60 minutes (15 pickup + 30 walk + 15 travel).
+    /// </summary>
+    private static int OccupiedMinutes(int walkDurationMinutes) =>
+        PickupBufferMinutes + walkDurationMinutes + TravelBufferMinutes;
+
     public async Task<IReadOnlyCollection<AvailabilitySlotResponse>> GetWeeklyAsync(Guid walkerId) =>
         (await availabilityRepository.GetByWalkerIdAsync(walkerId))
             .Select(MapSlot)
@@ -108,6 +119,7 @@ public sealed class AvailabilityEngine(
             intervals = daySlots.Select(s => (s.StartTime, s.EndTime)).ToList();
         }
 
+        var occupiedMinutes = OccupiedMinutes(durationMinutes);
         var result = new List<AvailableSlotResponse>();
 
         foreach (var (ivStart, ivEnd) in intervals)
@@ -115,7 +127,9 @@ public sealed class AvailabilityEngine(
             int startMin = ivStart.Hour * 60 + ivStart.Minute;
             int endMin   = ivEnd.Hour  * 60 + ivEnd.Minute;
 
-            for (int t = startMin; t + durationMinutes <= endMin; t += 30)
+            // The full occupied block (pickup + walk + travel) must fit inside the walker's
+            // available window, otherwise travel time would spill past the end of their day.
+            for (int t = startMin; t + occupiedMinutes <= endMin; t += 30)
             {
                 var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t));
                 var slotEndTime   = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(t + durationMinutes));
@@ -126,24 +140,25 @@ public sealed class AvailabilityEngine(
             }
         }
 
-        if (maxDogs is null)
-            return result;
-
-        // Filter out slots where active bookings (pending/accepted) already fill capacity
+        // Exclude slots whose occupied interval (pickup + walk + travel) overlaps an active
+        // booking's occupied interval — this is what actually keeps the walker's calendar clear.
         var allBookings = await bookingRepository.GetByWalkerIdAsync(walkerId, status: null);
         var activeBookings = allBookings
             .Where(b => b.Status is "pending" or "accepted")
             .ToList();
 
+        var capacity = maxDogs ?? 1;
+
         return result
             .Where(slot =>
             {
+                var slotOccupiedEnd = slot.Start.AddMinutes(occupiedMinutes);
                 var overlapping = activeBookings.Count(b =>
                 {
-                    var bookingEnd = b.SlotStart.AddMinutes(b.DurationMinutes);
-                    return b.SlotStart < slot.End && bookingEnd > slot.Start;
+                    var bookingOccupiedEnd = b.SlotStart.AddMinutes(OccupiedMinutes(b.DurationMinutes));
+                    return b.SlotStart < slotOccupiedEnd && bookingOccupiedEnd > slot.Start;
                 });
-                return overlapping < maxDogs.Value;
+                return overlapping < capacity;
             })
             .ToList();
     }

@@ -25,6 +25,22 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
     public DbSet<WalkBooking> WalkBookings => Set<WalkBooking>();
     public DbSet<PaymentOrder> PaymentOrders => Set<PaymentOrder>();
+
+    public DbSet<HomeServiceProvider> HomeServiceProviders => Set<HomeServiceProvider>();
+    public DbSet<HomeServiceType> HomeServiceTypes => Set<HomeServiceType>();
+    public DbSet<HomeProviderService> HomeProviderServices => Set<HomeProviderService>();
+    public DbSet<HomeProviderAvailability> HomeProviderAvailabilities => Set<HomeProviderAvailability>();
+    public DbSet<HomeProviderAvailabilityException> HomeProviderAvailabilityExceptions => Set<HomeProviderAvailabilityException>();
+    public DbSet<HomeProviderDocument> HomeProviderDocuments => Set<HomeProviderDocument>();
+    public DbSet<HomeProviderGallery> HomeProviderGalleries => Set<HomeProviderGallery>();
+    public DbSet<HomeProviderCertification> HomeProviderCertifications => Set<HomeProviderCertification>();
+    public DbSet<HomeProviderSpecialty> HomeProviderSpecialties => Set<HomeProviderSpecialty>();
+    public DbSet<HomeProviderServiceArea> HomeProviderServiceAreas => Set<HomeProviderServiceArea>();
+    public DbSet<HomeServiceBooking> HomeServiceBookings => Set<HomeServiceBooking>();
+    public DbSet<HomeServiceSession> HomeServiceSessions => Set<HomeServiceSession>();
+    public DbSet<HomeServiceSessionEvent> HomeServiceSessionEvents => Set<HomeServiceSessionEvent>();
+    public DbSet<FavoriteHomeProvider> FavoriteHomeProviders => Set<FavoriteHomeProvider>();
+
     public DbSet<BusinessHour> BusinessHours => Set<BusinessHour>();
     public DbSet<BusinessHourException> BusinessHourExceptions => Set<BusinessHourException>();
     
@@ -355,6 +371,212 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(o => o.UpdatedAt).HasColumnName("updated_at");
             b.HasIndex(o => o.BookingId).IsUnique();
             b.HasIndex(o => o.ProviderReference).IsUnique();
+        });
+
+        builder.Entity<HomeServiceProvider>(b =>
+        {
+            b.ToTable("home_service_providers");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Id).HasColumnName("id");
+            b.Property(p => p.UserId).HasColumnName("user_id");
+            b.Property(p => p.Bio).HasColumnName("bio");
+            b.Property(p => p.Description).HasColumnName("description");
+            b.Property(p => p.Experience).HasColumnName("experience");
+            b.Property(p => p.YearsOfExperience).HasColumnName("years_of_experience");
+            b.Property(p => p.IsAcceptingBookings).HasColumnName("is_accepting_bookings");
+            b.Property(p => p.MaxConcurrentBookings).HasColumnName("max_concurrent_bookings");
+            b.Property(p => p.BaseLocation).HasColumnName("base_location");
+            b.Property(p => p.Latitude).HasColumnName("latitude");
+            b.Property(p => p.Longitude).HasColumnName("longitude");
+            b.Property(p => p.VerificationStatus).HasColumnName("verification_status");
+            b.Property(p => p.RejectionReason).HasColumnName("rejection_reason");
+            b.Property(p => p.DocumentName).HasColumnName("document_name");
+            b.Property(p => p.DocumentNumber).HasColumnName("document_number");
+            b.Property(p => p.ApprovedAt).HasColumnName("approved_at");
+            b.Property(p => p.ApprovedBy).HasColumnName("approved_by");
+            b.Property(p => p.CreatedAt).HasColumnName("created_at");
+            b.Property(p => p.UpdatedAt).HasColumnName("updated_at");
+            b.HasIndex(p => p.UserId).IsUnique();
+        });
+
+        builder.Entity<HomeServiceType>(b =>
+        {
+            b.ToTable("home_service_types");
+            b.HasKey(t => t.Id);
+            b.Property(t => t.Id).HasColumnName("id");
+            b.Property(t => t.Code).HasColumnName("code");
+            b.Property(t => t.Name).HasColumnName("name");
+            b.Property(t => t.Description).HasColumnName("description");
+            b.Property(t => t.IsActive).HasColumnName("is_active");
+            b.Property(t => t.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(t => t.Code).IsUnique();
+        });
+
+        builder.Entity<HomeProviderService>(b =>
+        {
+            b.ToTable("home_provider_services");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Id).HasColumnName("id");
+            b.Property(s => s.ProviderId).HasColumnName("provider_id");
+            b.Property(s => s.ServiceTypeId).HasColumnName("service_type_id");
+            b.Property(s => s.Price).HasColumnName("price").HasColumnType("numeric(10,2)");
+            b.Property(s => s.PriceUnit).HasColumnName("price_unit");
+            b.Property(s => s.Description).HasColumnName("description");
+            b.Property(s => s.IsActive).HasColumnName("is_active");
+            b.Property(s => s.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(s => new { s.ProviderId, s.ServiceTypeId }).IsUnique();
+        });
+
+        builder.Entity<HomeProviderAvailability>(b =>
+        {
+            b.ToTable("home_provider_availability");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.Id).HasColumnName("id");
+            b.Property(a => a.ProviderId).HasColumnName("provider_id");
+            b.Property(a => a.DayOfWeek).HasColumnName("day_of_week");
+            b.Property(a => a.StartTime).HasColumnName("start_time").HasColumnType("time");
+            b.Property(a => a.EndTime).HasColumnName("end_time").HasColumnType("time");
+            b.Property(a => a.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<HomeProviderAvailabilityException>(b =>
+        {
+            b.ToTable("home_provider_availability_exceptions");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).HasColumnName("id");
+            b.Property(e => e.ProviderId).HasColumnName("provider_id");
+            b.Property(e => e.Date).HasColumnName("date").HasColumnType("date");
+            b.Property(e => e.IsUnavailable).HasColumnName("is_unavailable");
+            b.Property(e => e.StartTime).HasColumnName("start_time").HasColumnType("time");
+            b.Property(e => e.EndTime).HasColumnName("end_time").HasColumnType("time");
+            b.Property(e => e.Reason).HasColumnName("reason");
+            b.Property(e => e.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(e => new { e.ProviderId, e.Date }).IsUnique();
+        });
+
+        builder.Entity<HomeProviderDocument>(b =>
+        {
+            b.ToTable("home_provider_documents");
+            b.HasKey(d => d.Id);
+            b.Property(d => d.Id).HasColumnName("id");
+            b.Property(d => d.ProviderId).HasColumnName("provider_id");
+            b.Property(d => d.DocumentType).HasColumnName("document_type");
+            b.Property(d => d.FileUrl).HasColumnName("file_url");
+            b.Property(d => d.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<HomeProviderGallery>(b =>
+        {
+            b.ToTable("home_provider_gallery");
+            b.HasKey(g => g.Id);
+            b.Property(g => g.Id).HasColumnName("id");
+            b.Property(g => g.ProviderId).HasColumnName("provider_id");
+            b.Property(g => g.PhotoUrl).HasColumnName("photo_url");
+            b.Property(g => g.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<HomeProviderCertification>(b =>
+        {
+            b.ToTable("home_provider_certifications");
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Id).HasColumnName("id");
+            b.Property(c => c.ProviderId).HasColumnName("provider_id");
+            b.Property(c => c.ServiceTypeId).HasColumnName("service_type_id");
+            b.Property(c => c.Title).HasColumnName("title");
+            b.Property(c => c.IssuingOrganization).HasColumnName("issuing_organization");
+            b.Property(c => c.CredentialNumber).HasColumnName("credential_number");
+            b.Property(c => c.IssuedDate).HasColumnName("issued_date").HasColumnType("date");
+            b.Property(c => c.ExpiryDate).HasColumnName("expiry_date").HasColumnType("date");
+            b.Property(c => c.DocumentUrl).HasColumnName("document_url");
+            b.Property(c => c.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<HomeProviderSpecialty>(b =>
+        {
+            b.ToTable("home_provider_specialties");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Id).HasColumnName("id");
+            b.Property(s => s.ProviderId).HasColumnName("provider_id");
+            b.Property(s => s.Specialty).HasColumnName("specialty");
+            b.Property(s => s.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(s => new { s.ProviderId, s.Specialty }).IsUnique();
+        });
+
+        builder.Entity<HomeProviderServiceArea>(b =>
+        {
+            b.ToTable("home_provider_service_areas");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.Id).HasColumnName("id");
+            b.Property(a => a.ProviderId).HasColumnName("provider_id");
+            b.Property(a => a.Label).HasColumnName("label");
+            b.Property(a => a.Latitude).HasColumnName("latitude");
+            b.Property(a => a.Longitude).HasColumnName("longitude");
+            b.Property(a => a.RadiusKm).HasColumnName("radius_km").HasColumnType("numeric(6,2)");
+            b.Property(a => a.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<HomeServiceBooking>(b =>
+        {
+            b.ToTable("home_service_bookings");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.ClientUserId).HasColumnName("client_user_id");
+            b.Property(x => x.ProviderId).HasColumnName("provider_id");
+            b.Property(x => x.ServiceTypeId).HasColumnName("service_type_id");
+            b.Property(x => x.PetId).HasColumnName("pet_id");
+            b.Property(x => x.Status).HasColumnName("status");
+            b.Property(x => x.SlotStart).HasColumnName("slot_start");
+            b.Property(x => x.DurationMinutes).HasColumnName("duration_minutes");
+            b.Property(x => x.SnapshotPrice).HasColumnName("snapshot_price").HasColumnType("numeric(10,2)");
+            b.Property(x => x.TotalPrice).HasColumnName("total_price").HasColumnType("numeric(10,2)");
+            b.Property(x => x.ServiceAddress).HasColumnName("service_address");
+            b.Property(x => x.ServiceLatitude).HasColumnName("service_latitude");
+            b.Property(x => x.ServiceLongitude).HasColumnName("service_longitude");
+            b.Property(x => x.SpecialInstructions).HasColumnName("special_instructions");
+            b.Property(x => x.HomeServiceSessionId).HasColumnName("home_service_session_id");
+            b.Property(x => x.AcceptedAt).HasColumnName("accepted_at");
+            b.Property(x => x.RejectedAt).HasColumnName("rejected_at");
+            b.Property(x => x.CancelledAt).HasColumnName("cancelled_at");
+            b.Property(x => x.StartedAt).HasColumnName("started_at");
+            b.Property(x => x.CompletedAt).HasColumnName("completed_at");
+            b.Property(x => x.CreatedAt).HasColumnName("created_at");
+            b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        });
+
+        builder.Entity<HomeServiceSession>(b =>
+        {
+            b.ToTable("home_service_sessions");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Id).HasColumnName("id");
+            b.Property(s => s.ProviderId).HasColumnName("provider_id");
+            b.Property(s => s.BookingId).HasColumnName("booking_id");
+            b.Property(s => s.Status).HasColumnName("status");
+            b.Property(s => s.StartedAt).HasColumnName("started_at");
+            b.Property(s => s.EndedAt).HasColumnName("ended_at");
+            b.Property(s => s.TotalDistanceMeters).HasColumnName("total_distance_meters");
+            b.Property(s => s.TotalDurationSeconds).HasColumnName("total_duration_seconds");
+        });
+
+        builder.Entity<HomeServiceSessionEvent>(b =>
+        {
+            b.ToTable("home_service_session_events");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).HasColumnName("id");
+            b.Property(e => e.SessionId).HasColumnName("session_id");
+            b.Property(e => e.EventType).HasColumnName("event_type");
+            b.Property(e => e.Description).HasColumnName("description");
+            b.Property(e => e.Latitude).HasColumnName("latitude").HasColumnType("numeric(10,8)");
+            b.Property(e => e.Longitude).HasColumnName("longitude").HasColumnType("numeric(11,8)");
+            b.Property(e => e.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<FavoriteHomeProvider>(b =>
+        {
+            b.ToTable("favorite_home_providers");
+            b.HasKey(f => new { f.UserId, f.ProviderId });
+            b.Property(f => f.UserId).HasColumnName("user_id");
+            b.Property(f => f.ProviderId).HasColumnName("provider_id");
+            b.Property(f => f.CreatedAt).HasColumnName("created_at");
         });
     }
 }

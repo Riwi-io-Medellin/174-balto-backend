@@ -10,6 +10,11 @@ public sealed record CreateBusinessFeedbackRequest(
     int Rating,
     string? Comment);
 
+public sealed record CreateHomeServiceProviderFeedbackRequest(
+    Guid ProviderId,
+    int Rating,
+    string? Comment);
+
 public sealed record FeedbackResponse(
     Guid Id,
     Guid UserId,

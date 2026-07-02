@@ -9,7 +9,9 @@ public sealed class FeedbackService(
     IFeedbackRepository feedbackRepository,
     IWalkerRepository walkerRepository,
     IBusinessRepository businessRepository,
-    IWalkBookingRepository bookingRepository) : IFeedbackService
+    IWalkBookingRepository bookingRepository,
+    IHomeServiceProviderRepository homeServiceProviderRepository,
+    IHomeServiceBookingRepository homeServiceBookingRepository) : IFeedbackService
 {
     public async Task<(FeedbackResponse? Feedback, string? ErrorCode)> CreateWalkerFeedbackAsync(
         Guid userId, CreateWalkerFeedbackRequest request)
@@ -62,6 +64,32 @@ public sealed class FeedbackService(
         return await MapCreatedResponse(created.Id);
     }
 
+    public async Task<(FeedbackResponse? Feedback, string? ErrorCode)> CreateHomeServiceProviderFeedbackAsync(
+        Guid userId, CreateHomeServiceProviderFeedbackRequest request)
+    {
+        if (request.Rating is < 1 or > 5)
+            return (null, "INVALID_RATING");
+
+        var provider = await homeServiceProviderRepository.GetByIdAsync(request.ProviderId);
+        if (provider is null) return (null, "PROVIDER_NOT_FOUND");
+
+        var bookings = await homeServiceBookingRepository.GetByClientUserIdAsync(userId, status: "completed");
+        var hadService = bookings.Any(b => b.ProviderId == request.ProviderId);
+        if (!hadService) return (null, "NO_SERVICE_HISTORY");
+
+        var feedback = new Feedback
+        {
+            UserId = userId,
+            TargetId = request.ProviderId,
+            TargetType = "home_service_provider",
+            Rating = request.Rating,
+            Comment = request.Comment?.Trim()
+        };
+
+        var created = await feedbackRepository.CreateAsync(feedback);
+        return await MapCreatedResponse(created.Id);
+    }
+
     public async Task<(FeedbackResponse? Feedback, string? ErrorCode)> UpdateFeedbackAsync(
         Guid userId, Guid feedbackId, UpdateFeedbackRequest request)
     {
@@ -105,6 +133,14 @@ public sealed class FeedbackService(
         if (business is null) return null;
 
         return await BuildSummaryAsync(businessId, "business");
+    }
+
+    public async Task<FeedbackSummaryResponse?> GetByHomeServiceProviderAsync(Guid providerId)
+    {
+        var provider = await homeServiceProviderRepository.GetByIdAsync(providerId);
+        if (provider is null) return null;
+
+        return await BuildSummaryAsync(providerId, "home_service_provider");
     }
 
     private async Task<FeedbackSummaryResponse> BuildSummaryAsync(Guid targetId, string targetType)

@@ -75,6 +75,48 @@ public static class FeedbackEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
+        group.MapPost("/home-service-providers", async (
+            CreateHomeServiceProviderFeedbackRequest request,
+            HttpContext ctx,
+            IFeedbackService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (feedback, errorCode) = await service.CreateHomeServiceProviderFeedbackAsync(userId, request);
+            return errorCode switch
+            {
+                "INVALID_RATING" => Results.BadRequest(
+                    new ApiErrorResponse("Rating must be between 1 and 5.", "INVALID_RATING")),
+                "PROVIDER_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Home service provider not found.", "PROVIDER_NOT_FOUND")),
+                "NO_SERVICE_HISTORY" => Results.Json(
+                    new ApiErrorResponse("You have not had a completed service with this provider.", "NO_SERVICE_HISTORY"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ when feedback is not null => Results.Created($"/api/feedback/home-service-providers/{feedback.Id}", feedback),
+                _ => ResultsExtensions.UnhandledError()
+            };
+        })
+        .WithName("CreateHomeServiceProviderFeedback")
+        .WithSummary("Leave feedback for a home service provider (requires completed service history)")
+        .Produces<FeedbackResponse>(StatusCodes.Status201Created)
+        .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/home-service-providers/{providerId:guid}", async (Guid providerId, IFeedbackService service) =>
+        {
+            var summary = await service.GetByHomeServiceProviderAsync(providerId);
+            return summary is null
+                ? Results.NotFound(new ApiErrorResponse("Home service provider not found.", "PROVIDER_NOT_FOUND"))
+                : Results.Ok(summary);
+        })
+        .WithName("GetHomeServiceProviderFeedback")
+        .WithSummary("Get all feedback and average rating for a home service provider")
+        .Produces<FeedbackSummaryResponse>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         group.MapGet("/walkers/{walkerId:guid}", async (Guid walkerId, IFeedbackService service) =>
         {
             var summary = await service.GetByWalkerAsync(walkerId);
