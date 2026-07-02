@@ -9,6 +9,8 @@ public sealed class Business
     public string Email { get; set; } = string.Empty;
     public string? Location { get; set; }
     public string? Address { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public long Phone { get; set; }
     public string? InstagramUrl { get; set; }
     public string? FacebookUrl { get; set; }

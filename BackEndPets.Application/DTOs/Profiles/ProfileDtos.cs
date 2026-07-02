@@ -38,7 +38,9 @@ public sealed record CreateBusinessRequest(
     long Phone,
     string? Type = null,
     string? Location = null,
-    string? Address = null);
+    string? Address = null,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record BusinessResponse(
     Guid Id,
@@ -57,7 +59,10 @@ public sealed record BusinessResponse(
     string? Description,
     string? PhotoUrl,
     double AverageRating = 0,
-    int TotalReviews = 0);
+    int TotalReviews = 0,
+    double? Latitude = null,
+    double? Longitude = null,
+    bool IsOpenNow = false);
 
 public sealed record WalkerProfileResponse(
     Guid Id,

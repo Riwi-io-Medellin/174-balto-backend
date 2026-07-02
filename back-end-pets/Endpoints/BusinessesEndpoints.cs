@@ -63,7 +63,29 @@ public static class BusinessesEndpoints
             .WithSummary("Get a business by id")
             .Produces<BusinessResponse>(StatusCodes.Status200OK)
             .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
-        
+
+        group.MapPut("/me", async (UpdateBusinessRequest request, HttpContext ctx, IProfileService service) =>
+            {
+                var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId))
+                    return Results.Unauthorized();
+
+                var (business, errorCode) = await service.UpdateMyBusinessAsync(userId, request);
+                return errorCode switch
+                {
+                    "BUSINESS_NOT_FOUND" => Results.NotFound(new ApiErrorResponse(
+                        "Business profile not found.", "BUSINESS_NOT_FOUND")),
+                    "BUSINESS_NOT_APPROVED" => Results.Conflict(new ApiErrorResponse(
+                        "Only approved businesses can update their profile.", "BUSINESS_NOT_APPROVED")),
+                    _ when business is not null => Results.Ok(business),
+                    _ => ResultsExtensions.UnhandledError()
+                };
+            })
+            .WithName("UpdateMyBusiness")
+            .Produces<BusinessResponse>(StatusCodes.Status200OK)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
+
         return app;
     }
 }

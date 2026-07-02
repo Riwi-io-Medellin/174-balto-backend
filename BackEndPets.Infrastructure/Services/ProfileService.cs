@@ -14,9 +14,32 @@ public sealed class ProfileService(
     IWalkerRepository walkerRepository,
     IBusinessRepository businessRepository,
     IBusinessServiceRepository businessServiceRepository,
+    IBusinessHourRepository businessHourRepository,
+    IBusinessHourExceptionRepository businessHourExceptionRepository,
     IFeedbackRepository feedbackRepository) : IProfileService
 {
     private static readonly string[] ValidBusinessTypes = ["veterinary", "grooming", "shelter", "petshop", "other"];
+
+    /// Computes whether a business is open right now from its weekly hours + today's exception (Bogotá time, UTC-5).
+    private async Task<bool> IsOpenNowAsync(Guid businessId)
+    {
+        var now = DateTime.UtcNow.AddHours(-5);
+        var today = DateOnly.FromDateTime(now);
+        var nowTime = TimeOnly.FromDateTime(now);
+
+        var exceptions = await businessHourExceptionRepository.GetByBusinessIdAsync(businessId);
+        var todayException = exceptions.FirstOrDefault(e => e.Date == today);
+        if (todayException is not null)
+        {
+            if (todayException.IsUnavailable) return false;
+            return todayException.StartTime is not null && todayException.EndTime is not null &&
+                   nowTime >= todayException.StartTime && nowTime <= todayException.EndTime;
+        }
+
+        var hours = await businessHourRepository.GetByBusinessIdAsync(businessId);
+        var todayHour = hours.FirstOrDefault(h => h.DayOfWeek == (int)now.DayOfWeek && h.IsActive);
+        return todayHour is not null && nowTime >= todayHour.StartTime && nowTime <= todayHour.EndTime;
+    }
 
     public async Task<MeResponse?> GetMeAsync(Guid userId)
     {
@@ -82,7 +105,9 @@ public sealed class ProfileService(
             Phone = request.Phone,
             Type = request.Type?.Trim(),
             Location = request.Location?.Trim(),
-            Address = request.Address?.Trim()
+            Address = request.Address?.Trim(),
+            Latitude = request.Latitude,
+            Longitude = request.Longitude
         };
 
         try
@@ -103,7 +128,9 @@ public sealed class ProfileService(
                 created.InstagramUrl,
                 created.FacebookUrl,
                 null,
-                null), null);
+                null,
+                Latitude: created.Latitude,
+                Longitude: created.Longitude), null);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" } pg)
         {
@@ -169,11 +196,13 @@ public sealed class ProfileService(
         {
             var service = (await businessServiceRepository.GetByBusinessIdAsync(b.Id)).FirstOrDefault();
             var (avg, count) = ratingMap.GetValueOrDefault(b.Id, (0.0, 0));
+            var isOpen = await IsOpenNowAsync(b.Id);
             result.Add(new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
                 b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
                 b.CreatedAt, b.InstagramUrl, b.FacebookUrl,
                 service?.Description, service?.PhotoUrl,
-                Math.Round(avg, 1), count));
+                Math.Round(avg, 1), count,
+                Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen));
         }
         return result;
     }
@@ -186,12 +215,14 @@ public sealed class ProfileService(
         var service = (await businessServiceRepository.GetByBusinessIdAsync(b.Id)).FirstOrDefault();
         var feedbacks = await feedbackRepository.GetByTargetAsync(b.Id, "business");
         var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
+        var isOpen = await IsOpenNowAsync(b.Id);
     
         return new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
             b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
             b.CreatedAt, b.InstagramUrl, b.FacebookUrl,
             service?.Description, service?.PhotoUrl,
-            Math.Round(avg, 1), feedbacks.Count);
+            Math.Round(avg, 1), feedbacks.Count,
+            Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen);
     }
     
     public async Task<(BusinessResponse? Business, string? ErrorCode)> UpdateMyBusinessAsync(
@@ -215,6 +246,7 @@ public sealed class ProfileService(
         var service = (await businessServiceRepository.GetByBusinessIdAsync(business.Id)).FirstOrDefault();
         var feedbacks = await feedbackRepository.GetByTargetAsync(business.Id, "business");
         var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
+        var isOpen = await IsOpenNowAsync(business.Id);
     
         return (new BusinessResponse(
             business.Id, business.OwnerUserId, business.Name, business.Nit,
@@ -222,7 +254,8 @@ public sealed class ProfileService(
             business.Address, business.VerificationStatus,
             business.CreatedAt, business.InstagramUrl, business.FacebookUrl,
             service?.Description, service?.PhotoUrl,
-            Math.Round(avg, 1), feedbacks.Count), null);
+            Math.Round(avg, 1), feedbacks.Count,
+            Latitude: business.Latitude, Longitude: business.Longitude, IsOpenNow: isOpen), null);
     }
 
     public async Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId)

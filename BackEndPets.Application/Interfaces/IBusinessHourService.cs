@@ -13,4 +13,10 @@ public interface IBusinessHourService
 
     Task<(IReadOnlyCollection<BusinessHourExceptionResponse>? Result, string? ErrorCode)> ReplaceMyExceptionsAsync(
         Guid userId, IEnumerable<BusinessHourExceptionRequest> exceptions);
+
+    /// Public read-only lookup, no ownership check — used to render any business's profile.
+    Task<IReadOnlyCollection<BusinessHourResponse>> GetHoursByBusinessIdAsync(Guid businessId);
+
+    /// Public read-only lookup, no ownership check — used to render any business's profile.
+    Task<IReadOnlyCollection<BusinessHourExceptionResponse>> GetExceptionsByBusinessIdAsync(Guid businessId);
 }

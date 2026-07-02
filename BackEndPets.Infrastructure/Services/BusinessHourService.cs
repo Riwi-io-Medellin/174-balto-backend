@@ -84,6 +84,12 @@ public sealed class BusinessHourService(
         return (saved.Select(MapException).ToList(), null);
     }
 
+    public async Task<IReadOnlyCollection<BusinessHourResponse>> GetHoursByBusinessIdAsync(Guid businessId) =>
+        (await hourRepository.GetByBusinessIdAsync(businessId)).Select(MapHour).ToList();
+
+    public async Task<IReadOnlyCollection<BusinessHourExceptionResponse>> GetExceptionsByBusinessIdAsync(Guid businessId) =>
+        (await exceptionRepository.GetByBusinessIdAsync(businessId)).Select(MapException).ToList();
+
     private async Task<Business?> GetMyBusinessAsync(Guid userId) =>
         (await businessRepository.GetByOwnerIdAsync(userId)).FirstOrDefault();
 

@@ -60,28 +60,6 @@ public static class BusinessHourEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
         
-        group.MapPut("/me", async (UpdateBusinessRequest request, HttpContext ctx, IProfileService service) =>
-            {
-                var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (!Guid.TryParse(userIdStr, out var userId))
-                    return Results.Unauthorized();
-
-                var (business, errorCode) = await service.UpdateMyBusinessAsync(userId, request);
-                return errorCode switch
-                {
-                    "BUSINESS_NOT_FOUND" => Results.NotFound(new ApiErrorResponse(
-                        "Business profile not found.", "BUSINESS_NOT_FOUND")),
-                    "BUSINESS_NOT_APPROVED" => Results.Conflict(new ApiErrorResponse(
-                        "Only approved businesses can update their profile.", "BUSINESS_NOT_APPROVED")),
-                    _ when business is not null => Results.Ok(business),
-                    _ => ResultsExtensions.UnhandledError()
-                };
-            })
-            .WithName("UpdateMyBusiness")
-            .Produces<BusinessResponse>(StatusCodes.Status200OK)
-            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
-            .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
-
         group.MapGet("/exceptions", async (HttpContext ctx, IBusinessHourService service) =>
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -128,6 +106,23 @@ public static class BusinessHourEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
         .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
+
+        // Public read-only hours by business id (used on any business profile, not just the owner's).
+        var publicGroup = app.MapGroup("/api/businesses")
+            .WithTags("Businesses")
+            .RequireAuthorization();
+
+        publicGroup.MapGet("/{businessId:guid}/hours", async (
+                Guid businessId, IBusinessHourService service) =>
+            Results.Ok(await service.GetHoursByBusinessIdAsync(businessId)))
+            .WithName("GetBusinessHoursById")
+            .Produces<IReadOnlyCollection<BusinessHourResponse>>(StatusCodes.Status200OK);
+
+        publicGroup.MapGet("/{businessId:guid}/hours/exceptions", async (
+                Guid businessId, IBusinessHourService service) =>
+            Results.Ok(await service.GetExceptionsByBusinessIdAsync(businessId)))
+            .WithName("GetBusinessHourExceptionsById")
+            .Produces<IReadOnlyCollection<BusinessHourExceptionResponse>>(StatusCodes.Status200OK);
 
         return app;
     }

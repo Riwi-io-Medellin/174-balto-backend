@@ -155,6 +155,8 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(biz => biz.Email).HasColumnName("email");
             b.Property(biz => biz.Location).HasColumnName("location");
             b.Property(biz => biz.Address).HasColumnName("address");
+            b.Property(biz => biz.Latitude).HasColumnName("latitude");
+            b.Property(biz => biz.Longitude).HasColumnName("longitude");
             b.Property(biz => biz.Phone).HasColumnName("phone");
             b.Property(biz => biz.Type).HasColumnName("type");
             b.Property(biz => biz.VerificationStatus).HasColumnName("verification_status");
