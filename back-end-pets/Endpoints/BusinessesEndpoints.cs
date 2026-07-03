@@ -86,6 +86,22 @@ public static class BusinessesEndpoints
             .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
             .Produces<ApiErrorResponse>(StatusCodes.Status409Conflict);
 
+        group.MapGet("/me", async (HttpContext ctx, IProfileService service) =>
+            {
+                var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId))
+                    return Results.Unauthorized();
+
+                var business = await service.GetMyBusinessAsync(userId);
+                return business is null
+                    ? Results.NotFound(new ApiErrorResponse(
+                        "You have not registered a business yet.", "BUSINESS_NOT_FOUND"))
+                    : Results.Ok(business);
+            })
+            .WithName("GetMyBusiness")
+            .Produces<BusinessResponse>(StatusCodes.Status200OK)
+            .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         return app;
     }
 }

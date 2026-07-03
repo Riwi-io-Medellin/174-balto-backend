@@ -225,6 +225,12 @@ public sealed class ProfileService(
             Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen);
     }
     
+    public async Task<BusinessResponse?> GetMyBusinessAsync(Guid userId)
+    {
+        var business = (await businessRepository.GetByOwnerIdAsync(userId)).FirstOrDefault();
+        return business is null ? null : await GetBusinessByIdAsync(business.Id);
+    }
+
     public async Task<(BusinessResponse? Business, string? ErrorCode)> UpdateMyBusinessAsync(
         Guid userId, UpdateBusinessRequest request)
     {

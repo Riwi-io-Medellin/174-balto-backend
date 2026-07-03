@@ -18,4 +18,5 @@ public interface IProfileService
         Guid userId, UpdateWalkerProfileRequest request);
     Task<(BusinessResponse? Business, string? ErrorCode)> UpdateMyBusinessAsync(
         Guid userId, UpdateBusinessRequest request);
+    Task<BusinessResponse?> GetMyBusinessAsync(Guid userId);
 }
