@@ -38,12 +38,12 @@ public sealed class OpenAIPetClinicalTipsService(
             : string.Join("\n", events.OrderByDescending(e => e.EventDate).Take(10).Select(e =>
                 $"- {e.EventDate:yyyy-MM-dd} {e.EventType}: reason={e.Reason}, diagnosis={e.Diagnosis}, next control={e.NextControlDate:yyyy-MM-dd}"));
 
-        var prompt = $"""
-            Pet: {pet.Name}, species={pet.Species}, breed={pet.Breed}, birth date={pet.BirthDate:yyyy-MM-dd}, weight={pet.Weight}kg.
-            Allergies: {record.Allergies ?? "none"}. Chronic conditions: {record.ChronicConditions ?? "none"}. Diet restrictions: {record.DietaryRestrictions ?? "none"}.
+        var prompt = $$"""
+            Pet: {{pet.Name}}, species={{pet.Species}}, breed={{pet.Breed}}, birth date={{pet.BirthDate:yyyy-MM-dd}}, weight={{pet.Weight}}kg.
+            Allergies: {{record.Allergies ?? "none"}}. Chronic conditions: {{record.ChronicConditions ?? "none"}}. Diet restrictions: {{record.DietaryRestrictions ?? "none"}}.
 
             Recent clinical events:
-            {eventsSummary}
+            {{eventsSummary}}
 
             Generate 3 to 6 short, personalized tips for the owner based only on this data
             (care, feeding, pending controls, vaccination status, alerts, general advice).
