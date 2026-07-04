@@ -37,6 +37,10 @@ public sealed class PetRepository(AppIdentityDbContext dbContext) : IPetReposito
         existing.Description = pet.Description;
         existing.PhotoUrl = pet.PhotoUrl;
         existing.Weight = pet.Weight;
+        existing.Sex = pet.Sex;
+        existing.Color = pet.Color;
+        existing.IdentificationNumber = pet.IdentificationNumber;
+        existing.MicrochipNumber = pet.MicrochipNumber;
         existing.IsLost = pet.IsLost;
         existing.LostLatitude = pet.LostLatitude;
         existing.LostLongitude = pet.LostLongitude;

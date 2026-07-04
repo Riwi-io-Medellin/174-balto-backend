@@ -6,6 +6,7 @@ using BackEndPets.Application;
 using BackEndPets.Infrastructure;
 using BackEndPets.Infrastructure.Identity;
 using CloudinaryDotNet;
+using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -82,6 +83,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
 });
 
+QuestPDF.Settings.License = LicenseType.Community;
+
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
@@ -93,6 +96,10 @@ if (!string.IsNullOrEmpty(cloudName))
         builder.Configuration["Cloudinary:ApiKey"],
         builder.Configuration["Cloudinary:ApiSecret"]);
     builder.Services.AddSingleton(new Cloudinary(cloudinaryAccount));
+}
+else
+{
+    builder.Services.AddSingleton<Cloudinary?>(_ => null);
 }
 
 var app = builder.Build();
@@ -201,7 +208,7 @@ app.MapFeedbackEndpoints();
 app.MapWalkerAssetsEndpoints();
 app.MapBusinessAssetsEndpoints();
 app.MapBusinessServicesEndpoints();
-app.MapPetHistoryEndpoints();
+app.MapPetClinicalEndpoints();
 app.MapUploadEndpoints();
 app.MapNotificationsEndpoints();
 app.MapWalkerAvailabilityEndpoints();

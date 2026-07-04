@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using BackEndPets.Application.DTOs.Chat;
 using BackEndPets.Application.Interfaces;
+using BackEndPets.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +12,7 @@ namespace BackEndPets.Infrastructure.Services;
 public sealed class ChatService(
     IPetService petService,
     IWalkingHistoryService walkingHistoryService,
+    IPetClinicalRepository clinicalRepository,
     IConfiguration configuration,
     ILogger<ChatService> logger) : IChatService
 {
@@ -36,6 +38,8 @@ public sealed class ChatService(
                 $", weight: {p.Weight?.ToString("0.##") ?? "unknown"} kg" +
                 $", description: {p.Description ?? "none"}"));
 
+        var clinicalContext = await BuildClinicalContextAsync(pets);
+
         var walkContext = history.Count == 0
             ? "The user has no walk history."
             : $"Total walks: {history.Count}. Last walk: {history.Max(h => h.StartTime):yyyy-MM-dd}.";
@@ -48,6 +52,9 @@ public sealed class ChatService(
             USER DATA (only you see it, don't repeat it in full unless needed):
             Pets:
             {petContext}
+
+            Clinical history (structured, from the database — this is the source of truth for health questions):
+            {clinicalContext}
 
             Walk history:
             {walkContext}
@@ -124,5 +131,35 @@ public sealed class ChatService(
             return (null, "AI_EMPTY_RESPONSE");
 
         return (new ChatMessageResponse(reply), null);
+    }
+
+    private async Task<string> BuildClinicalContextAsync(IReadOnlyCollection<Application.DTOs.Pets.PetResponse> pets)
+    {
+        if (pets.Count == 0) return "No clinical history available.";
+
+        var blocks = new List<string>();
+        foreach (var p in pets)
+        {
+            var record = await clinicalRepository.GetRecordByPetIdAsync(p.Id);
+            var events = await clinicalRepository.GetEventsByPetIdAsync(p.Id);
+
+            if (record is null && events.Count == 0)
+            {
+                blocks.Add($"- {p.Name}: no clinical history recorded.");
+                continue;
+            }
+
+            var recentEvents = events
+                .OrderByDescending(e => e.EventDate)
+                .Take(5)
+                .Select(e => $"  * {e.EventDate:yyyy-MM-dd} [{e.EventType}] reason={e.Reason ?? "n/a"}, diagnosis={e.Diagnosis ?? "n/a"}, next control={e.NextControlDate?.ToString("yyyy-MM-dd") ?? "n/a"}");
+
+            blocks.Add(
+                $"- {p.Name}: allergies={record?.Allergies ?? "none"}, chronic conditions={record?.ChronicConditions ?? "none"}, " +
+                $"diet restrictions={record?.DietaryRestrictions ?? "none"}\n" +
+                string.Join("\n", recentEvents));
+        }
+
+        return string.Join("\n", blocks);
     }
 }

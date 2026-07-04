@@ -80,7 +80,8 @@ public sealed class PetService(
     }
 
     private static PetResponse MapResponse(Pet p) =>
-        new(p.Id, p.UserId, p.Name, p.Species, p.Breed, p.BirthDate, p.Description, p.PhotoUrl, p.Weight, p.CreatedAt,
+        new(p.Id, p.UserId, p.Name, p.Species, p.Breed, p.BirthDate, p.Description, p.PhotoUrl, p.Weight,
+            p.Sex, p.Color, p.IdentificationNumber, p.MicrochipNumber, p.CreatedAt,
             p.IsLost, p.LostLatitude, p.LostLongitude, p.LostAt);
     
     public async Task<(PetResponse? Pet, string? ErrorCode)> ReportLostAsync(

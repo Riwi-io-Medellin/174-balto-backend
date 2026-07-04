@@ -60,8 +60,11 @@ public static class DependencyInjection
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IBusinessServiceRepository, BusinessServiceRepository>();
         services.AddScoped<IBusinessServicesService, BusinessServicesService>();
-        services.AddScoped<IPetHistoryRepository, PetHistoryRepository>();
-        services.AddScoped<IPetHistoryService, PetHistoryService>();
+        services.AddScoped<IPetClinicalRepository, PetClinicalRepository>();
+        services.AddScoped<IPetClinicalRecordService, PetClinicalRecordService>();
+        services.AddScoped<IPetClinicalExtractionService, OpenAIPetClinicalExtractionService>();
+        services.AddScoped<IPetClinicalDocumentGenerationService, QuestPdfClinicalDocumentGenerationService>();
+        services.AddScoped<IPetClinicalTipsService, OpenAIPetClinicalTipsService>();
         services.AddScoped<IDocumentVerificationService, OpenAIDocumentVerificationService>();
         services.AddScoped<IWalkerApplicationService, WalkerApplicationService>();
         services.AddScoped<IWalkerAvailabilityRepository, WalkerAvailabilityRepository>();

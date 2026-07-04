@@ -20,7 +20,11 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
     public DbSet<BusinessDocument> BusinessDocuments => Set<BusinessDocument>();
     public DbSet<BusinessService> BusinessServices => Set<BusinessService>();
-    public DbSet<PetHistory> PetHistories => Set<PetHistory>();
+    public DbSet<PetClinicalRecord> PetClinicalRecords => Set<PetClinicalRecord>();
+    public DbSet<PetClinicalEvent> PetClinicalEvents => Set<PetClinicalEvent>();
+    public DbSet<PetClinicalMedication> PetClinicalMedications => Set<PetClinicalMedication>();
+    public DbSet<PetClinicalDocument> PetClinicalDocuments => Set<PetClinicalDocument>();
+    public DbSet<PetClinicalTip> PetClinicalTips => Set<PetClinicalTip>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<WalkerAvailability> WalkerAvailabilities => Set<WalkerAvailability>();
     public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
@@ -231,6 +235,10 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.Description).HasColumnName("description");
             b.Property(p => p.PhotoUrl).HasColumnName("photo_url");
             b.Property(p => p.Weight).HasColumnName("weight").HasColumnType("numeric(5,2)");
+            b.Property(p => p.Sex).HasColumnName("sex");
+            b.Property(p => p.Color).HasColumnName("color");
+            b.Property(p => p.IdentificationNumber).HasColumnName("identification_number");
+            b.Property(p => p.MicrochipNumber).HasColumnName("microchip_number");
             b.Property(p => p.IsLost).HasColumnName("is_lost");
             b.Property(p => p.LostLatitude).HasColumnName("lost_latitude");
             b.Property(p => p.LostLongitude).HasColumnName("lost_longitude");
@@ -238,16 +246,96 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.CreatedAt).HasColumnName("created_at");
         });
         
-        builder.Entity<PetHistory>(b =>
+        builder.Entity<PetClinicalRecord>(b =>
         {
-            b.ToTable("pet_histories");
-            b.HasKey(h => h.Id);
-            b.Property(h => h.Id).HasColumnName("id");
-            b.Property(h => h.PetId).HasColumnName("pet_id");
-            b.Property(h => h.Title).HasColumnName("title");
-            b.Property(h => h.Description).HasColumnName("description");
-            b.Property(h => h.DocumentUrl).HasColumnName("document_url");
-            b.Property(h => h.CreatedAt).HasColumnName("created_at");
+            b.ToTable("pet_clinical_records");
+            b.HasKey(r => r.Id);
+            b.Property(r => r.Id).HasColumnName("id");
+            b.Property(r => r.PetId).HasColumnName("pet_id");
+            b.Property(r => r.Allergies).HasColumnName("allergies");
+            b.Property(r => r.ChronicConditions).HasColumnName("chronic_conditions");
+            b.Property(r => r.DietaryRestrictions).HasColumnName("dietary_restrictions");
+            b.Property(r => r.DocumentUrl).HasColumnName("document_url");
+            b.Property(r => r.DocumentGeneratedAt).HasColumnName("document_generated_at");
+            b.Property(r => r.CreatedAt).HasColumnName("created_at");
+            b.Property(r => r.UpdatedAt).HasColumnName("updated_at");
+            b.HasIndex(r => r.PetId).IsUnique();
+        });
+
+        builder.Entity<PetClinicalEvent>(b =>
+        {
+            b.ToTable("pet_clinical_events");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).HasColumnName("id");
+            b.Property(e => e.PetId).HasColumnName("pet_id");
+            b.Property(e => e.EventType).HasColumnName("event_type");
+            b.Property(e => e.EventDate).HasColumnName("event_date");
+            b.Property(e => e.ClinicName).HasColumnName("clinic_name");
+            b.Property(e => e.VeterinarianName).HasColumnName("veterinarian_name");
+            b.Property(e => e.Reason).HasColumnName("reason");
+            b.Property(e => e.ClinicalSigns).HasColumnName("clinical_signs");
+            b.Property(e => e.Temperature).HasColumnName("temperature").HasColumnType("numeric(5,2)");
+            b.Property(e => e.HeartRate).HasColumnName("heart_rate");
+            b.Property(e => e.RespiratoryRate).HasColumnName("respiratory_rate");
+            b.Property(e => e.Weight).HasColumnName("weight").HasColumnType("numeric(6,2)");
+            b.Property(e => e.BodyCondition).HasColumnName("body_condition");
+            b.Property(e => e.Findings).HasColumnName("findings");
+            b.Property(e => e.Diagnosis).HasColumnName("diagnosis");
+            b.Property(e => e.ExamsPerformed).HasColumnName("exams_performed");
+            b.Property(e => e.ExamResults).HasColumnName("exam_results");
+            b.Property(e => e.Procedures).HasColumnName("procedures");
+            b.Property(e => e.Recommendations).HasColumnName("recommendations");
+            b.Property(e => e.Observations).HasColumnName("observations");
+            b.Property(e => e.NextControlDate).HasColumnName("next_control_date");
+            b.Property(e => e.Source).HasColumnName("source");
+            b.Property(e => e.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(e => e.PetId);
+            b.HasMany(e => e.Medications)
+                .WithOne()
+                .HasForeignKey(m => m.ClinicalEventId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PetClinicalMedication>(b =>
+        {
+            b.ToTable("pet_clinical_medications");
+            b.HasKey(m => m.Id);
+            b.Property(m => m.Id).HasColumnName("id");
+            b.Property(m => m.ClinicalEventId).HasColumnName("clinical_event_id");
+            b.Property(m => m.Name).HasColumnName("name");
+            b.Property(m => m.Dose).HasColumnName("dose");
+            b.Property(m => m.Frequency).HasColumnName("frequency");
+            b.Property(m => m.Duration).HasColumnName("duration");
+            b.Property(m => m.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<PetClinicalDocument>(b =>
+        {
+            b.ToTable("pet_clinical_documents");
+            b.HasKey(d => d.Id);
+            b.Property(d => d.Id).HasColumnName("id");
+            b.Property(d => d.PetId).HasColumnName("pet_id");
+            b.Property(d => d.FileUrl).HasColumnName("file_url");
+            b.Property(d => d.FileName).HasColumnName("file_name");
+            b.Property(d => d.FileType).HasColumnName("file_type");
+            b.Property(d => d.Status).HasColumnName("status");
+            b.Property(d => d.ExtractedJson).HasColumnName("extracted_json");
+            b.Property(d => d.ErrorMessage).HasColumnName("error_message");
+            b.Property(d => d.CreatedAt).HasColumnName("created_at");
+            b.Property(d => d.ProcessedAt).HasColumnName("processed_at");
+            b.HasIndex(d => d.PetId);
+        });
+
+        builder.Entity<PetClinicalTip>(b =>
+        {
+            b.ToTable("pet_clinical_tips");
+            b.HasKey(t => t.Id);
+            b.Property(t => t.Id).HasColumnName("id");
+            b.Property(t => t.PetId).HasColumnName("pet_id");
+            b.Property(t => t.Category).HasColumnName("category");
+            b.Property(t => t.Message).HasColumnName("message");
+            b.Property(t => t.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(t => t.PetId);
         });
 
         builder.Entity<PetWalkingHistory>(b =>
