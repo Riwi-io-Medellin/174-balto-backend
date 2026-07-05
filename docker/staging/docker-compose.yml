@@ -11,6 +11,11 @@ services:
       - ASPNETCORE_ENVIRONMENT=Staging
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION}
       - Jwt__Key=${JWT_KEY}
+      - Ai__VetDocumentProvider=${AI_PROVIDER}
+      - Gemini__ApiKey=${GEMINI_API_KEY}
+      - Gemini__Model=${GEMINI_MODEL}
+      - OpenRouter__ApiKey=${OPENROUTER_API_KEY}
+      - OpenRouter__Model=${OPENROUTER_MODEL}
     networks:
       - proxy
 

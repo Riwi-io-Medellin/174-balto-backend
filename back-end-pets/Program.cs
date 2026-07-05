@@ -232,6 +232,7 @@ app.MapNotificationsEndpoints();
 app.MapWalkerAvailabilityEndpoints();
 app.MapWalkBookingEndpoints();
 app.MapChatEndpoints();
+app.MapVetDocumentAnalysisEndpoints();
 app.MapPaymentsEndpoints();
 app.MapAdminVerificationEndpoints();
 app.MapHomeServicesEndpoints();

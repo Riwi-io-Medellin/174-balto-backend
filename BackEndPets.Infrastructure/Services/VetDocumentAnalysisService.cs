@@ -1,0 +1,155 @@
+using System.Text.Json;
+using BackEndPets.Application.DTOs.VetDocumentAnalysis;
+using BackEndPets.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+namespace BackEndPets.Infrastructure.Services;
+
+public sealed class VetDocumentAnalysisService(
+    IEnumerable<IVetDocumentAiClient> clients,
+    IVetDocumentAttachmentFetcher attachmentFetcher,
+    IConfiguration configuration,
+    ILogger<VetDocumentAnalysisService> logger) : IVetDocumentAnalysisService
+{
+    public const string RequiredDisclaimer =
+        "This is not a veterinary diagnosis, treatment plan, or substitute for professional veterinary care. Please consult a licensed veterinarian for medical decisions.";
+
+    private static readonly string[] AllowedUrgencyLevels =
+        ["routine", "schedule_vet_visit", "urgent", "emergency"];
+
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private const string SystemPrompt = """
+        You are a veterinary document guidance assistant. Your role is to help a pet
+        owner understand a veterinary document (blood test, ultrasound report, PCR/lab
+        result, prescription, or similar) in plain language, BEFORE they speak to a
+        licensed veterinarian.
+
+        You must NEVER provide a diagnosis, a treatment plan, medication choices, or
+        dosage advice. You provide preliminary, educational guidance only, and you
+        must always recommend consulting a licensed veterinarian for any medical
+        decision. If the document or context is insufficient, say so explicitly rather
+        than guessing.
+
+        Respond ONLY with a JSON object with exactly this shape:
+        {
+          "summary": string,
+          "keyFindings": string[],
+          "abnormalValues": [
+            { "label": string, "value": string, "referenceRange": string | null, "interpretation": string }
+          ],
+          "possibleConcerns": string[],
+          "urgencyLevel": "routine" | "schedule_vet_visit" | "urgent" | "emergency",
+          "questionsForVet": string[],
+          "missingInformation": string[],
+          "disclaimer": string
+        }
+        """;
+
+    public async Task<(VetDocumentAnalysisResponse? Result, string? ErrorCode)> AnalyzeAsync(
+        Guid userId, AnalyzeVetDocumentRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.PetContext.Name) ||
+            string.IsNullOrWhiteSpace(request.PetContext.Species) ||
+            request.FileUrls.Count == 0 ||
+            request.FileUrls.Count > 5)
+        {
+            return (null, "VALIDATION_FAILED");
+        }
+
+        var providerName = configuration["Ai:VetDocumentProvider"] ?? "gemini";
+        var clientList = clients.ToList();
+        var primary = clientList.FirstOrDefault(c => c.ProviderName == providerName);
+        var secondary = clientList.FirstOrDefault(c => c.ProviderName != providerName);
+
+        if ((primary is null || !primary.IsConfigured) && (secondary is null || !secondary.IsConfigured))
+        {
+            logger.LogWarning("No vet-document AI provider is configured.");
+            return (null, "AI_NOT_CONFIGURED");
+        }
+
+        IReadOnlyList<(byte[] Bytes, string MimeType)> attachments;
+        try
+        {
+            attachments = await attachmentFetcher.FetchAsync(request.FileUrls, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to download attachment(s) for analysis: {ExceptionType}", ex.GetType().Name);
+            return (null, "AI_UNAVAILABLE");
+        }
+
+        var userPrompt = BuildUserPrompt(request);
+
+        var text = primary is null ? null : await TryGenerateAsync(primary, userPrompt, attachments, ct);
+        if (text is null && secondary is not null)
+        {
+            text = await TryGenerateAsync(secondary, userPrompt, attachments, ct);
+        }
+
+        if (text is null)
+            return (null, "AI_UNAVAILABLE");
+
+        try
+        {
+            var result = JsonSerializer.Deserialize<VetDocumentAnalysisResponse>(text, JsonOpts);
+            if (result is null)
+                return (null, "AI_PARSE_ERROR");
+
+            var normalized = result with
+            {
+                UrgencyLevel = AllowedUrgencyLevels.Contains(result.UrgencyLevel)
+                    ? result.UrgencyLevel
+                    : "schedule_vet_visit",
+                Disclaimer = RequiredDisclaimer
+            };
+
+            return (normalized, null);
+        }
+        catch (JsonException)
+        {
+            logger.LogError("Failed to parse AI response into the expected JSON shape.");
+            return (null, "AI_PARSE_ERROR");
+        }
+    }
+
+    private async Task<string?> TryGenerateAsync(
+        IVetDocumentAiClient client,
+        string userPrompt,
+        IReadOnlyList<(byte[] Bytes, string MimeType)> attachments,
+        CancellationToken ct)
+    {
+        if (!client.IsConfigured) return null;
+        try
+        {
+            return await client.GenerateAnalysisJsonAsync(SystemPrompt, userPrompt, attachments, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("{Provider} analysis attempt failed: {ExceptionType}", client.ProviderName, ex.GetType().Name);
+            return null;
+        }
+    }
+
+    private static string BuildUserPrompt(AnalyzeVetDocumentRequest request)
+    {
+        var ctx = request.PetContext;
+        var lines = new List<string>
+        {
+            "Analyze the attached veterinary document(s) for this pet:",
+            $"- Name: {ctx.Name}",
+            $"- Species: {ctx.Species}",
+        };
+        if (!string.IsNullOrWhiteSpace(ctx.Breed)) lines.Add($"- Breed: {ctx.Breed}");
+        if (ctx.Age is not null) lines.Add($"- Age: {ctx.Age} years");
+        if (!string.IsNullOrWhiteSpace(ctx.Sex)) lines.Add($"- Sex: {ctx.Sex}");
+        if (ctx.WeightKg is not null) lines.Add($"- Weight: {ctx.WeightKg} kg");
+        if (!string.IsNullOrWhiteSpace(request.DocumentType)) lines.Add($"- Document type: {request.DocumentType}");
+        if (!string.IsNullOrWhiteSpace(request.Symptoms)) lines.Add($"- Reported symptoms/reason: {request.Symptoms}");
+        return string.Join('\n', lines);
+    }
+}
