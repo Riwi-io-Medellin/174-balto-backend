@@ -19,6 +19,13 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Allow request bodies up to 60MB so walk-video uploads (max 50MB, see
+// UploadEndpoints.cs) aren't rejected by Kestrel's ~28.6MB default.
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 60 * 1024 * 1024;
+});
+
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "balto";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "balto.api";
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "dev-only-change-this-secret-key-32-chars";

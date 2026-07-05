@@ -27,29 +27,45 @@ public static class UploadEndpoints
             if (file is null || file.Length == 0)
                 return Results.BadRequest(new { error = "No file provided.", code = "FILE_REQUIRED" });
         
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf" };
+            var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            var videoExtensions = new[] { ".mp4", ".mov", ".webm", ".m4v", ".3gp" };
+            var allowedExtensions = imageExtensions.Concat(videoExtensions).Append(".pdf");
             var extension = Path.GetExtension(file.FileName).ToLower();
             if (!allowedExtensions.Contains(extension))
                 return Results.BadRequest(new UploadError(
-                    "Invalid file type. Allowed: jpg, jpeg, png, webp, gif, pdf.",
+                    "Invalid file type. Allowed: jpg, jpeg, png, webp, gif, mp4, mov, webm, m4v, 3gp, pdf.",
                     "INVALID_FILE_TYPE"));
-        
-            if (file.Length > 10 * 1024 * 1024)
+
+            var isVideo = videoExtensions.Contains(extension);
+            var maxBytes = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+            if (file.Length > maxBytes)
                 return Results.BadRequest(new UploadError(
-                    "File exceeds 10MB limit.",
+                    isVideo ? "File exceeds 50MB limit." : "File exceeds 10MB limit.",
                     "FILE_TOO_LARGE"));
-        
+
             await using var stream = file.OpenReadStream();
-            var isImage = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" }.Contains(extension);
-        
+            var isImage = imageExtensions.Contains(extension);
+
             UploadResult result;
-        
+
             if (isImage)
             {
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
                     Folder = "balto",
+                    UseFilename = true,
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
+                result = await cloudinary.UploadAsync(uploadParams);
+            }
+            else if (isVideo)
+            {
+                var uploadParams = new VideoUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "balto/videos",
                     UseFilename = true,
                     UniqueFilename = true,
                     Overwrite = false
