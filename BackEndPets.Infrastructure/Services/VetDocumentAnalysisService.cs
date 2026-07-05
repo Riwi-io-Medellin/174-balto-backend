@@ -80,8 +80,11 @@ public sealed class VetDocumentAnalysisService(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to download attachment(s) for analysis: {ExceptionType}", ex.GetType().Name);
-            return (null, $"ATTACHMENT_FETCH_FAILED|{ex.GetType().Name}");
+            var detail = ex is HttpRequestException { StatusCode: not null } httpEx
+                ? $"{ex.GetType().Name} {(int)httpEx.StatusCode}"
+                : ex.GetType().Name;
+            logger.LogError("Failed to download attachment(s) for analysis: {Detail}", detail);
+            return (null, $"ATTACHMENT_FETCH_FAILED|{detail}");
         }
 
         var userPrompt = BuildUserPrompt(request);
