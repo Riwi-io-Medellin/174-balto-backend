@@ -26,9 +26,21 @@ public static class VetDocumentAnalysisEndpoints
                 {
                     "VALIDATION_FAILED"   => Results.BadRequest(new ApiErrorResponse(
                         "Pet name, species, and at least one document are required.", "VALIDATION_FAILED")),
-                    "AI_NOT_CONFIGURED"   => Results.StatusCode(503),
-                    "AI_UNAVAILABLE"      => Results.StatusCode(503),
-                    "AI_PARSE_ERROR"      => Results.StatusCode(502),
+                    "AI_NOT_CONFIGURED"   => Results.Json(
+                        new ApiErrorResponse(
+                            "No AI provider is configured on the server (missing or invalid API key).",
+                            "AI_NOT_CONFIGURED"),
+                        statusCode: StatusCodes.Status503ServiceUnavailable),
+                    "AI_UNAVAILABLE"      => Results.Json(
+                        new ApiErrorResponse(
+                            "The AI provider could not be reached or returned an error. Please try again shortly.",
+                            "AI_UNAVAILABLE"),
+                        statusCode: StatusCodes.Status503ServiceUnavailable),
+                    "AI_PARSE_ERROR"      => Results.Json(
+                        new ApiErrorResponse(
+                            "The AI response could not be understood. Please try again.",
+                            "AI_PARSE_ERROR"),
+                        statusCode: StatusCodes.Status502BadGateway),
                     _                     => ResultsExtensions.UnhandledError()
                 };
             })
