@@ -24,7 +24,8 @@ public sealed class GeminiVetDocumentAiClient(
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new InvalidOperationException("Gemini:ApiKey is not configured.");
 
-        var model = configuration["Gemini:Model"] ?? "gemini-2.0-flash";
+        var configuredModel = configuration["Gemini:Model"];
+        var model = string.IsNullOrWhiteSpace(configuredModel) ? "gemini-2.5-flash" : configuredModel;
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
 
         var parts = new List<object> { new { text = userPrompt } };

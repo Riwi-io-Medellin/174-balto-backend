@@ -61,7 +61,8 @@ public sealed class VetDocumentAnalysisService(
             return (null, "VALIDATION_FAILED");
         }
 
-        var providerName = configuration["Ai:VetDocumentProvider"] ?? "gemini";
+        var configuredProvider = configuration["Ai:VetDocumentProvider"];
+        var providerName = string.IsNullOrWhiteSpace(configuredProvider) ? "gemini" : configuredProvider;
         var clientList = clients.ToList();
         var primary = clientList.FirstOrDefault(c => c.ProviderName == providerName);
         var secondary = clientList.FirstOrDefault(c => c.ProviderName != providerName);

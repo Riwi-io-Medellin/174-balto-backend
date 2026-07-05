@@ -30,7 +30,8 @@ public sealed class OpenRouterVetDocumentAiClient(
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new InvalidOperationException("OpenRouter:ApiKey is not configured.");
 
-        var model = configuration["OpenRouter:Model"] ?? "openai/gpt-4o-mini";
+        var configuredModel = configuration["OpenRouter:Model"];
+        var model = string.IsNullOrWhiteSpace(configuredModel) ? "openai/gpt-4o-mini" : configuredModel;
 
         var userContent = new List<object> { new { type = "text", text = userPrompt } };
         userContent.AddRange(attachments.Select(a => (object)new
