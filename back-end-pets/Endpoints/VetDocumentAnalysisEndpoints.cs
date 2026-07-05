@@ -22,26 +22,37 @@ public static class VetDocumentAnalysisEndpoints
                 var (result, errorCode) = await service.AnalyzeAsync(userId, request, ct);
                 if (result is not null) return Results.Ok(result);
 
-                return errorCode switch
+                // Some codes carry a "|<detail>" suffix (exception type name only,
+                // never a message/body) to help diagnose without server log access.
+                var parts = errorCode?.Split('|', 2);
+                var baseCode = parts?[0];
+                var detail = parts is { Length: 2 } ? parts[1] : null;
+
+                return baseCode switch
                 {
-                    "VALIDATION_FAILED"   => Results.BadRequest(new ApiErrorResponse(
+                    "VALIDATION_FAILED"          => Results.BadRequest(new ApiErrorResponse(
                         "Pet name, species, and at least one document are required.", "VALIDATION_FAILED")),
-                    "AI_NOT_CONFIGURED"   => Results.Json(
+                    "AI_NOT_CONFIGURED"          => Results.Json(
                         new ApiErrorResponse(
                             "No AI provider is configured on the server (missing or invalid API key).",
                             "AI_NOT_CONFIGURED"),
                         statusCode: StatusCodes.Status503ServiceUnavailable),
-                    "AI_UNAVAILABLE"      => Results.Json(
+                    "ATTACHMENT_FETCH_FAILED"    => Results.Json(
                         new ApiErrorResponse(
-                            "The AI provider could not be reached or returned an error. Please try again shortly.",
+                            $"Could not download the uploaded document(s) for analysis. ({detail})",
+                            "ATTACHMENT_FETCH_FAILED"),
+                        statusCode: StatusCodes.Status503ServiceUnavailable),
+                    "AI_UNAVAILABLE"             => Results.Json(
+                        new ApiErrorResponse(
+                            $"The AI provider could not be reached or returned an error. ({detail}) Please try again shortly.",
                             "AI_UNAVAILABLE"),
                         statusCode: StatusCodes.Status503ServiceUnavailable),
-                    "AI_PARSE_ERROR"      => Results.Json(
+                    "AI_PARSE_ERROR"             => Results.Json(
                         new ApiErrorResponse(
                             "The AI response could not be understood. Please try again.",
                             "AI_PARSE_ERROR"),
                         statusCode: StatusCodes.Status502BadGateway),
-                    _                     => ResultsExtensions.UnhandledError()
+                    _                            => ResultsExtensions.UnhandledError()
                 };
             })
             .WithTags("VetDocumentAnalysis")

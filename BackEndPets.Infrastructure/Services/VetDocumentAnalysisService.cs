@@ -81,19 +81,22 @@ public sealed class VetDocumentAnalysisService(
         catch (Exception ex)
         {
             logger.LogError("Failed to download attachment(s) for analysis: {ExceptionType}", ex.GetType().Name);
-            return (null, "AI_UNAVAILABLE");
+            return (null, $"ATTACHMENT_FETCH_FAILED|{ex.GetType().Name}");
         }
 
         var userPrompt = BuildUserPrompt(request);
 
-        var text = primary is null ? null : await TryGenerateAsync(primary, userPrompt, attachments, ct);
+        var (text, primaryError) = primary is null
+            ? (null, null)
+            : await TryGenerateAsync(primary, userPrompt, attachments, ct);
+        var lastError = primaryError;
         if (text is null && secondary is not null)
         {
-            text = await TryGenerateAsync(secondary, userPrompt, attachments, ct);
+            (text, lastError) = await TryGenerateAsync(secondary, userPrompt, attachments, ct);
         }
 
         if (text is null)
-            return (null, "AI_UNAVAILABLE");
+            return (null, $"AI_UNAVAILABLE|{lastError ?? "no configured provider succeeded"}");
 
         try
         {
@@ -118,21 +121,22 @@ public sealed class VetDocumentAnalysisService(
         }
     }
 
-    private async Task<string?> TryGenerateAsync(
+    private async Task<(string? Json, string? ErrorDetail)> TryGenerateAsync(
         IVetDocumentAiClient client,
         string userPrompt,
         IReadOnlyList<(byte[] Bytes, string MimeType)> attachments,
         CancellationToken ct)
     {
-        if (!client.IsConfigured) return null;
+        if (!client.IsConfigured) return (null, $"{client.ProviderName} not configured");
         try
         {
-            return await client.GenerateAnalysisJsonAsync(SystemPrompt, userPrompt, attachments, ct);
+            var json = await client.GenerateAnalysisJsonAsync(SystemPrompt, userPrompt, attachments, ct);
+            return (json, null);
         }
         catch (Exception ex)
         {
             logger.LogError("{Provider} analysis attempt failed: {ExceptionType}", client.ProviderName, ex.GetType().Name);
-            return null;
+            return (null, $"{client.ProviderName}: {ex.GetType().Name}");
         }
     }
 
