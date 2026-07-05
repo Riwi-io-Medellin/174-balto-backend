@@ -43,4 +43,12 @@ public interface IWalkSessionService
 
     Task<(IReadOnlyCollection<WalkSessionMediaResponse>? Media, string? ErrorCode)> GetMediaAsync(
         Guid currentUserId, Guid sessionId);
+
+    // ── Walk chat ──────────────────────────────────────────────────────────────
+
+    Task<(ChatMessageResponse? Message, string? ErrorCode)> SendChatMessageAsync(
+        Guid currentUserId, Guid sessionId, SendChatMessageRequest request);
+
+    Task<(IReadOnlyCollection<ChatMessageResponse>? Messages, string? ErrorCode)> GetChatMessagesAsync(
+        Guid currentUserId, Guid sessionId);
 }

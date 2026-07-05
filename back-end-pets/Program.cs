@@ -171,6 +171,17 @@ await using (var scope = app.Services.CreateAsyncScope())
         );
         """);
 
+    // Chat messages: real-time text chat between owner and walker during a walk.
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+            walk_session_id   UUID        NOT NULL,
+            sender_user_id    UUID        NOT NULL,
+            text              TEXT        NOT NULL,
+            created_at        TIMESTAMP   NOT NULL DEFAULT NOW()
+        );
+        """);
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await IdentitySeeder.SeedDemoUserAsync(userManager);
 }

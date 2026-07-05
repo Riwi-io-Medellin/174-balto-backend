@@ -369,4 +369,79 @@ public sealed class WalkSessionService(
         m.Url,
         m.Type,
         m.UploadedAt);
+
+    // ── Walk chat ──────────────────────────────────────────────────────────────
+
+    public async Task<(ChatMessageResponse? Message, string? ErrorCode)> SendChatMessageAsync(
+        Guid currentUserId, Guid sessionId, SendChatMessageRequest request)
+    {
+        var (session, errorCode) = await LoadSessionAsParticipantAsync(currentUserId, sessionId);
+        if (session is null) return (null, errorCode);
+
+        var message = new ChatMessage
+        {
+            WalkSessionId = sessionId,
+            SenderUserId  = currentUserId,
+            Text          = request.Text,
+            CreatedAt     = DateTime.UtcNow
+        };
+
+        db.ChatMessages.Add(message);
+        await db.SaveChangesAsync();
+
+        return (MapChatMessage(message), null);
+    }
+
+    public async Task<(IReadOnlyCollection<ChatMessageResponse>? Messages, string? ErrorCode)> GetChatMessagesAsync(
+        Guid currentUserId, Guid sessionId)
+    {
+        var (session, errorCode) = await LoadSessionAsParticipantAsync(currentUserId, sessionId);
+        if (session is null) return (null, errorCode);
+
+        var messages = await db.ChatMessages
+            .Where(m => m.WalkSessionId == sessionId)
+            .OrderBy(m => m.CreatedAt)
+            .ToListAsync();
+
+        return (messages.Select(MapChatMessage).ToList(), null);
+    }
+
+    private async Task<(WalkSession? Session, string? ErrorCode)> LoadSessionAsParticipantAsync(
+        Guid currentUserId, Guid sessionId)
+    {
+        var session = await sessionRepo.GetByIdAsync(sessionId);
+        if (session is null) return (null, "SESSION_NOT_FOUND");
+
+        // Allow access for the assigned walker or the booking's pet owner.
+        var walker  = await walkerRepo.GetByUserIdAsync(currentUserId);
+        var isWalker = walker is not null && walker.Id == session.WalkerId;
+
+        if (!isWalker)
+        {
+            var isOwner = false;
+
+            if (session.BookingId is not null)
+            {
+                var booking = await bookingRepo.GetByIdAsync(session.BookingId.Value);
+                isOwner = booking?.ClientUserId == currentUserId;
+            }
+
+            if (!isOwner)
+            {
+                var histories = await historyRepo.GetBySessionIdAsync(sessionId);
+                isOwner = histories.Any(h => h.UserId == currentUserId);
+            }
+
+            if (!isOwner) return (null, "UNAUTHORIZED");
+        }
+
+        return (session, null);
+    }
+
+    private static ChatMessageResponse MapChatMessage(ChatMessage m) => new(
+        m.Id,
+        m.WalkSessionId,
+        m.SenderUserId,
+        m.Text,
+        m.CreatedAt);
 }

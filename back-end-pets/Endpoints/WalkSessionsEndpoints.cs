@@ -363,6 +363,69 @@ public static class WalkSessionsEndpoints
         .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
         .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
 
+        group.MapPost("/{sessionId:guid}/chat", async (
+            Guid sessionId,
+            SendChatMessageRequest request,
+            HttpContext ctx,
+            IWalkSessionService service,
+            IHubContext<WalkTrackingHub> hub) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (message, errorCode) = await service.SendChatMessageAsync(userId, sessionId, request);
+            if (message is not null)
+            {
+                await hub.Clients.Group($"walk-{sessionId}").SendAsync("ChatMessageReceived", message);
+                return Results.Created($"/api/walk-sessions/{sessionId}/chat/{message.Id}", message);
+            }
+
+            return errorCode switch
+            {
+                "SESSION_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
+                "UNAUTHORIZED" => Results.Json(
+                    new ApiErrorResponse("You do not have access to this session.", "UNAUTHORIZED"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("SendWalkChatMessage")
+        .WithSummary("Send a chat message for a walk session (walker or pet owner) and broadcast it")
+        .Produces<ChatMessageResponse>(StatusCodes.Status201Created)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/{sessionId:guid}/chat", async (
+            Guid sessionId,
+            HttpContext ctx,
+            IWalkSessionService service) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            var (messages, errorCode) = await service.GetChatMessagesAsync(userId, sessionId);
+            if (messages is not null)
+                return Results.Ok(messages);
+
+            return errorCode switch
+            {
+                "SESSION_NOT_FOUND" => Results.NotFound(
+                    new ApiErrorResponse("Session not found.", "SESSION_NOT_FOUND")),
+                "UNAUTHORIZED" => Results.Json(
+                    new ApiErrorResponse("You do not have access to this session.", "UNAUTHORIZED"),
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ => Results.Json(new ApiErrorResponse("An unexpected error occurred.", "INTERNAL_SERVER_ERROR"), statusCode: StatusCodes.Status500InternalServerError)
+            };
+        })
+        .WithName("GetWalkChatMessages")
+        .WithSummary("Get chat message history for a walk session (walker or pet owner)")
+        .Produces<IReadOnlyCollection<ChatMessageResponse>>(StatusCodes.Status200OK)
+        .Produces<ApiErrorResponse>(StatusCodes.Status403Forbidden)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         group.MapGet("/{sessionId:guid}/route", async (
             Guid sessionId,
             HttpContext ctx,

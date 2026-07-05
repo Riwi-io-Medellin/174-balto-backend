@@ -51,3 +51,14 @@ public sealed record WalkSessionMediaResponse(
     string Url,
     string Type,
     DateTime UploadedAt);
+
+// ── Walk chat ──────────────────────────────────────────────────────────────
+
+public sealed record SendChatMessageRequest(string Text);
+
+public sealed record ChatMessageResponse(
+    Guid Id,
+    Guid WalkSessionId,
+    Guid SenderUserId,
+    string Text,
+    DateTime CreatedAt);

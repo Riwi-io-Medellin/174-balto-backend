@@ -15,6 +15,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<WalkSession> WalkSessions => Set<WalkSession>();
     public DbSet<WalkRoutePoint> WalkRoutePoints => Set<WalkRoutePoint>();
     public DbSet<WalkSessionMedia> WalkSessionMediaItems => Set<WalkSessionMedia>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
     public DbSet<WalkerGallery> WalkerGalleries => Set<WalkerGallery>();
     public DbSet<WalkerDocument> WalkerDocuments => Set<WalkerDocument>();
@@ -387,6 +388,17 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(m => m.Url).HasColumnName("url");
             b.Property(m => m.Type).HasColumnName("type");
             b.Property(m => m.UploadedAt).HasColumnName("uploaded_at");
+        });
+
+        builder.Entity<ChatMessage>(b =>
+        {
+            b.ToTable("chat_messages");
+            b.HasKey(m => m.Id);
+            b.Property(m => m.Id).HasColumnName("id");
+            b.Property(m => m.WalkSessionId).HasColumnName("walk_session_id");
+            b.Property(m => m.SenderUserId).HasColumnName("sender_user_id");
+            b.Property(m => m.Text).HasColumnName("text");
+            b.Property(m => m.CreatedAt).HasColumnName("created_at");
         });
         
         builder.Entity<Feedback>(b =>
