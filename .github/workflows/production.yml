@@ -65,7 +65,11 @@ jobs:
               -e Cloudinary__ApiSecret="${{ secrets.CLOUDINARY__APISECRET }}" \
               -e SocialAuth__Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
               -e Gemini__ApiKey="${{ secrets.GEMINI_API_KEY }}" \
+              -e Gemini__Model="${{ secrets.GEMINI_MODEL }}" \
               -e OpenAI__ApiKey="${{ secrets.OPENAI_API_KEY }}" \
+              -e OpenRouter__ApiKey="${{ secrets.OPENROUTER_API_KEY }}" \
+              -e OpenRouter__Model="${{ secrets.OPENROUTER_MODEL }}" \
+              -e Ai__VetDocumentProvider="${{ secrets.AI_PROVIDER }}" \
               -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:prod-${{ github.sha }}
 
