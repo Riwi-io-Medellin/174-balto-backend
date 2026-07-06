@@ -9,6 +9,7 @@ public sealed record PetContextDto(
     double? WeightKg);
 
 public sealed record AnalyzeVetDocumentRequest(
+    Guid PetId,
     PetContextDto PetContext,
     IReadOnlyList<string> FileUrls,
     string? DocumentType,

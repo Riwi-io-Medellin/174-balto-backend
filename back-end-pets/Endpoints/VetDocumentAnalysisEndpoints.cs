@@ -32,6 +32,8 @@ public static class VetDocumentAnalysisEndpoints
                 {
                     "VALIDATION_FAILED"          => Results.BadRequest(new ApiErrorResponse(
                         "Pet name, species, and at least one document are required.", "VALIDATION_FAILED")),
+                    "PET_NOT_FOUND"              => Results.NotFound(new ApiErrorResponse(
+                        "Pet not found.", "PET_NOT_FOUND")),
                     "AI_NOT_CONFIGURED"          => Results.Json(
                         new ApiErrorResponse(
                             "No AI provider is configured on the server (missing or invalid API key).",
@@ -62,6 +64,7 @@ public static class VetDocumentAnalysisEndpoints
             .Produces<VetDocumentAnalysisResponse>()
             .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status502BadGateway)
             .Produces(StatusCodes.Status503ServiceUnavailable);
 

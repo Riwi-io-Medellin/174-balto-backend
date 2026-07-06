@@ -98,4 +98,20 @@ public sealed class PetClinicalRepository(AppIdentityDbContext dbContext) : IPet
             .Where(t => t.PetId == petId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
+
+    public async Task<PetVetDocumentAnalysis> CreateVetDocumentAnalysisAsync(PetVetDocumentAnalysis analysis)
+    {
+        analysis.Id = Guid.NewGuid();
+        analysis.CreatedAt = DateTime.UtcNow;
+        dbContext.PetVetDocumentAnalyses.Add(analysis);
+        await dbContext.SaveChangesAsync();
+        return analysis;
+    }
+
+    public async Task<IReadOnlyCollection<PetVetDocumentAnalysis>> GetVetDocumentAnalysesByPetIdAsync(Guid petId, int take = 5) =>
+        await dbContext.PetVetDocumentAnalyses
+            .Where(a => a.PetId == petId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(take)
+            .ToListAsync();
 }

@@ -17,4 +17,7 @@ public interface IPetClinicalRepository
 
     Task ReplaceTipsAsync(Guid petId, IReadOnlyCollection<PetClinicalTip> tips);
     Task<IReadOnlyCollection<PetClinicalTip>> GetTipsByPetIdAsync(Guid petId);
+
+    Task<PetVetDocumentAnalysis> CreateVetDocumentAnalysisAsync(PetVetDocumentAnalysis analysis);
+    Task<IReadOnlyCollection<PetVetDocumentAnalysis>> GetVetDocumentAnalysesByPetIdAsync(Guid petId, int take = 5);
 }

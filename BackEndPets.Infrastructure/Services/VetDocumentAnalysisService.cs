@@ -1,6 +1,8 @@
 using System.Text.Json;
 using BackEndPets.Application.DTOs.VetDocumentAnalysis;
 using BackEndPets.Application.Interfaces;
+using BackEndPets.Domain.Entities;
+using BackEndPets.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -9,6 +11,8 @@ namespace BackEndPets.Infrastructure.Services;
 public sealed class VetDocumentAnalysisService(
     IEnumerable<IVetDocumentAiClient> clients,
     IVetDocumentAttachmentFetcher attachmentFetcher,
+    IPetService petService,
+    IPetClinicalRepository clinicalRepository,
     IConfiguration configuration,
     ILogger<VetDocumentAnalysisService> logger) : IVetDocumentAnalysisService
 {
@@ -59,6 +63,12 @@ public sealed class VetDocumentAnalysisService(
             request.FileUrls.Count > 5)
         {
             return (null, "VALIDATION_FAILED");
+        }
+
+        var pet = await petService.GetByIdAsync(request.PetId);
+        if (pet is null || pet.UserId != userId)
+        {
+            return (null, "PET_NOT_FOUND");
         }
 
         var configuredProvider = configuration["Ai:VetDocumentProvider"];
@@ -115,12 +125,33 @@ public sealed class VetDocumentAnalysisService(
                 Disclaimer = RequiredDisclaimer
             };
 
+            await PersistAsync(request, normalized);
+
             return (normalized, null);
         }
         catch (JsonException)
         {
             logger.LogError("Failed to parse AI response into the expected JSON shape.");
             return (null, "AI_PARSE_ERROR");
+        }
+    }
+
+    private async Task PersistAsync(AnalyzeVetDocumentRequest request, VetDocumentAnalysisResponse response)
+    {
+        try
+        {
+            await clinicalRepository.CreateVetDocumentAnalysisAsync(new PetVetDocumentAnalysis
+            {
+                PetId = request.PetId,
+                DocumentType = request.DocumentType,
+                Symptoms = request.Symptoms,
+                UrgencyLevel = response.UrgencyLevel,
+                ResultJson = JsonSerializer.Serialize(response, JsonOpts)
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to persist vet document analysis result: {ExceptionType}", ex.GetType().Name);
         }
     }
 

@@ -142,8 +142,9 @@ public sealed class ChatService(
         {
             var record = await clinicalRepository.GetRecordByPetIdAsync(p.Id);
             var events = await clinicalRepository.GetEventsByPetIdAsync(p.Id);
+            var analyses = await clinicalRepository.GetVetDocumentAnalysesByPetIdAsync(p.Id, take: 3);
 
-            if (record is null && events.Count == 0)
+            if (record is null && events.Count == 0 && analyses.Count == 0)
             {
                 blocks.Add($"- {p.Name}: no clinical history recorded.");
                 continue;
@@ -154,10 +155,18 @@ public sealed class ChatService(
                 .Take(5)
                 .Select(e => $"  * {e.EventDate:yyyy-MM-dd} [{e.EventType}] reason={e.Reason ?? "n/a"}, diagnosis={e.Diagnosis ?? "n/a"}, next control={e.NextControlDate?.ToString("yyyy-MM-dd") ?? "n/a"}");
 
+            var recentAnalyses = analyses.Select(a =>
+            {
+                using var doc = JsonDocument.Parse(a.ResultJson);
+                var summary = doc.RootElement.TryGetProperty("summary", out var s) ? s.GetString() : null;
+                return $"  * {a.CreatedAt:yyyy-MM-dd} [AI document analysis, urgency={a.UrgencyLevel}] {summary ?? "(no summary)"}";
+            });
+
             blocks.Add(
                 $"- {p.Name}: allergies={record?.Allergies ?? "none"}, chronic conditions={record?.ChronicConditions ?? "none"}, " +
                 $"diet restrictions={record?.DietaryRestrictions ?? "none"}\n" +
-                string.Join("\n", recentEvents));
+                string.Join("\n", recentEvents) +
+                (analyses.Count > 0 ? "\n" + string.Join("\n", recentAnalyses) : ""));
         }
 
         return string.Join("\n", blocks);

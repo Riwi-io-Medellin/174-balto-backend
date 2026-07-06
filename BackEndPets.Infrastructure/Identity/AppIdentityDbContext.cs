@@ -26,6 +26,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<PetClinicalMedication> PetClinicalMedications => Set<PetClinicalMedication>();
     public DbSet<PetClinicalDocument> PetClinicalDocuments => Set<PetClinicalDocument>();
     public DbSet<PetClinicalTip> PetClinicalTips => Set<PetClinicalTip>();
+    public DbSet<PetVetDocumentAnalysis> PetVetDocumentAnalyses => Set<PetVetDocumentAnalysis>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<WalkerAvailability> WalkerAvailabilities => Set<WalkerAvailability>();
     public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
@@ -337,6 +338,20 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(t => t.Message).HasColumnName("message");
             b.Property(t => t.CreatedAt).HasColumnName("created_at");
             b.HasIndex(t => t.PetId);
+        });
+
+        builder.Entity<PetVetDocumentAnalysis>(b =>
+        {
+            b.ToTable("pet_vet_document_analyses");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.Id).HasColumnName("id");
+            b.Property(a => a.PetId).HasColumnName("pet_id");
+            b.Property(a => a.DocumentType).HasColumnName("document_type");
+            b.Property(a => a.Symptoms).HasColumnName("symptoms");
+            b.Property(a => a.UrgencyLevel).HasColumnName("urgency_level");
+            b.Property(a => a.ResultJson).HasColumnName("result_json");
+            b.Property(a => a.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(a => a.PetId);
         });
 
         builder.Entity<PetWalkingHistory>(b =>
