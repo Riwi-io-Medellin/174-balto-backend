@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.Interfaces;
+using BackEndPets.Domain.Interfaces;
 
 namespace BackEndPets.API.Endpoints;
 
@@ -86,6 +87,42 @@ public static class NotificationsEndpoints
         .WithName("MarkAllNotificationsAsRead")
         .WithSummary("Mark all notifications as read for the current user")
         .Produces(StatusCodes.Status200OK);
+
+        group.MapPost("/device-token", async (
+            RegisterDeviceTokenRequest request,
+            HttpContext ctx,
+            IDeviceTokenRepository deviceTokenRepository) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.Platform))
+                return Results.BadRequest(new ApiErrorResponse("Token and platform are required.", "VALIDATION_FAILED"));
+
+            await deviceTokenRepository.RegisterAsync(userId, request.Token, request.Platform);
+            return Results.NoContent();
+        })
+        .WithName("RegisterDeviceToken")
+        .WithSummary("Register (or refresh) the current user's push-notification device token")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest);
+
+        group.MapPost("/device-token/remove", async (
+            RemoveDeviceTokenRequest request,
+            HttpContext ctx,
+            IDeviceTokenRepository deviceTokenRepository) =>
+        {
+            var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out _))
+                return Results.Unauthorized();
+
+            await deviceTokenRepository.RemoveAsync(request.Token);
+            return Results.NoContent();
+        })
+        .WithName("RemoveDeviceToken")
+        .WithSummary("Remove a device token (e.g. on logout)")
+        .Produces(StatusCodes.Status204NoContent);
 
         return app;
     }

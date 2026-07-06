@@ -57,6 +57,8 @@ public static class DependencyInjection
         services.AddScoped<IBusinessAssetsService, BusinessAssetsService>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IDeviceTokenRepository, DeviceTokenRepository>();
+        services.AddSingleton<IPushNotificationSender, FirebasePushNotificationSender>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IBusinessServiceRepository, BusinessServiceRepository>();
         services.AddScoped<IBusinessServicesService, BusinessServicesService>();

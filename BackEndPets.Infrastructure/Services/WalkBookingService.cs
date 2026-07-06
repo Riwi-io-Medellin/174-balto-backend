@@ -80,8 +80,8 @@ public sealed class WalkBookingService(
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: walker.UserId,
             Type: "system",
-            Title: "Nueva solicitud de paseo",
-            Body: $"Un cliente ha solicitado un paseo para el {slotStart:dd/MM/yyyy HH:mm}.",
+            Title: "New walk request",
+            Body: $"A client has requested a walk for {slotStart:MM/dd/yyyy HH:mm}.",
             EntityId: created.Id,
             EntityType: "walk_booking"));
 

@@ -28,6 +28,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
     public DbSet<PetClinicalTip> PetClinicalTips => Set<PetClinicalTip>();
     public DbSet<PetVetDocumentAnalysis> PetVetDocumentAnalyses => Set<PetVetDocumentAnalysis>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
     public DbSet<WalkerAvailability> WalkerAvailabilities => Set<WalkerAvailability>();
     public DbSet<WalkerAvailabilityException> WalkerAvailabilityExceptions => Set<WalkerAvailabilityException>();
     public DbSet<WalkBooking> WalkBookings => Set<WalkBooking>();
@@ -444,6 +445,20 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(n => n.IsRead).HasColumnName("is_read");
             b.Property(n => n.ReadAt).HasColumnName("read_at");
             b.Property(n => n.CreatedAt).HasColumnName("created_at");
+        });
+
+        builder.Entity<DeviceToken>(b =>
+        {
+            b.ToTable("device_tokens");
+            b.HasKey(t => t.Id);
+            b.Property(t => t.Id).HasColumnName("id");
+            b.Property(t => t.UserId).HasColumnName("user_id");
+            b.Property(t => t.Token).HasColumnName("token");
+            b.Property(t => t.Platform).HasColumnName("platform");
+            b.Property(t => t.CreatedAt).HasColumnName("created_at");
+            b.Property(t => t.LastSeenAt).HasColumnName("last_seen_at");
+            b.HasIndex(t => t.Token).IsUnique();
+            b.HasIndex(t => t.UserId);
         });
 
         builder.Entity<WalkerAvailability>(b =>

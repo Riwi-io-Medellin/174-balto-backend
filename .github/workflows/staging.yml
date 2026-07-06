@@ -71,6 +71,7 @@ jobs:
               -e OpenRouter__Model="${{ secrets.OPENROUTER_MODEL }}" \
               -e Ai__VetDocumentProvider="${{ secrets.AI_PROVIDER }}" \
               -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
+              -e Firebase__CredentialsJson="${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" \
               ghcr.io/riwi-io-medellin/back-end-pets:staging-${{ github.sha }}
 
             sleep 15

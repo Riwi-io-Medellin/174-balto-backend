@@ -35,57 +35,57 @@ public sealed class QuestPdfClinicalDocumentGenerationService(Cloudinary? cloudi
 
                 page.Header().Column(col =>
                 {
-                    col.Item().Text("Balto — Historia Clínica Oficial").FontSize(18).Bold();
-                    col.Item().Text($"Generado: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC").FontSize(8).FontColor(Colors.Grey.Medium);
+                    col.Item().Text("Balto — Official Clinical History").FontSize(18).Bold();
+                    col.Item().Text($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC").FontSize(8).FontColor(Colors.Grey.Medium);
                 });
 
                 page.Content().Column(col =>
                 {
                     col.Spacing(12);
 
-                    col.Item().Element(c => SectionTitle(c, "Datos de la mascota"));
-                    col.Item().Text($"Nombre: {pet.Name}    Especie: {pet.Species ?? "N/A"}    Raza: {pet.Breed ?? "N/A"}");
-                    col.Item().Text($"Sexo: {pet.Sex ?? "N/A"}    Color: {pet.Color ?? "N/A"}    Peso: {pet.Weight?.ToString("0.##") ?? "N/A"} kg");
-                    col.Item().Text($"Nacimiento: {pet.BirthDate?.ToString("yyyy-MM-dd") ?? "N/A"}    Identificación: {pet.IdentificationNumber ?? "N/A"}    Microchip: {pet.MicrochipNumber ?? "N/A"}");
+                    col.Item().Element(c => SectionTitle(c, "Pet details"));
+                    col.Item().Text($"Name: {pet.Name}    Species: {pet.Species ?? "N/A"}    Breed: {pet.Breed ?? "N/A"}");
+                    col.Item().Text($"Sex: {pet.Sex ?? "N/A"}    Color: {pet.Color ?? "N/A"}    Weight: {pet.Weight?.ToString("0.##") ?? "N/A"} kg");
+                    col.Item().Text($"Born: {pet.BirthDate?.ToString("yyyy-MM-dd") ?? "N/A"}    ID number: {pet.IdentificationNumber ?? "N/A"}    Microchip: {pet.MicrochipNumber ?? "N/A"}");
 
-                    col.Item().Element(c => SectionTitle(c, "Datos del propietario"));
-                    col.Item().Text($"Nombre: {ownerFullName}    Teléfono: {ownerPhone ?? "N/A"}");
-                    col.Item().Text($"Dirección: {ownerAddress ?? "N/A"}    Correo: {ownerEmail ?? "N/A"}");
+                    col.Item().Element(c => SectionTitle(c, "Owner details"));
+                    col.Item().Text($"Name: {ownerFullName}    Phone: {ownerPhone ?? "N/A"}");
+                    col.Item().Text($"Address: {ownerAddress ?? "N/A"}    Email: {ownerEmail ?? "N/A"}");
 
-                    col.Item().Element(c => SectionTitle(c, "Resumen médico"));
-                    col.Item().Text($"Alergias: {record.Allergies ?? "Ninguna registrada"}");
-                    col.Item().Text($"Condiciones crónicas: {record.ChronicConditions ?? "Ninguna registrada"}");
-                    col.Item().Text($"Restricciones alimenticias: {record.DietaryRestrictions ?? "Ninguna registrada"}");
+                    col.Item().Element(c => SectionTitle(c, "Medical summary"));
+                    col.Item().Text($"Allergies: {record.Allergies ?? "None recorded"}");
+                    col.Item().Text($"Chronic conditions: {record.ChronicConditions ?? "None recorded"}");
+                    col.Item().Text($"Dietary restrictions: {record.DietaryRestrictions ?? "None recorded"}");
 
-                    col.Item().Element(c => SectionTitle(c, "Vacunas"));
+                    col.Item().Element(c => SectionTitle(c, "Vaccines"));
                     AppendEventList(col, orderedEvents.Where(e => e.EventType == PetClinicalEventType.Vaccine));
 
-                    col.Item().Element(c => SectionTitle(c, "Cirugías"));
+                    col.Item().Element(c => SectionTitle(c, "Surgeries"));
                     AppendEventList(col, orderedEvents.Where(e => e.EventType == PetClinicalEventType.Surgery));
 
-                    col.Item().Element(c => SectionTitle(c, "Medicamentos"));
+                    col.Item().Element(c => SectionTitle(c, "Medications"));
                     foreach (var med in orderedEvents.SelectMany(e => e.Medications))
                         col.Item().Text($"• {med.Name} — {med.Dose ?? "N/A"}, {med.Frequency ?? "N/A"}, {med.Duration ?? "N/A"}");
 
-                    col.Item().Element(c => SectionTitle(c, "Cronología de eventos clínicos"));
+                    col.Item().Element(c => SectionTitle(c, "Clinical event timeline"));
                     foreach (var e in orderedEvents)
                     {
-                        col.Item().Text($"{e.EventDate:yyyy-MM-dd} — {e.EventType.ToUpperInvariant()} — {e.Reason ?? e.Diagnosis ?? "Sin motivo registrado"}").Bold();
-                        if (!string.IsNullOrWhiteSpace(e.Diagnosis)) col.Item().Text($"   Diagnóstico: {e.Diagnosis}");
-                        if (!string.IsNullOrWhiteSpace(e.ExamResults)) col.Item().Text($"   Resultados: {e.ExamResults}");
-                        if (!string.IsNullOrWhiteSpace(e.Recommendations)) col.Item().Text($"   Recomendaciones: {e.Recommendations}");
-                        if (!string.IsNullOrWhiteSpace(e.Observations)) col.Item().Text($"   Observaciones: {e.Observations}");
-                        if (e.NextControlDate is not null) col.Item().Text($"   Próximo control: {e.NextControlDate:yyyy-MM-dd}");
+                        col.Item().Text($"{e.EventDate:yyyy-MM-dd} — {e.EventType.ToUpperInvariant()} — {e.Reason ?? e.Diagnosis ?? "No reason recorded"}").Bold();
+                        if (!string.IsNullOrWhiteSpace(e.Diagnosis)) col.Item().Text($"   Diagnosis: {e.Diagnosis}");
+                        if (!string.IsNullOrWhiteSpace(e.ExamResults)) col.Item().Text($"   Results: {e.ExamResults}");
+                        if (!string.IsNullOrWhiteSpace(e.Recommendations)) col.Item().Text($"   Recommendations: {e.Recommendations}");
+                        if (!string.IsNullOrWhiteSpace(e.Observations)) col.Item().Text($"   Observations: {e.Observations}");
+                        if (e.NextControlDate is not null) col.Item().Text($"   Next check-up: {e.NextControlDate:yyyy-MM-dd}");
                     }
 
-                    col.Item().Element(c => SectionTitle(c, "Última actualización"));
+                    col.Item().Element(c => SectionTitle(c, "Last updated"));
                     col.Item().Text($"{record.UpdatedAt:yyyy-MM-dd HH:mm} UTC");
                 });
 
                 page.Footer().AlignCenter().Text(t =>
                 {
-                    t.Span("Documento generado automáticamente por Balto a partir de información estructurada. ");
-                    t.Span("No reemplaza el criterio de un médico veterinario.").FontColor(Colors.Grey.Medium);
+                    t.Span("Document automatically generated by Balto from structured information. ");
+                    t.Span("It does not replace a licensed veterinarian's judgment.").FontColor(Colors.Grey.Medium);
                 });
             });
         });
@@ -115,10 +115,10 @@ public sealed class QuestPdfClinicalDocumentGenerationService(Cloudinary? cloudi
         var list = events.ToList();
         if (list.Count == 0)
         {
-            col.Item().Text("Ninguna registrada.").FontColor(Colors.Grey.Medium);
+            col.Item().Text("None recorded.").FontColor(Colors.Grey.Medium);
             return;
         }
         foreach (var e in list)
-            col.Item().Text($"• {e.EventDate:yyyy-MM-dd} — {e.Reason ?? e.Diagnosis ?? "Sin detalle"}");
+            col.Item().Text($"• {e.EventDate:yyyy-MM-dd} — {e.Reason ?? e.Diagnosis ?? "No detail"}");
     }
 }

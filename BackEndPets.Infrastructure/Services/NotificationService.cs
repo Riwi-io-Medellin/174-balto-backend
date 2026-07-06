@@ -2,11 +2,15 @@ using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.Interfaces;
 using BackEndPets.Domain.Entities;
 using BackEndPets.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace BackEndPets.Infrastructure.Services;
 
 public sealed class NotificationService(
-    INotificationRepository notificationRepository) : INotificationService
+    INotificationRepository notificationRepository,
+    IDeviceTokenRepository deviceTokenRepository,
+    IPushNotificationSender pushSender,
+    ILogger<NotificationService> logger) : INotificationService
 {
     private static readonly string[] ValidTypes =
     [
@@ -34,7 +38,41 @@ public sealed class NotificationService(
         };
 
         var created = await notificationRepository.CreateAsync(notification);
+        await SendPushAsync(created);
         return MapResponse(created);
+    }
+
+    private async Task SendPushAsync(Notification notification)
+    {
+        if (!pushSender.IsConfigured) return;
+
+        try
+        {
+            var tokens = await deviceTokenRepository.GetTokensByUserIdAsync(notification.UserId);
+            if (tokens.Count == 0) return;
+
+            var invalidTokens = await pushSender.SendAsync(
+                tokens,
+                notification.Title,
+                notification.Body,
+                new Dictionary<string, string>
+                {
+                    ["type"] = notification.Type,
+                    ["entityId"] = notification.EntityId?.ToString() ?? "",
+                    ["entityType"] = notification.EntityType ?? "",
+                },
+                CancellationToken.None);
+
+            if (invalidTokens.Count > 0)
+            {
+                await deviceTokenRepository.RemoveTokensAsync(invalidTokens);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to send push notification for {Type}: {ExceptionType}",
+                notification.Type, ex.GetType().Name);
+        }
     }
 
     public async Task<NotificationSummaryResponse> GetMyNotificationsAsync(

@@ -28,3 +28,7 @@ public sealed record CreateNotificationRequest(
     Guid? EntityId = null,
     string? EntityType = null,
     string? Metadata = null);
+
+public sealed record RegisterDeviceTokenRequest(string Token, string Platform);
+
+public sealed record RemoveDeviceTokenRequest(string Token);
