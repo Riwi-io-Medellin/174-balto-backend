@@ -30,3 +30,9 @@ public sealed record VetDocumentAnalysisResponse(
     IReadOnlyList<string> QuestionsForVet,
     IReadOnlyList<string> MissingInformation,
     string Disclaimer);
+
+public sealed record VetDocumentAnalysisHistoryItem(
+    Guid Id,
+    DateTime CreatedAt,
+    string? DocumentType,
+    VetDocumentAnalysisResponse Result);

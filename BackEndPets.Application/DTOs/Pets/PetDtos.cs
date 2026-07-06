@@ -36,7 +36,9 @@ public sealed record PetResponse(
     bool IsLost,
     double? LostLatitude,
     double? LostLongitude,
-    DateTime? LostAt);
+    DateTime? LostAt,
+    string? LatestHealthUrgency = null,
+    DateTime? LatestHealthAnalysisAt = null);
     
 public sealed record ReportPetLostRequest(
     double LostLatitude,

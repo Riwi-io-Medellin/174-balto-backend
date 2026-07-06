@@ -20,4 +20,5 @@ public interface IPetClinicalRepository
 
     Task<PetVetDocumentAnalysis> CreateVetDocumentAnalysisAsync(PetVetDocumentAnalysis analysis);
     Task<IReadOnlyCollection<PetVetDocumentAnalysis>> GetVetDocumentAnalysesByPetIdAsync(Guid petId, int take = 5);
+    Task<IReadOnlyDictionary<Guid, PetVetDocumentAnalysis>> GetLatestVetDocumentAnalysesByPetIdsAsync(IReadOnlyCollection<Guid> petIds);
 }

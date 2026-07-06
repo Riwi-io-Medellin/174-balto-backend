@@ -11,6 +11,7 @@ namespace BackEndPets.Infrastructure.Services;
 
 public sealed class PetService(
     IPetRepository petRepository,
+    IPetClinicalRepository clinicalRepository,
     UserManager<ApplicationUser> userManager,
     INotificationService notificationService) : IPetService
 {
@@ -35,18 +36,27 @@ public sealed class PetService(
     public async Task<PetResponse?> GetByIdAsync(Guid id)
     {
         var pet = await petRepository.GetByIdAsync(id);
-        return pet is null ? null : MapResponse(pet);
+        if (pet is null) return null;
+
+        var latest = await clinicalRepository.GetVetDocumentAnalysesByPetIdAsync(id, take: 1);
+        return MapResponse(pet, latest.FirstOrDefault());
     }
 
     public async Task<PagedResult<PetResponse>> GetByUserIdAsync(Guid userId, int page = 1, int pageSize = 20)
     {
         var all = await petRepository.GetByUserIdAsync(userId);
         var totalCount = all.Count;
-        var paged = all
+        var pagedPets = all
             .OrderBy(p => p.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(MapResponse)
+            .ToList();
+
+        var latestByPetId = await clinicalRepository.GetLatestVetDocumentAnalysesByPetIdsAsync(
+            pagedPets.Select(p => p.Id).ToList());
+
+        var paged = pagedPets
+            .Select(p => MapResponse(p, latestByPetId.GetValueOrDefault(p.Id)))
             .ToList();
         return new PagedResult<PetResponse>(paged, page, pageSize, totalCount);
     }
@@ -79,10 +89,11 @@ public sealed class PetService(
         return (true, null);
     }
 
-    private static PetResponse MapResponse(Pet p) =>
+    private static PetResponse MapResponse(Pet p, PetVetDocumentAnalysis? latestAnalysis = null) =>
         new(p.Id, p.UserId, p.Name, p.Species, p.Breed, p.BirthDate, p.Description, p.PhotoUrl, p.Weight,
             p.Sex, p.Color, p.IdentificationNumber, p.MicrochipNumber, p.CreatedAt,
-            p.IsLost, p.LostLatitude, p.LostLongitude, p.LostAt);
+            p.IsLost, p.LostLatitude, p.LostLongitude, p.LostAt,
+            latestAnalysis?.UrgencyLevel, latestAnalysis?.CreatedAt);
     
     public async Task<(PetResponse? Pet, string? ErrorCode)> ReportLostAsync(
         Guid userId, Guid petId, ReportPetLostRequest request)
