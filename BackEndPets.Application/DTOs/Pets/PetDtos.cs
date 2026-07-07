@@ -43,3 +43,17 @@ public sealed record PetResponse(
 public sealed record ReportPetLostRequest(
     double LostLatitude,
     double LostLongitude);
+
+public sealed record PublicPetTagResponse(
+    Guid Id,
+    string Name,
+    string? Species,
+    string? Breed,
+    string? PhotoUrl,
+    string? Sex,
+    string? Color,
+    decimal? Weight,
+    DateTime? BirthDate,
+    bool IsLost,
+    string OwnerName,
+    string OwnerPhone);

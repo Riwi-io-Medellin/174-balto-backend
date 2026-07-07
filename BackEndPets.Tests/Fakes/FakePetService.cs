@@ -27,4 +27,7 @@ public sealed class FakePetService : IPetService
 
     public Task<(PetResponse? Pet, string? ErrorCode)> MarkFoundAsync(Guid userId, Guid petId) =>
         throw new NotImplementedException();
+
+    public Task<PublicPetTagResponse?> GetPublicTagInfoAsync(Guid petId) =>
+        throw new NotImplementedException();
 }

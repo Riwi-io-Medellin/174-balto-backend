@@ -138,4 +138,18 @@ public sealed class PetService(
         await petRepository.UpdateAsync(pet);
         return (MapResponse(pet), null);
     }
+
+    public async Task<PublicPetTagResponse?> GetPublicTagInfoAsync(Guid petId)
+    {
+        var pet = await petRepository.GetByIdAsync(petId);
+        if (pet is null) return null;
+
+        var owner = await userManager.FindByIdAsync(pet.UserId.ToString());
+        var ownerName = owner is null ? "Unknown owner" : $"{owner.FirstName} {owner.LastName}".Trim();
+        var ownerPhone = owner?.Phone ?? string.Empty;
+
+        return new PublicPetTagResponse(
+            pet.Id, pet.Name, pet.Species, pet.Breed, pet.PhotoUrl, pet.Sex, pet.Color,
+            pet.Weight, pet.BirthDate, pet.IsLost, ownerName, ownerPhone);
+    }
 }
