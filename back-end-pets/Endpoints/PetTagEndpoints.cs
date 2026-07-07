@@ -29,16 +29,31 @@ public static class PetTagEndpoints
         app.MapGet("/pet-tag/{id:guid}", async (Guid id, IPetService service) =>
         {
             var info = await service.GetPublicTagInfoAsync(id);
-            return Results.Content(RenderHtml(info), "text/html");
+            return Results.Content(RenderHtml(id, info), "text/html");
         })
         .WithTags("PetTag")
         .WithName("GetPublicPetTagPage")
         .WithSummary("Public HTML page shown when an NFC tag is tapped in a browser");
 
+        app.MapPost("/api/pet-tag/{id:guid}/location", async (Guid id, ShareTagLocationRequest request, IPetService service) =>
+        {
+            var (success, errorCode) = await service.ShareTagLocationAsync(id, request);
+            return errorCode switch
+            {
+                "PET_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Pet not found.", "PET_NOT_FOUND")),
+                _ => Results.NoContent()
+            };
+        })
+        .WithTags("PetTag")
+        .WithName("SharePetTagLocation")
+        .WithSummary("Share the finder's current location with the pet's owner (no auth required)")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound);
+
         return app;
     }
 
-    private static string RenderHtml(PublicPetTagResponse? p)
+    private static string RenderHtml(Guid id, PublicPetTagResponse? p)
     {
         if (p is null)
         {
@@ -72,6 +87,41 @@ public static class PetTagEndpoints
             ? ""
             : $"""<a href="tel:{ownerPhone}" style="display:block;background:#1BAA71;color:white;text-decoration:none;font-weight:700;padding:14px;border-radius:12px;margin-top:16px;">Call {ownerName}</a>""";
 
+        var shareLocationButton = """
+            <button id="shareLocationBtn" onclick="shareLocation()" style="display:block;width:100%;background:#3A80C2;color:white;border:none;font-weight:700;font-size:15px;padding:14px;border-radius:12px;margin-top:10px;font-family:inherit;">
+              📍 Share My Location with Owner
+            </button>
+            <p id="shareLocationStatus" style="font-size:13px;color:#6B7280;margin-top:8px;"></p>
+            <script>
+              function shareLocation() {
+                var btn = document.getElementById('shareLocationBtn');
+                var status = document.getElementById('shareLocationStatus');
+                if (!navigator.geolocation) {
+                  status.textContent = 'Location is not supported on this device.';
+                  return;
+                }
+                btn.disabled = true;
+                status.textContent = 'Getting your location…';
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                  fetch('/api/pet-tag/__PET_ID__/location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude })
+                  }).then(function(res) {
+                    status.textContent = res.ok ? 'Location sent to the owner. Thank you!' : 'Could not send your location.';
+                    btn.disabled = false;
+                  }).catch(function() {
+                    status.textContent = 'Could not send your location.';
+                    btn.disabled = false;
+                  });
+                }, function() {
+                  status.textContent = 'Location permission denied.';
+                  btn.disabled = false;
+                });
+              }
+            </script>
+            """.Replace("__PET_ID__", id.ToString());
+
         var details = string.Join("", new[]
         {
             breed == "" ? null : $"<div><b>Breed:</b> {breed}</div>",
@@ -93,6 +143,7 @@ public static class PetTagEndpoints
               <div><b>Owner:</b> {ownerName}</div>
             </div>
             {callButton}
+            {shareLocationButton}
             <p style="color:#9CA3AF;font-size:12px;margin-top:24px;">Scanned via a Balto NFC pet tag.</p>
             </body></html>
             """;

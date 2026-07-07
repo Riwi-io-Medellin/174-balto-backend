@@ -30,4 +30,7 @@ public sealed class FakePetService : IPetService
 
     public Task<PublicPetTagResponse?> GetPublicTagInfoAsync(Guid petId) =>
         throw new NotImplementedException();
+
+    public Task<(bool Success, string? ErrorCode)> ShareTagLocationAsync(Guid petId, ShareTagLocationRequest request) =>
+        throw new NotImplementedException();
 }

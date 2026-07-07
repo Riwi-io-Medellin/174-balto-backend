@@ -14,9 +14,9 @@ public sealed class NotificationService(
 {
     private static readonly string[] ValidTypes =
     [
-        "walk_started", "walk_finished", "walk_cancelled",
+        "walk_started", "walk_finished", "walk_cancelled", "walk_media_uploaded", "chat_message",
         "walker_assigned", "walker_approved", "walker_rejected",
-        "lost_pet", "business_approved", "business_rejected", "system"
+        "lost_pet", "pet_tag_scanned", "pet_location_shared", "business_approved", "business_rejected", "system"
     ];
 
     private static readonly string[] ValidEntityTypes =
@@ -109,8 +109,19 @@ public sealed class NotificationService(
     public Task<int> GetUnreadCountAsync(Guid userId) =>
         notificationRepository.GetUnreadCountAsync(userId);
 
+    // Notification timestamps are always UTC instants (set via DateTime.UtcNow), but
+    // Postgres round-trips them with DateTimeKind.Unspecified, and the JSON converter
+    // only appends "Z" for Kind.Utc — without it, clients parse the value as local time
+    // and are off by the server's UTC offset. Re-tag as Utc here rather than in the
+    // shared converter, since other date fields (e.g. business hours) are intentionally
+    // Unspecified/local.
+    private static DateTime EnsureUtc(DateTime dt) =>
+        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+
+    private static DateTime? EnsureUtc(DateTime? dt) => dt is null ? null : EnsureUtc(dt.Value);
+
     private static NotificationResponse MapResponse(Notification n) =>
         new(n.Id, n.UserId, n.Type, n.Title, n.Body,
             n.EntityId, n.EntityType, n.Metadata,
-            n.IsRead, n.ReadAt, n.CreatedAt);
+            n.IsRead, EnsureUtc(n.ReadAt), EnsureUtc(n.CreatedAt));
 }

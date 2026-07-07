@@ -57,3 +57,7 @@ public sealed record PublicPetTagResponse(
     bool IsLost,
     string OwnerName,
     string OwnerPhone);
+
+public sealed record ShareTagLocationRequest(
+    double Latitude,
+    double Longitude);

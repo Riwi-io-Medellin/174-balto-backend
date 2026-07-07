@@ -177,4 +177,21 @@ public sealed class PetService(
             EntityId: pet.Id,
             EntityType: "pet"));
     }
+
+    public async Task<(bool Success, string? ErrorCode)> ShareTagLocationAsync(Guid petId, ShareTagLocationRequest request)
+    {
+        var pet = await petRepository.GetByIdAsync(petId);
+        if (pet is null) return (false, "PET_NOT_FOUND");
+
+        var mapsUrl = $"https://maps.google.com/?q={request.Latitude},{request.Longitude}";
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: pet.UserId,
+            Type: "pet_location_shared",
+            Title: $"Someone shared a location for {pet.Name}",
+            Body: $"Tap to view where they are: {mapsUrl}",
+            EntityId: pet.Id,
+            EntityType: "pet"));
+
+        return (true, null);
+    }
 }

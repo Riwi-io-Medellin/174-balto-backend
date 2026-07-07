@@ -13,4 +13,5 @@ public interface IPetService
     Task<(PetResponse? Pet, string? ErrorCode)> ReportLostAsync(Guid userId, Guid petId, ReportPetLostRequest request);
     Task<(PetResponse? Pet, string? ErrorCode)> MarkFoundAsync(Guid userId, Guid petId);
     Task<PublicPetTagResponse?> GetPublicTagInfoAsync(Guid petId);
+    Task<(bool Success, string? ErrorCode)> ShareTagLocationAsync(Guid petId, ShareTagLocationRequest request);
 }
