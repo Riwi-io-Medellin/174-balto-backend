@@ -114,10 +114,15 @@ public static class PetTagEndpoints
                     status.textContent = 'Could not send your location.';
                     btn.disabled = false;
                   });
-                }, function() {
-                  status.textContent = 'Location permission denied.';
+                }, function(err) {
+                  var messages = {
+                    1: 'Location permission denied. Please allow location access for this site in your browser settings.',
+                    2: 'Could not determine your location (no GPS/network signal). Try again outdoors or with a better connection.',
+                    3: 'Getting your location timed out. Please try again.'
+                  };
+                  status.textContent = messages[err.code] || ('Location error: ' + err.message);
                   btn.disabled = false;
-                });
+                }, { enableHighAccuracy: true, timeout: 15000 });
               }
             </script>
             """.Replace("__PET_ID__", id.ToString());
