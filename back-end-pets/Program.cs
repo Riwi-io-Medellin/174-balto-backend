@@ -88,11 +88,6 @@ builder.Services.AddOpenApi(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
-    // The reverse proxy sits on a separate Docker network, so its IP won't match
-    // the default loopback-only trust list — without clearing these, forwarded
-    // headers (and the scheme they carry) are silently ignored.
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
 });
 
 QuestPDF.Settings.License = LicenseType.Community;
@@ -208,28 +203,11 @@ app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
 }));
 
 app.UseForwardedHeaders();
-
-// UseHttpsRedirection() can't determine the HTTPS port here since Kestrel itself
-// only ever serves plain HTTP — TLS is terminated at the reverse proxy. Redirect
-// manually based on the scheme the proxy reports via X-Forwarded-Proto instead,
-// so old NFC tags/links written with http:// still land on https://.
-app.Use(async (context, next) =>
-{
-    // Exclude /health: container/orchestrator health checks hit this in-network
-    // over plain HTTP and won't follow a redirect.
-    if (!context.Request.IsHttps && context.Request.Path != "/health")
-    {
-        var httpsUrl = $"https://{context.Request.Host}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
-        context.Response.Redirect(httpsUrl, permanent: true);
-        return;
-    }
-    await next();
-});
-
 app.UseCors("AllowAll");
 app.MapOpenApi();
 app.MapSwaggerEndpoints();
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
