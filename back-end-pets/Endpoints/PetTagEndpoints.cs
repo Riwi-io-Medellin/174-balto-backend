@@ -77,7 +77,7 @@ public static class PetTagEndpoints
         var age = p.BirthDate is null ? null : (int?)((DateTime.UtcNow - p.BirthDate.Value).TotalDays / 365);
 
         var lostBanner = p.IsLost
-            ? """<div style="background:#FDECEA;color:#D32F2F;font-weight:700;padding:12px;border-radius:12px;margin-bottom:16px;">⚠️ This pet has been reported lost. Please contact the owner.</div>"""
+            ? """<div style="background:#FDECEA;color:#D32F2F;font-weight:700;padding:12px;border-radius:12px;margin-bottom:16px;">This pet has been reported lost. Please contact the owner.</div>"""
             : "";
 
         var photoHtml = photo == ""
@@ -90,7 +90,7 @@ public static class PetTagEndpoints
 
         var shareLocationButton = """
             <button id="shareLocationBtn" onclick="shareLocation()" style="display:block;width:100%;background:#3A80C2;color:white;border:none;font-weight:700;font-size:15px;padding:14px;border-radius:12px;margin-top:10px;font-family:inherit;">
-              📍 Share My Location with Owner
+              Share My Location with Owner
             </button>
             <p id="shareLocationStatus" style="font-size:13px;color:#6B7280;margin-top:8px;"></p>
             <script>
