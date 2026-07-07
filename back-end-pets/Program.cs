@@ -189,6 +189,21 @@ await using (var scope = app.Services.CreateAsyncScope())
         );
         """);
 
+    // businesses: Description/PhotoUrl (own fields, previously borrowed from the
+    // first BusinessService) + Market toggles (sell services and/or products).
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS description     TEXT;
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS photo_url       TEXT;
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS sells_services  BOOLEAN NOT NULL DEFAULT false;
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS sells_products  BOOLEAN NOT NULL DEFAULT false;
+        """);
+
+    // business_services: item_kind distinguishes services from products so the
+    // same table/CRUD can back both sides of the business "Market" feature.
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE business_services ADD COLUMN IF NOT EXISTS item_kind VARCHAR(20) NOT NULL DEFAULT 'service';
+        """);
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await IdentitySeeder.SeedDemoUserAsync(userManager);
 }

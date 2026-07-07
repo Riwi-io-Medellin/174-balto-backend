@@ -15,6 +15,10 @@ public sealed class Business
     public string? InstagramUrl { get; set; }
     public string? FacebookUrl { get; set; }
     public string? Type { get; set; }
+    public string? Description { get; set; }
+    public string? PhotoUrl { get; set; }
+    public bool SellsServices { get; set; }
+    public bool SellsProducts { get; set; }
     public string VerificationStatus { get; set; } = "pending";
     public DateTime CreatedAt { get; set; }
 }

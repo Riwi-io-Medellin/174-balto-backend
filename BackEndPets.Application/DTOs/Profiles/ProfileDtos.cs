@@ -62,7 +62,9 @@ public sealed record BusinessResponse(
     int TotalReviews = 0,
     double? Latitude = null,
     double? Longitude = null,
-    bool IsOpenNow = false);
+    bool IsOpenNow = false,
+    bool SellsServices = false,
+    bool SellsProducts = false);
 
 public sealed record WalkerProfileResponse(
     Guid Id,
@@ -122,4 +124,8 @@ public sealed record WalkerRecommendationResponse(
 
 public sealed record UpdateBusinessRequest(
     string? InstagramUrl,
-    string? FacebookUrl);
+    string? FacebookUrl,
+    string? Description = null,
+    string? PhotoUrl = null,
+    bool? SellsServices = null,
+    bool? SellsProducts = null);

@@ -4,13 +4,15 @@ public sealed record CreateBusinessServiceRequest(
     string ServiceType,
     decimal Price,
     string? Description = null,
-    string? PhotoUrl = null);
+    string? PhotoUrl = null,
+    string? ItemKind = null);
 
 public sealed record UpdateBusinessServiceRequest(
     string ServiceType,
     decimal Price,
     string? Description = null,
-    string? PhotoUrl = null);
+    string? PhotoUrl = null,
+    string? ItemKind = null);
 
 public sealed record BusinessServiceResponse(
     Guid Id,
@@ -19,4 +21,5 @@ public sealed record BusinessServiceResponse(
     string? Description,
     decimal Price,
     string? PhotoUrl,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string ItemKind = "service");

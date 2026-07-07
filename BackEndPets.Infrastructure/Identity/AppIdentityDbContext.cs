@@ -172,6 +172,10 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.HasIndex(biz => biz.Email).IsUnique();
             b.Property(biz => biz.InstagramUrl).HasColumnName("instagram_url");
             b.Property(biz => biz.FacebookUrl).HasColumnName("facebook_url");
+            b.Property(biz => biz.Description).HasColumnName("description");
+            b.Property(biz => biz.PhotoUrl).HasColumnName("photo_url");
+            b.Property(biz => biz.SellsServices).HasColumnName("sells_services");
+            b.Property(biz => biz.SellsProducts).HasColumnName("sells_products");
         });
         
         builder.Entity<BusinessDocument>(b =>
@@ -195,6 +199,7 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(s => s.Description).HasColumnName("description");
             b.Property(s => s.Price).HasColumnName("price");
             b.Property(s => s.PhotoUrl).HasColumnName("photo_url");
+            b.Property(s => s.ItemKind).HasColumnName("item_kind");
             b.Property(s => s.CreatedAt).HasColumnName("created_at");
         });
         

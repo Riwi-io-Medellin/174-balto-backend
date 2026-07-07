@@ -33,6 +33,8 @@ public static class BusinessServicesEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 "INVALID_PRICE" => Results.BadRequest(
                     new ApiErrorResponse("Price must be 0 or greater.", "INVALID_PRICE")),
+                "INVALID_ITEM_KIND" => Results.BadRequest(
+                    new ApiErrorResponse("itemKind must be 'service' or 'product'.", "INVALID_ITEM_KIND")),
                 _ when created is not null => Results.Created(
                     $"/api/businesses/{businessId}/services/{created.Id}", created),
                 _ => ResultsExtensions.UnhandledError()
@@ -74,6 +76,8 @@ public static class BusinessServicesEndpoints
                     statusCode: StatusCodes.Status403Forbidden),
                 "INVALID_PRICE" => Results.BadRequest(
                     new ApiErrorResponse("Price must be 0 or greater.", "INVALID_PRICE")),
+                "INVALID_ITEM_KIND" => Results.BadRequest(
+                    new ApiErrorResponse("itemKind must be 'service' or 'product'.", "INVALID_ITEM_KIND")),
                 _ => Results.Ok(updated)
             };
         })

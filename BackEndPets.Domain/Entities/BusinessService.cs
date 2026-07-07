@@ -8,5 +8,6 @@ public sealed class BusinessService
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public string? PhotoUrl { get; set; }
+    public string ItemKind { get; set; } = "service";
     public DateTime CreatedAt { get; set; }
 }

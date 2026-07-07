@@ -9,6 +9,8 @@ public sealed class BusinessServicesService(
     IBusinessRepository businessRepository,
     IBusinessServiceRepository serviceRepository) : IBusinessServicesService
 {
+    private static readonly string[] ValidItemKinds = ["service", "product"];
+
     public async Task<(BusinessServiceResponse? Service, string? ErrorCode)> CreateAsync(
         Guid userId, Guid businessId, CreateBusinessServiceRequest request)
     {
@@ -18,13 +20,17 @@ public sealed class BusinessServicesService(
 
         if (request.Price < 0) return (null, "INVALID_PRICE");
 
+        var itemKind = request.ItemKind?.Trim().ToLowerInvariant() ?? "service";
+        if (!ValidItemKinds.Contains(itemKind)) return (null, "INVALID_ITEM_KIND");
+
         var service = new BusinessService
         {
             BusinessId = businessId,
             ServiceType = request.ServiceType.Trim(),
             Description = request.Description?.Trim(),
             Price = request.Price,
-            PhotoUrl = request.PhotoUrl?.Trim()
+            PhotoUrl = request.PhotoUrl?.Trim(),
+            ItemKind = itemKind
         };
 
         var created = await serviceRepository.CreateAsync(service);
@@ -47,10 +53,14 @@ public sealed class BusinessServicesService(
 
         if (request.Price < 0) return (null, "INVALID_PRICE");
 
+        var itemKind = request.ItemKind?.Trim().ToLowerInvariant() ?? service.ItemKind;
+        if (!ValidItemKinds.Contains(itemKind)) return (null, "INVALID_ITEM_KIND");
+
         service.ServiceType = request.ServiceType.Trim();
         service.Description = request.Description?.Trim();
         service.Price = request.Price;
         service.PhotoUrl = request.PhotoUrl?.Trim();
+        service.ItemKind = itemKind;
 
         var updated = await serviceRepository.UpdateAsync(service);
         return (MapResponse(updated!), null);
@@ -69,5 +79,5 @@ public sealed class BusinessServicesService(
     }
 
     private static BusinessServiceResponse MapResponse(BusinessService s) =>
-        new(s.Id, s.BusinessId, s.ServiceType, s.Description, s.Price, s.PhotoUrl, s.CreatedAt);
+        new(s.Id, s.BusinessId, s.ServiceType, s.Description, s.Price, s.PhotoUrl, s.CreatedAt, s.ItemKind);
 }

@@ -127,10 +127,12 @@ public sealed class ProfileService(
                 created.CreatedAt,
                 created.InstagramUrl,
                 created.FacebookUrl,
-                null,
-                null,
+                created.Description,
+                created.PhotoUrl,
                 Latitude: created.Latitude,
-                Longitude: created.Longitude), null);
+                Longitude: created.Longitude,
+                SellsServices: created.SellsServices,
+                SellsProducts: created.SellsProducts), null);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" } pg)
         {
@@ -194,15 +196,15 @@ public sealed class ProfileService(
         var result = new List<BusinessResponse>();
         foreach (var b in businesses)
         {
-            var service = (await businessServiceRepository.GetByBusinessIdAsync(b.Id)).FirstOrDefault();
             var (avg, count) = ratingMap.GetValueOrDefault(b.Id, (0.0, 0));
             var isOpen = await IsOpenNowAsync(b.Id);
             result.Add(new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
                 b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
                 b.CreatedAt, b.InstagramUrl, b.FacebookUrl,
-                service?.Description, service?.PhotoUrl,
+                b.Description, b.PhotoUrl,
                 Math.Round(avg, 1), count,
-                Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen));
+                Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen,
+                SellsServices: b.SellsServices, SellsProducts: b.SellsProducts));
         }
         return result;
     }
@@ -212,7 +214,6 @@ public sealed class ProfileService(
         var b = await businessRepository.GetByIdAsync(id);
         if (b is null) return null;
     
-        var service = (await businessServiceRepository.GetByBusinessIdAsync(b.Id)).FirstOrDefault();
         var feedbacks = await feedbackRepository.GetByTargetAsync(b.Id, "business");
         var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
         var isOpen = await IsOpenNowAsync(b.Id);
@@ -220,9 +221,10 @@ public sealed class ProfileService(
         return new BusinessResponse(b.Id, b.OwnerUserId, b.Name, b.Nit,
             b.Email, b.Phone, b.Type, b.Location, b.Address, b.VerificationStatus,
             b.CreatedAt, b.InstagramUrl, b.FacebookUrl,
-            service?.Description, service?.PhotoUrl,
+            b.Description, b.PhotoUrl,
             Math.Round(avg, 1), feedbacks.Count,
-            Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen);
+            Latitude: b.Latitude, Longitude: b.Longitude, IsOpenNow: isOpen,
+            SellsServices: b.SellsServices, SellsProducts: b.SellsProducts);
     }
     
     public async Task<BusinessResponse?> GetMyBusinessAsync(Guid userId)
@@ -246,10 +248,21 @@ public sealed class ProfileService(
     
         if (request.FacebookUrl is not null)
             business.FacebookUrl = request.FacebookUrl.Trim();
+
+        if (request.Description is not null)
+            business.Description = request.Description.Trim();
+
+        if (request.PhotoUrl is not null)
+            business.PhotoUrl = request.PhotoUrl.Trim();
+
+        if (request.SellsServices is not null)
+            business.SellsServices = request.SellsServices.Value;
+
+        if (request.SellsProducts is not null)
+            business.SellsProducts = request.SellsProducts.Value;
     
         await businessRepository.UpdateAsync(business);
     
-        var service = (await businessServiceRepository.GetByBusinessIdAsync(business.Id)).FirstOrDefault();
         var feedbacks = await feedbackRepository.GetByTargetAsync(business.Id, "business");
         var avg = feedbacks.Count > 0 ? feedbacks.Average(f => f.Rating) : 0.0;
         var isOpen = await IsOpenNowAsync(business.Id);
@@ -259,9 +272,10 @@ public sealed class ProfileService(
             business.Email, business.Phone, business.Type, business.Location,
             business.Address, business.VerificationStatus,
             business.CreatedAt, business.InstagramUrl, business.FacebookUrl,
-            service?.Description, service?.PhotoUrl,
+            business.Description, business.PhotoUrl,
             Math.Round(avg, 1), feedbacks.Count,
-            Latitude: business.Latitude, Longitude: business.Longitude, IsOpenNow: isOpen), null);
+            Latitude: business.Latitude, Longitude: business.Longitude, IsOpenNow: isOpen,
+            SellsServices: business.SellsServices, SellsProducts: business.SellsProducts), null);
     }
 
     public async Task<(WalkerProfileResponse? Profile, string? ErrorCode)> GetMyWalkerProfileAsync(Guid userId)
