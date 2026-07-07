@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.DTOs.Pets;
@@ -15,6 +16,12 @@ public sealed class PetService(
     UserManager<ApplicationUser> userManager,
     INotificationService notificationService) : IPetService
 {
+    // In-memory per-pet cooldown so repeated tag scans (page refreshes, crawlers)
+    // don't spam the owner with a notification every single time.
+    private static readonly ConcurrentDictionary<Guid, DateTime> LastTagScanNotifiedAt = new();
+    private static readonly TimeSpan TagScanNotifyCooldown = TimeSpan.FromMinutes(10);
+
+
     public async Task<PetResponse> CreateAsync(Guid userId, CreatePetRequest request)
     {
         var pet = new Pet
@@ -148,8 +155,26 @@ public sealed class PetService(
         var ownerName = owner is null ? "Unknown owner" : $"{owner.FirstName} {owner.LastName}".Trim();
         var ownerPhone = owner?.Phone ?? string.Empty;
 
+        await NotifyOwnerOfTagScanAsync(pet);
+
         return new PublicPetTagResponse(
             pet.Id, pet.Name, pet.Species, pet.Breed, pet.PhotoUrl, pet.Sex, pet.Color,
             pet.Weight, pet.BirthDate, pet.IsLost, ownerName, ownerPhone);
+    }
+
+    private async Task NotifyOwnerOfTagScanAsync(Pet pet)
+    {
+        var now = DateTime.UtcNow;
+        var lastNotified = LastTagScanNotifiedAt.GetOrAdd(pet.Id, DateTime.MinValue);
+        if (now - lastNotified < TagScanNotifyCooldown) return;
+        LastTagScanNotifiedAt[pet.Id] = now;
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: pet.UserId,
+            Type: "pet_tag_scanned",
+            Title: $"{pet.Name}'s tag was scanned",
+            Body: "Someone just viewed your pet's tag info.",
+            EntityId: pet.Id,
+            EntityType: "pet"));
     }
 }
