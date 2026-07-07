@@ -114,4 +114,19 @@ public sealed class PetClinicalRepository(AppIdentityDbContext dbContext) : IPet
             .OrderByDescending(a => a.CreatedAt)
             .Take(take)
             .ToListAsync();
+
+    public async Task<IReadOnlyDictionary<Guid, PetVetDocumentAnalysis>> GetLatestVetDocumentAnalysesByPetIdsAsync(
+        IReadOnlyCollection<Guid> petIds)
+    {
+        if (petIds.Count == 0) return new Dictionary<Guid, PetVetDocumentAnalysis>();
+
+        var all = await dbContext.PetVetDocumentAnalyses
+            .Where(a => petIds.Contains(a.PetId))
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+
+        return all
+            .GroupBy(a => a.PetId)
+            .ToDictionary(g => g.Key, g => g.First());
+    }
 }

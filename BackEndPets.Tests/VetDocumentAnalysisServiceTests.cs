@@ -206,4 +206,34 @@ public sealed class VetDocumentAnalysisServiceTests
         Assert.Equal("schedule_vet_visit", persisted.UrgencyLevel);
         Assert.Contains("blood panel", persisted.ResultJson);
     }
+
+    [Fact]
+    public async Task GetHistoryAsync_ReturnsMostRecentFirst()
+    {
+        var gemini = new FakeVetDocumentAiClient("gemini") { ResponseJson = ValidResponseJson };
+        var clinicalRepository = new FakePetClinicalRepository();
+        var service = Build(gemini, new FakeVetDocumentAiClient("openrouter"), clinicalRepository: clinicalRepository);
+
+        await service.AnalyzeAsync(ValidUserId, ValidRequest(), CancellationToken.None);
+        await service.AnalyzeAsync(ValidUserId, ValidRequest(), CancellationToken.None);
+
+        var (result, errorCode) = await service.GetHistoryAsync(ValidUserId, ValidPetId, CancellationToken.None);
+
+        Assert.Null(errorCode);
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.Count);
+        Assert.True(result[0].CreatedAt >= result[1].CreatedAt);
+    }
+
+    [Fact]
+    public async Task GetHistoryAsync_PetNotOwnedByUser_ReturnsPetNotFound()
+    {
+        var petService = new FakePetService { PetToReturn = OwnedPet() with { UserId = Guid.NewGuid() } };
+        var service = Build(new FakeVetDocumentAiClient("gemini"), new FakeVetDocumentAiClient("openrouter"), petService: petService);
+
+        var (result, errorCode) = await service.GetHistoryAsync(ValidUserId, ValidPetId, CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.Equal("PET_NOT_FOUND", errorCode);
+    }
 }

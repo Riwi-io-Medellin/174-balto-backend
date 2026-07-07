@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using BackEndPets.Application.DTOs.Common;
 using BackEndPets.Application.DTOs.Notifications;
 using BackEndPets.Application.DTOs.Pets;
@@ -11,9 +12,16 @@ namespace BackEndPets.Infrastructure.Services;
 
 public sealed class PetService(
     IPetRepository petRepository,
+    IPetClinicalRepository clinicalRepository,
     UserManager<ApplicationUser> userManager,
     INotificationService notificationService) : IPetService
 {
+    // In-memory per-pet cooldown so repeated tag scans (page refreshes, crawlers)
+    // don't spam the owner with a notification every single time.
+    private static readonly ConcurrentDictionary<Guid, DateTime> LastTagScanNotifiedAt = new();
+    private static readonly TimeSpan TagScanNotifyCooldown = TimeSpan.FromMinutes(10);
+
+
     public async Task<PetResponse> CreateAsync(Guid userId, CreatePetRequest request)
     {
         var pet = new Pet
@@ -35,18 +43,27 @@ public sealed class PetService(
     public async Task<PetResponse?> GetByIdAsync(Guid id)
     {
         var pet = await petRepository.GetByIdAsync(id);
-        return pet is null ? null : MapResponse(pet);
+        if (pet is null) return null;
+
+        var latest = await clinicalRepository.GetVetDocumentAnalysesByPetIdAsync(id, take: 1);
+        return MapResponse(pet, latest.FirstOrDefault());
     }
 
     public async Task<PagedResult<PetResponse>> GetByUserIdAsync(Guid userId, int page = 1, int pageSize = 20)
     {
         var all = await petRepository.GetByUserIdAsync(userId);
         var totalCount = all.Count;
-        var paged = all
+        var pagedPets = all
             .OrderBy(p => p.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(MapResponse)
+            .ToList();
+
+        var latestByPetId = await clinicalRepository.GetLatestVetDocumentAnalysesByPetIdsAsync(
+            pagedPets.Select(p => p.Id).ToList());
+
+        var paged = pagedPets
+            .Select(p => MapResponse(p, latestByPetId.GetValueOrDefault(p.Id)))
             .ToList();
         return new PagedResult<PetResponse>(paged, page, pageSize, totalCount);
     }
@@ -79,10 +96,11 @@ public sealed class PetService(
         return (true, null);
     }
 
-    private static PetResponse MapResponse(Pet p) =>
+    private static PetResponse MapResponse(Pet p, PetVetDocumentAnalysis? latestAnalysis = null) =>
         new(p.Id, p.UserId, p.Name, p.Species, p.Breed, p.BirthDate, p.Description, p.PhotoUrl, p.Weight,
             p.Sex, p.Color, p.IdentificationNumber, p.MicrochipNumber, p.CreatedAt,
-            p.IsLost, p.LostLatitude, p.LostLongitude, p.LostAt);
+            p.IsLost, p.LostLatitude, p.LostLongitude, p.LostAt,
+            latestAnalysis?.UrgencyLevel, latestAnalysis?.CreatedAt);
     
     public async Task<(PetResponse? Pet, string? ErrorCode)> ReportLostAsync(
         Guid userId, Guid petId, ReportPetLostRequest request)
@@ -126,5 +144,54 @@ public sealed class PetService(
         pet.IsLost = false;
         await petRepository.UpdateAsync(pet);
         return (MapResponse(pet), null);
+    }
+
+    public async Task<PublicPetTagResponse?> GetPublicTagInfoAsync(Guid petId)
+    {
+        var pet = await petRepository.GetByIdAsync(petId);
+        if (pet is null) return null;
+
+        var owner = await userManager.FindByIdAsync(pet.UserId.ToString());
+        var ownerName = owner is null ? "Unknown owner" : $"{owner.FirstName} {owner.LastName}".Trim();
+        var ownerPhone = owner?.Phone ?? string.Empty;
+
+        await NotifyOwnerOfTagScanAsync(pet);
+
+        return new PublicPetTagResponse(
+            pet.Id, pet.Name, pet.Species, pet.Breed, pet.PhotoUrl, pet.Sex, pet.Color,
+            pet.Weight, pet.BirthDate, pet.IsLost, ownerName, ownerPhone);
+    }
+
+    private async Task NotifyOwnerOfTagScanAsync(Pet pet)
+    {
+        var now = DateTime.UtcNow;
+        var lastNotified = LastTagScanNotifiedAt.GetOrAdd(pet.Id, DateTime.MinValue);
+        if (now - lastNotified < TagScanNotifyCooldown) return;
+        LastTagScanNotifiedAt[pet.Id] = now;
+
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: pet.UserId,
+            Type: "pet_tag_scanned",
+            Title: $"{pet.Name}'s tag was scanned",
+            Body: "Someone just viewed your pet's tag info.",
+            EntityId: pet.Id,
+            EntityType: "pet"));
+    }
+
+    public async Task<(bool Success, string? ErrorCode)> ShareTagLocationAsync(Guid petId, ShareTagLocationRequest request)
+    {
+        var pet = await petRepository.GetByIdAsync(petId);
+        if (pet is null) return (false, "PET_NOT_FOUND");
+
+        var mapsUrl = $"https://maps.google.com/?q={request.Latitude},{request.Longitude}";
+        await notificationService.CreateAsync(new CreateNotificationRequest(
+            UserId: pet.UserId,
+            Type: "pet_location_shared",
+            Title: $"Someone shared a location for {pet.Name}",
+            Body: $"Tap to view where they are: {mapsUrl}",
+            EntityId: pet.Id,
+            EntityType: "pet"));
+
+        return (true, null);
     }
 }

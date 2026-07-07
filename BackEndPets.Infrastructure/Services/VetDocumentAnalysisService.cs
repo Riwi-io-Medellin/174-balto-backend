@@ -54,6 +54,29 @@ public sealed class VetDocumentAnalysisService(
         }
         """;
 
+    public async Task<(IReadOnlyList<VetDocumentAnalysisHistoryItem>? Result, string? ErrorCode)> GetHistoryAsync(
+        Guid userId, Guid petId, CancellationToken ct)
+    {
+        var pet = await petService.GetByIdAsync(petId);
+        if (pet is null || pet.UserId != userId)
+        {
+            return (null, "PET_NOT_FOUND");
+        }
+
+        var records = await clinicalRepository.GetVetDocumentAnalysesByPetIdAsync(petId, take: 20);
+        var items = records
+            .Select(r =>
+            {
+                var result = JsonSerializer.Deserialize<VetDocumentAnalysisResponse>(r.ResultJson, JsonOpts);
+                return result is null ? null : new VetDocumentAnalysisHistoryItem(r.Id, r.CreatedAt, r.DocumentType, result);
+            })
+            .Where(i => i is not null)
+            .Select(i => i!)
+            .ToList();
+
+        return (items, null);
+    }
+
     public async Task<(VetDocumentAnalysisResponse? Result, string? ErrorCode)> AnalyzeAsync(
         Guid userId, AnalyzeVetDocumentRequest request, CancellationToken ct)
     {

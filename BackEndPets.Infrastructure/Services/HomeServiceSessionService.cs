@@ -48,8 +48,8 @@ public sealed class HomeServiceSessionService(
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
             Type: "system",
-            Title: "Servicio iniciado",
-            Body: "El proveedor ha iniciado el servicio.",
+            Title: "Service started",
+            Body: "Your provider has started the service.",
             EntityId: created.Id,
             EntityType: "home_service_session"));
 
@@ -101,8 +101,8 @@ public sealed class HomeServiceSessionService(
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
             Type: "system",
-            Title: "Servicio finalizado",
-            Body: "El servicio ha sido completado.",
+            Title: "Service finished",
+            Body: "The service has been completed.",
             EntityId: session.Id,
             EntityType: "home_service_session"));
 

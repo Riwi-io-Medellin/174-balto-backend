@@ -53,8 +53,8 @@ public sealed class WalkSessionService(
             await notificationService.CreateAsync(new CreateNotificationRequest(
                 UserId: history.UserId,
                 Type: "walk_started",
-                Title: "Paseo iniciado",
-                Body: "El paseador ha iniciado el paseo.",
+                Title: "Walk started",
+                Body: "Your walker has started the walk.",
                 EntityId: created.Id,
                 EntityType: "walk_session"));
         }
@@ -128,8 +128,8 @@ public sealed class WalkSessionService(
             await notificationService.CreateAsync(new CreateNotificationRequest(
                 UserId: history.UserId,
                 Type: "walk_finished",
-                Title: "Paseo finalizado",
-                Body: "El paseo ha sido completado.",
+                Title: "Walk finished",
+                Body: "The walk has been completed.",
                 EntityId: session.Id,
                 EntityType: "walk_session"));
         }
@@ -222,8 +222,8 @@ public sealed class WalkSessionService(
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
             Type: "walk_started",
-            Title: "Paseo iniciado",
-            Body: "El paseador ha iniciado el paseo.",
+            Title: "Walk started",
+            Body: "Your walker has started the walk.",
             EntityId: created.Id,
             EntityType: "walk_session"));
 
@@ -266,8 +266,8 @@ public sealed class WalkSessionService(
         await notificationService.CreateAsync(new CreateNotificationRequest(
             UserId: booking.ClientUserId,
             Type: "walk_finished",
-            Title: "Paseo finalizado",
-            Body: "El paseo ha sido completado.",
+            Title: "Walk finished",
+            Body: "The walk has been completed.",
             EntityId: session.Id,
             EntityType: "walk_session"));
 
@@ -322,6 +322,20 @@ public sealed class WalkSessionService(
 
         db.WalkSessionMediaItems.Add(media);
         await db.SaveChangesAsync();
+
+        var (_, mediaOwnerIds) = await GetParticipantsAsync(session);
+        foreach (var ownerId in mediaOwnerIds)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: ownerId,
+                Type: "walk_media_uploaded",
+                Title: request.Type == "video" ? "New walk video" : "New walk photo",
+                Body: request.Type == "video"
+                    ? "Your walker uploaded a new video from the walk."
+                    : "Your walker uploaded a new photo from the walk.",
+                EntityId: session.Id,
+                EntityType: "walk_session"));
+        }
 
         return (MapMedia(media), null);
     }
@@ -389,7 +403,47 @@ public sealed class WalkSessionService(
         db.ChatMessages.Add(message);
         await db.SaveChangesAsync();
 
+        var (walkerUserId, chatOwnerIds) = await GetParticipantsAsync(session);
+        var recipients = new HashSet<Guid>(chatOwnerIds);
+        if (walkerUserId is Guid w) recipients.Add(w);
+        recipients.Remove(currentUserId);
+
+        var preview = request.Text.Length > 80 ? request.Text[..80] + "…" : request.Text;
+        foreach (var recipientId in recipients)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequest(
+                UserId: recipientId,
+                Type: "chat_message",
+                Title: "New message",
+                Body: preview,
+                EntityId: session.Id,
+                EntityType: "walk_session"));
+        }
+
         return (MapChatMessage(message), null);
+    }
+
+    private async Task<(Guid? WalkerUserId, IReadOnlyCollection<Guid> OwnerUserIds)> GetParticipantsAsync(
+        WalkSession session)
+    {
+        Guid? walkerUserId = null;
+        if (session.WalkerId is Guid walkerId)
+        {
+            var walker = await walkerRepo.GetByIdAsync(walkerId);
+            walkerUserId = walker?.UserId;
+        }
+
+        var ownerIds = new HashSet<Guid>();
+        if (session.BookingId is Guid bookingId)
+        {
+            var booking = await bookingRepo.GetByIdAsync(bookingId);
+            if (booking is not null) ownerIds.Add(booking.ClientUserId);
+        }
+
+        var histories = await historyRepo.GetBySessionIdAsync(session.Id);
+        foreach (var h in histories) ownerIds.Add(h.UserId);
+
+        return (walkerUserId, ownerIds);
     }
 
     public async Task<(IReadOnlyCollection<ChatMessageResponse>? Messages, string? ErrorCode)> GetChatMessagesAsync(

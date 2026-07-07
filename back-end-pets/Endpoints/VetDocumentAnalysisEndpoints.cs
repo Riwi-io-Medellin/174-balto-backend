@@ -68,6 +68,33 @@ public static class VetDocumentAnalysisEndpoints
             .Produces(StatusCodes.Status502BadGateway)
             .Produces(StatusCodes.Status503ServiceUnavailable);
 
+        app.MapGet("/api/vet-document-analysis/pet/{petId:guid}/history", async (
+                Guid petId,
+                HttpContext ctx,
+                IVetDocumentAnalysisService service,
+                CancellationToken ct) =>
+            {
+                var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId))
+                    return Results.Unauthorized();
+
+                var (result, errorCode) = await service.GetHistoryAsync(userId, petId, ct);
+                if (result is not null) return Results.Ok(result);
+
+                return errorCode switch
+                {
+                    "PET_NOT_FOUND" => Results.NotFound(new ApiErrorResponse("Pet not found.", "PET_NOT_FOUND")),
+                    _               => ResultsExtensions.UnhandledError()
+                };
+            })
+            .WithTags("VetDocumentAnalysis")
+            .WithName("GetVetDocumentAnalysisHistory")
+            .WithSummary("Get the vet document analysis history for a pet")
+            .RequireAuthorization()
+            .Produces<IReadOnlyList<VetDocumentAnalysisHistoryItem>>()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound);
+
         return app;
     }
 }

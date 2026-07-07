@@ -6,4 +6,7 @@ public interface IVetDocumentAnalysisService
 {
     Task<(VetDocumentAnalysisResponse? Result, string? ErrorCode)> AnalyzeAsync(
         Guid userId, AnalyzeVetDocumentRequest request, CancellationToken ct);
+
+    Task<(IReadOnlyList<VetDocumentAnalysisHistoryItem>? Result, string? ErrorCode)> GetHistoryAsync(
+        Guid userId, Guid petId, CancellationToken ct);
 }

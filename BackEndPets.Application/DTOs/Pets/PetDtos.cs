@@ -36,8 +36,28 @@ public sealed record PetResponse(
     bool IsLost,
     double? LostLatitude,
     double? LostLongitude,
-    DateTime? LostAt);
+    DateTime? LostAt,
+    string? LatestHealthUrgency = null,
+    DateTime? LatestHealthAnalysisAt = null);
     
 public sealed record ReportPetLostRequest(
     double LostLatitude,
     double LostLongitude);
+
+public sealed record PublicPetTagResponse(
+    Guid Id,
+    string Name,
+    string? Species,
+    string? Breed,
+    string? PhotoUrl,
+    string? Sex,
+    string? Color,
+    decimal? Weight,
+    DateTime? BirthDate,
+    bool IsLost,
+    string OwnerName,
+    string OwnerPhone);
+
+public sealed record ShareTagLocationRequest(
+    double Latitude,
+    double Longitude);

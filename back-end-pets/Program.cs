@@ -220,6 +220,7 @@ app.MapMeEndpoints();
 app.MapWalkersEndpoints();
 app.MapBusinessesEndpoints();
 app.MapPetsEndpoints();
+app.MapPetTagEndpoints();
 app.MapWalkingHistoryEndpoints();
 app.MapWalkSessionsEndpoints();
 app.MapFeedbackEndpoints();

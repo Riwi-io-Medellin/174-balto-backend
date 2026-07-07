@@ -17,7 +17,15 @@ public sealed class FakePetClinicalRepository : IPetClinicalRepository
 
     public Task<IReadOnlyCollection<PetVetDocumentAnalysis>> GetVetDocumentAnalysesByPetIdAsync(Guid petId, int take = 5) =>
         Task.FromResult<IReadOnlyCollection<PetVetDocumentAnalysis>>(
-            CreatedAnalyses.Where(a => a.PetId == petId).Take(take).ToList());
+            CreatedAnalyses.Where(a => a.PetId == petId).OrderByDescending(a => a.CreatedAt).Take(take).ToList());
+
+    public Task<IReadOnlyDictionary<Guid, PetVetDocumentAnalysis>> GetLatestVetDocumentAnalysesByPetIdsAsync(
+        IReadOnlyCollection<Guid> petIds) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, PetVetDocumentAnalysis>>(
+            CreatedAnalyses
+                .Where(a => petIds.Contains(a.PetId))
+                .GroupBy(a => a.PetId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.CreatedAt).First()));
 
     public Task<PetClinicalRecord?> GetRecordByPetIdAsync(Guid petId) =>
         throw new NotImplementedException();
