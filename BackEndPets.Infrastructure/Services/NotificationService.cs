@@ -60,6 +60,7 @@ public sealed class NotificationService(
                     ["type"] = notification.Type,
                     ["entityId"] = notification.EntityId?.ToString() ?? "",
                     ["entityType"] = notification.EntityType ?? "",
+                    ["metadata"] = notification.Metadata ?? "",
                 },
                 CancellationToken.None);
 

@@ -69,6 +69,7 @@ public static class PetTagEndpoints
         var name = WebUtility.HtmlEncode(p.Name);
         var species = WebUtility.HtmlEncode(p.Species ?? "Unknown species");
         var breed = p.Breed is null ? "" : WebUtility.HtmlEncode(p.Breed);
+        var sex = p.Sex is null ? "" : WebUtility.HtmlEncode(p.Sex);
         var color = p.Color is null ? "" : WebUtility.HtmlEncode(p.Color);
         var ownerName = WebUtility.HtmlEncode(p.OwnerName);
         var ownerPhone = WebUtility.HtmlEncode(p.OwnerPhone);
@@ -130,6 +131,7 @@ public static class PetTagEndpoints
         var details = string.Join("", new[]
         {
             breed == "" ? null : $"<div><b>Breed:</b> {breed}</div>",
+            sex == "" ? null : $"<div><b>Sex:</b> {sex}</div>",
             color == "" ? null : $"<div><b>Color:</b> {color}</div>",
             age is null ? null : $"<div><b>Age:</b> {age} yr</div>",
         }.Where(s => s is not null));

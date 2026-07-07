@@ -190,7 +190,12 @@ public sealed class PetService(
             Title: $"Someone shared a location for {pet.Name}",
             Body: $"Tap to view where they are: {mapsUrl}",
             EntityId: pet.Id,
-            EntityType: "pet"));
+            EntityType: "pet",
+            Metadata: System.Text.Json.JsonSerializer.Serialize(new
+            {
+                latitude = request.Latitude,
+                longitude = request.Longitude
+            })));
 
         return (true, null);
     }
