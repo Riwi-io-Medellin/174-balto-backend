@@ -68,7 +68,7 @@ public static class DependencyInjection
         services.AddScoped<IPetClinicalDocumentGenerationService, QuestPdfClinicalDocumentGenerationService>();
         services.AddScoped<IPetClinicalTipsService, OpenAIPetClinicalTipsService>();
         services.AddScoped<IDocumentVerificationService, OpenAIDocumentVerificationService>();
-        services.AddScoped<IVetDocumentAiClient, OpenAIVetDocumentAiClient>();
+        services.AddScoped<IVetDocumentAiClient, GeminiVetDocumentAiClient>();
         services.AddScoped<IVetDocumentAiClient, OpenRouterVetDocumentAiClient>();
         services.AddScoped<IVetDocumentAttachmentFetcher, HttpVetDocumentAttachmentFetcher>();
         services.AddScoped<IVetDocumentAnalysisService, VetDocumentAnalysisService>();
