@@ -125,6 +125,11 @@ public static class PetTagEndpoints
                   btn.disabled = false;
                 }, { enableHighAccuracy: true, timeout: 15000 });
               }
+              // Ask immediately on page load so the owner gets the location
+              // without the finder having to notice/tap the button. The
+              // button stays as a manual retry if the browser blocks the
+              // automatic prompt or the finder dismissed it.
+              shareLocation();
             </script>
             """.Replace("__PET_ID__", id.ToString());
 
