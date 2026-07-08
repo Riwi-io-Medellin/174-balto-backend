@@ -64,11 +64,11 @@ public static class DependencyInjection
         services.AddScoped<IBusinessServicesService, BusinessServicesService>();
         services.AddScoped<IPetClinicalRepository, PetClinicalRepository>();
         services.AddScoped<IPetClinicalRecordService, PetClinicalRecordService>();
-        services.AddScoped<IPetClinicalExtractionService, GeminiPetClinicalExtractionService>();
+        services.AddScoped<IPetClinicalExtractionService, OpenAIPetClinicalExtractionService>();
         services.AddScoped<IPetClinicalDocumentGenerationService, QuestPdfClinicalDocumentGenerationService>();
         services.AddScoped<IPetClinicalTipsService, OpenAIPetClinicalTipsService>();
         services.AddScoped<IDocumentVerificationService, OpenAIDocumentVerificationService>();
-        services.AddScoped<IVetDocumentAiClient, GeminiVetDocumentAiClient>();
+        services.AddScoped<IVetDocumentAiClient, OpenAIVetDocumentAiClient>();
         services.AddScoped<IVetDocumentAiClient, OpenRouterVetDocumentAiClient>();
         services.AddScoped<IVetDocumentAttachmentFetcher, HttpVetDocumentAttachmentFetcher>();
         services.AddScoped<IVetDocumentAnalysisService, VetDocumentAnalysisService>();
