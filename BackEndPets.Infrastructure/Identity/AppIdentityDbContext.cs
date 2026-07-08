@@ -251,6 +251,9 @@ public sealed class AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> 
             b.Property(p => p.LostLatitude).HasColumnName("lost_latitude");
             b.Property(p => p.LostLongitude).HasColumnName("lost_longitude");
             b.Property(p => p.LostAt).HasColumnName("lost_at");
+            b.Property(p => p.TagScanLatitude).HasColumnName("tag_scan_latitude");
+            b.Property(p => p.TagScanLongitude).HasColumnName("tag_scan_longitude");
+            b.Property(p => p.TagScanAt).HasColumnName("tag_scan_at");
             b.Property(p => p.CreatedAt).HasColumnName("created_at");
         });
         

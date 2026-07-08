@@ -112,15 +112,33 @@ public sealed class GeminiPetClinicalExtractionService(
             var responseJson = await httpResponse.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(responseJson);
 
-            var content = doc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            if (!doc.RootElement.TryGetProperty("candidates", out var candidates) ||
+                candidates.GetArrayLength() == 0)
+            {
+                var blockReason = doc.RootElement.TryGetProperty("promptFeedback", out var feedback)
+                    ? feedback.ToString()
+                    : "unknown";
+                logger.LogError("Gemini returned no candidates (likely blocked): {BlockReason}", blockReason);
+                return (null, "AI_EMPTY_RESPONSE");
+            }
+
+            var candidate = candidates[0];
+            var finishReason = candidate.TryGetProperty("finishReason", out var fr) ? fr.GetString() : null;
+            if (!candidate.TryGetProperty("content", out var contentElement) ||
+                !contentElement.TryGetProperty("parts", out var partsElement) ||
+                partsElement.GetArrayLength() == 0)
+            {
+                logger.LogError("Gemini candidate had no content parts (finishReason: {FinishReason})", finishReason);
+                return (null, "AI_EMPTY_RESPONSE");
+            }
+
+            var content = partsElement[0].TryGetProperty("text", out var textElement) ? textElement.GetString() : null;
 
             if (string.IsNullOrWhiteSpace(content))
+            {
+                logger.LogError("Gemini returned empty text (finishReason: {FinishReason})", finishReason);
                 return (null, "AI_EMPTY_RESPONSE");
+            }
 
             var draft = JsonSerializer.Deserialize<ClinicalExtractionDraftResponse>(content, JsonOpts);
             if (draft is null)

@@ -40,7 +40,10 @@ public sealed record PetResponse(
     double? LostLongitude,
     DateTime? LostAt,
     string? LatestHealthUrgency = null,
-    DateTime? LatestHealthAnalysisAt = null);
+    DateTime? LatestHealthAnalysisAt = null,
+    double? TagScanLatitude = null,
+    double? TagScanLongitude = null,
+    DateTime? TagScanAt = null);
     
 public sealed record ReportPetLostRequest(
     double LostLatitude,

@@ -192,8 +192,8 @@ public sealed class VetDocumentAnalysisService(
         }
         catch (Exception ex)
         {
-            logger.LogError("{Provider} analysis attempt failed: {ExceptionType}", client.ProviderName, ex.GetType().Name);
-            return (null, $"{client.ProviderName}: {ex.GetType().Name}");
+            logger.LogError("{Provider} analysis attempt failed: {ExceptionType} {Message}", client.ProviderName, ex.GetType().Name, ex.Message);
+            return (null, $"{client.ProviderName}: {ex.Message}");
         }
     }
 

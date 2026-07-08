@@ -45,6 +45,9 @@ public sealed class PetRepository(AppIdentityDbContext dbContext) : IPetReposito
         existing.LostLatitude = pet.LostLatitude;
         existing.LostLongitude = pet.LostLongitude;
         existing.LostAt = pet.LostAt;
+        existing.TagScanLatitude = pet.TagScanLatitude;
+        existing.TagScanLongitude = pet.TagScanLongitude;
+        existing.TagScanAt = pet.TagScanAt;
 
         await dbContext.SaveChangesAsync();
         return existing;

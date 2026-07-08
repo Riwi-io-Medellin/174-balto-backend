@@ -102,7 +102,8 @@ public sealed class PetService(
         new(p.Id, p.UserId, p.Name, p.Species, p.Breed, p.BirthDate, p.Description, p.PhotoUrl, p.Weight,
             p.Sex, p.Color, p.IdentificationNumber, p.MicrochipNumber, p.CreatedAt,
             p.IsLost, p.LostLatitude, p.LostLongitude, p.LostAt,
-            latestAnalysis?.UrgencyLevel, latestAnalysis?.CreatedAt);
+            latestAnalysis?.UrgencyLevel, latestAnalysis?.CreatedAt,
+            p.TagScanLatitude, p.TagScanLongitude, p.TagScanAt);
     
     public async Task<(PetResponse? Pet, string? ErrorCode)> ReportLostAsync(
         Guid userId, Guid petId, ReportPetLostRequest request)
@@ -184,6 +185,11 @@ public sealed class PetService(
     {
         var pet = await petRepository.GetByIdAsync(petId);
         if (pet is null) return (false, "PET_NOT_FOUND");
+
+        pet.TagScanLatitude = request.Latitude;
+        pet.TagScanLongitude = request.Longitude;
+        pet.TagScanAt = DateTime.UtcNow;
+        await petRepository.UpdateAsync(pet);
 
         var mapsUrl = $"https://maps.google.com/?q={request.Latitude},{request.Longitude}";
         await notificationService.CreateAsync(new CreateNotificationRequest(

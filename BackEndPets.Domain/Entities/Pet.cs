@@ -19,5 +19,8 @@ public sealed class Pet
     public double? LostLatitude { get; set; }
     public double? LostLongitude { get; set; }
     public DateTime? LostAt { get; set; }
+    public double? TagScanLatitude { get; set; }
+    public double? TagScanLongitude { get; set; }
+    public DateTime? TagScanAt { get; set; }
     public DateTime CreatedAt { get; set; }
 }
