@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using BackEndPets.Application.DTOs.Pets;
@@ -8,16 +7,15 @@ using Microsoft.Extensions.Logging;
 
 namespace BackEndPets.Infrastructure.Services;
 
-// NOTE: vision reads images via image_url. Scanned PDFs must be rasterized to
-// image URLs before calling this service (same limitation as
-// OpenAIDocumentVerificationService). Word/Excel files are not supported here;
-// UploadEndpoints should reject those for this flow or convert them upstream.
-public sealed class OpenAIPetClinicalExtractionService(
+// Reemplaza a OpenAIPetClinicalExtractionService: misma interfaz y mismo
+// SystemPrompt/JSON shape, pero usa Gemini (inlineData base64) en vez de
+// OpenAI (image_url). Reusa IVetDocumentAttachmentFetcher ya existente
+// para descargar los fileUrls como bytes.
+public sealed class GeminiPetClinicalExtractionService(
     IConfiguration configuration,
-    ILogger<OpenAIPetClinicalExtractionService> logger) : IPetClinicalExtractionService
+    IVetDocumentAttachmentFetcher attachmentFetcher,
+    ILogger<GeminiPetClinicalExtractionService> logger) : IPetClinicalExtractionService
 {
-    private const string ApiUrl = "https://api.openai.com/v1/chat/completions";
-
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -53,50 +51,59 @@ public sealed class OpenAIPetClinicalExtractionService(
         if (fileUrls.Count == 0)
             return (null, "NO_FILES");
 
-        var apiKey = configuration["OpenAI:ApiKey"];
+        var apiKey = configuration["Gemini:ApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            logger.LogWarning("OpenAI:ApiKey is not configured.");
+            logger.LogWarning("Gemini:ApiKey is not configured.");
             return (null, "AI_NOT_CONFIGURED");
         }
 
-        var configuredModel = configuration["OpenAI:Model"];
-        var model = string.IsNullOrWhiteSpace(configuredModel) ? "gpt-4o-mini" : configuredModel;
+        var configuredModel = configuration["Gemini:Model"];
+        var model = string.IsNullOrWhiteSpace(configuredModel) ? "gemini-2.5-flash" : configuredModel;
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
 
-        var userContent = new List<object> { new { type = "text", text = "Extract the clinical data from these documents." } };
-        userContent.AddRange(fileUrls.Select(url => (object)new { type = "image_url", image_url = new { url } }));
+        IReadOnlyList<(byte[] Bytes, string MimeType)> attachments;
+        try
+        {
+            attachments = await attachmentFetcher.FetchAsync(fileUrls.ToList(), CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to download attachment(s) for clinical extraction.");
+            return (null, "AI_UNAVAILABLE");
+        }
+
+        var parts = new List<object> { new { text = "Extract the clinical data from these documents." } };
+        parts.AddRange(attachments.Select(a => (object)new
+        {
+            inlineData = new { mimeType = a.MimeType, data = Convert.ToBase64String(a.Bytes) }
+        }));
 
         var requestBody = new
         {
-            model,
-            response_format = new { type = "json_object" },
-            max_tokens = 2000,
-            messages = new object[]
-            {
-                new { role = "system", content = SystemPrompt },
-                new { role = "user", content = userContent }
-            }
+            systemInstruction = new { parts = new object[] { new { text = SystemPrompt } } },
+            contents = new object[] { new { role = "user", parts } },
+            generationConfig = new { responseMimeType = "application/json" }
         };
 
         using var http = new HttpClient();
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         HttpResponseMessage httpResponse;
         try
         {
-            var json = JsonSerializer.Serialize(requestBody, JsonOpts);
-            httpResponse = await http.PostAsync(ApiUrl, new StringContent(json, Encoding.UTF8, "application/json"));
+            var json = JsonSerializer.Serialize(requestBody);
+            httpResponse = await http.PostAsync(url, new StringContent(json, Encoding.UTF8, "application/json"));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "OpenAI API call failed.");
+            logger.LogError(ex, "Gemini API call failed.");
             return (null, "AI_UNAVAILABLE");
         }
 
         if (!httpResponse.IsSuccessStatusCode)
         {
             var errorBody = await httpResponse.Content.ReadAsStringAsync();
-            logger.LogError("OpenAI returned {Status}: {Body}", httpResponse.StatusCode, errorBody);
+            logger.LogError("Gemini returned {Status}: {Body}", httpResponse.StatusCode, errorBody);
             return (null, "AI_UNAVAILABLE");
         }
 
@@ -106,9 +113,10 @@ public sealed class OpenAIPetClinicalExtractionService(
             using var doc = JsonDocument.Parse(responseJson);
 
             var content = doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
+                .GetProperty("candidates")[0]
                 .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
                 .GetString();
 
             if (string.IsNullOrWhiteSpace(content))
@@ -122,7 +130,7 @@ public sealed class OpenAIPetClinicalExtractionService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to parse OpenAI response.");
+            logger.LogError(ex, "Failed to parse Gemini response.");
             return (null, "AI_PARSE_ERROR");
         }
     }
